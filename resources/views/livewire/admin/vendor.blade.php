@@ -1,0 +1,44 @@
+<section class=" min-h-screen py-10">
+    <div lass="max-w-7xl mx-auto bg-white rounded-2xl shadow-md p-6">
+        <h2 class="text-3xl font-semibold mb-6 flex items-center justify-between">
+            All Vendor
+        </h2>
+
+        {{-- vendor table --}}
+        <div class="overflow-x-auto">
+            <table class="min-w-full border border-gray-200 divide-y divide-gray-200 text-sm">
+                <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
+                    <tr>
+                        <th class="px-4 py-3 text-left">#</th>
+                        <th class="px-4 py-3 text-left">Shop Image</th>
+                        <th class="px-4 py-3 text-left">Shop Name</th>
+                        <th class="px-4 py-3 text-left">Owner Name</th>
+                        <th class="px-4 py-3 text-left">Address</th>
+                        <th class="px-4 py-3 text-left">phone</th>
+                        <th class="px-4 py-3 text-left">email</th>
+                        <th class="px-4 py-3 text-left">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                 @foreach ($vendors as $idx => $vendor)
+                       <tr class="hover:bg-gray-50 transition">
+                        <td class="px-4 py-3 font-medium text-gray-700">{{$idx + 1}}</td>
+                        <td class="px-4 py-3 font-medium text-gray-700">
+                            <img class="w-20 h-10 object-cover rounded-md" src="{{ asset('storage/'.$vendor->shop_image) }}" alt="">
+                        </td>
+                        <td class="px-4 py-3 font-medium text-gray-700">{{ $vendor->shop_name }}</td>
+                        <td class="px-4 py-3 ">{{$vendor->owner_name}}</td>
+                        <td class="px-4 py-3 ">{{$vendor->shop_province}}, {{ $vendor->shop_city }}, <br> {{ $vendor->shop_tole }}</td>
+                        <td class="px-4 py-3 ">{{$vendor->shop_phone}}</td>
+                        <td class="px-4 py-3 ">{{$vendor->shop_email}}</td>
+                        <td class="px-4 py-3 ">
+                            <button class="bg-red-500 text-white py-0.5 px-2 rounded-md cursor-pointer hover:bg-red-700" wire:click='deleteVendor({{ $vendor->id }})'>Delete</button>
+                        </td>
+                    </tr>
+                 @endforeach
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</section>
