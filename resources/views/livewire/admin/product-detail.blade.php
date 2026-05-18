@@ -17,21 +17,28 @@
             <div class="p-6 bg-gray-50 flex flex-col items-center">
                 
                 <!-- Main Image -->
-                <div class="mb-4 w-72 h-72 border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+               
+                    @if($product->firstImage)
+                     <div class="mb-4 w-72 h-72 border border-gray-200 rounded-xl overflow-hidden shadow-sm">
                     <img src="{{ asset('storage/'. $product->firstImage->url) }}" 
                          alt="Product Image" 
+                         
                          class="w-full h-full object-cover" id="mainImage">
-                </div>
+                        </div>
+                         @endif
+                
 
                 <!-- Thumbnail Images -->
-                <div class="flex gap-3">
+                    @if($product->images)
+                     <div class="flex gap-3">
                     @foreach ($product->images as $image)
                         <img src="{{ asset('storage/'. $image->url) }}" 
                          class="w-20 h-20 object-cover rounded-lg border-2 border-transparent hover:border-blue-500 cursor-pointer transition"
                          onclick="document.getElementById('mainImage').src=this.src">
                     @endforeach
-                    
-                </div>
+                    </div>
+                    @endif 
+                
             </div>
 
             <!-- Product Info -->
