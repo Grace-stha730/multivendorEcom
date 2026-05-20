@@ -1,21 +1,18 @@
 <div class="horizontal-slider w-[95%] mx-auto my-5 z-1">
     <div class="p-2">
-        <img src="{{ asset('storage/banner/a.avif') }}" class="w-full  object-cover rounded-lg">
+        <img src="{{ asset('images/banner1.jpeg') }}" class="w-fullh-[500px]  object-cover rounded-lg ">
     </div>
     <div class="p-2">
-        <img src="{{ asset('storage/banner/b.avif') }}" class="w-full object-cover rounded-lg">
+        <img src="{{ asset('images/banner2.jpeg') }}" class="w-full h-[500px] object-cover rounded-lg">
     </div>
     <div class="p-2">
-        <img src="{{ asset('storage/banner/c.avif') }}" class="w-full object-cover rounded-lg">
+        <img src="{{ asset('images/banner3.jpeg') }}" class="w-full h-[500px] object-cover rounded-lg">
     </div>
     <div class="p-2">
-        <img src="{{ asset('storage/banner/d.avif') }}" class="w-full object-cover rounded-lg">
+        <img src="{{ asset('images/banner4.jpeg') }}" class="w-full h-[500px] object-cover rounded-lg">
     </div>
     <div class="p-2">
-        <img src="{{ asset('storage/banner/e.avif') }}" class="w-full object-cover rounded-lg">
-    </div>
-     <div class="p-2">
-        <img src="{{ asset('storage/banner/f.avif') }}" class="w-full object-cover rounded-lg">
+        <img src="{{ asset('images/banner5.jpeg') }}" class="w-full h-[500px] object-cover rounded-lg">
     </div>
 </div>
 <script>
