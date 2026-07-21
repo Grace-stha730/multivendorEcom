@@ -1,5 +1,4 @@
 import './bootstrap';
-import './echo';
 import './navbar';
 import './product';
 import './slick'

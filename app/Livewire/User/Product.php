@@ -101,13 +101,9 @@ class Product extends Component
             ->latest()->get();
 
         $categories = Category::all();
-        $collections = Auth::guard('web')->check()
-            ? ProductCollection::where('user_id', Auth::guard('web')->id())->latest()->get()
-            : collect();
 
         return view('livewire.user.product', [
             'products' => $products,
-            'searchGroups' => $searchGroups,
             'categories' => $categories,
             'userWishlistProductIds' => $userWishlistProductIds,
         ]);
