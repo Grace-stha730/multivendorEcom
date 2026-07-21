@@ -65,18 +65,7 @@ class User extends Authenticatable
         return $this->hasOne(productRating::class);
     }
 
-    public function productCollections()
-    {
-        return $this->hasMany(ProductCollection::class);
-    }
-
-    public function collectionStars()
-    {
-        return $this->hasMany(CollectionStar::class);
-    }
-
-    public function walletTransactions()
-    {
-        return $this->hasMany(WalletTransaction::class);
+    public function wishlists(){
+        return $this->hasMany(Wishlist::class);
     }
 }

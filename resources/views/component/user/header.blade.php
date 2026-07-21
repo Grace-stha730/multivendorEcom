@@ -41,8 +41,8 @@
             </li>
             @if (Auth::guard('web')->check())
                 <li class="py-3 lg:py-0">
-                    <a href="{{ route('user.collections') }}" class="hover:border-b-3 {{ request()->is('collections') ? 'border-b-3' : '' }}"
-                        wire:navigate>Collections</a>
+                    <a href="{{ route('user.chat') }}" class="hover:border-b-3 {{ request()->is('chat') ? 'border-b-3' : '' }}"
+                        wire:navigate>Messages</a>
                 </li>
             @endif
             <li class="py-3 lg:py-0">
@@ -55,6 +55,9 @@
             </li>
 
             @if (Auth::guard('web')->check())
+                <li class="py-3 lg:hidden">
+                    <a href="{{ route('user.chat') }}" wire:navigate>Messages</a>
+                </li>
                 <li class="py-3 lg:hidden">
                     <form action="{{ route('user.logout') }}" method="POST">
                         @csrf
@@ -74,26 +77,42 @@
         <!-- Right Icons -->
         <div class="flex space-x-6 items-center">
             <div class="cursor-pointer hover:text-gray-400">
-                <a class="relative" href="{{ route('user.cart') }}">
+                <a class="relative" href="{{ route('user.wishlist') }}" title="Wishlist">
+                    <i class="fa-solid fa-heart text-red-500"></i>
+                    <small
+                        class="absolute top-[-10px] -right-4 bg-red-600 text-white px-[5px] py-0 rounded-full">{{ $wishlistCount }}</small>
+                </a>
+            </div>
+
+            <div class="cursor-pointer hover:text-gray-400">
+                <a class="relative" href="{{ route('user.cart') }}" title="Shopping Cart">
                     <i class="fa-solid fa-cart-shopping"></i>
                     <small
                         class="absolute top-[-10px] -right-4 bg-red-800 text-white px-[5px] py-0 rounded-full">{{ $cartCount }}</small>
                 </a>
             </div>
 
-
-
             <div class="hidden lg:block cursor-pointer ">
                 @if (Auth::guard('web')->user())
                     <div class="relative">
                         <button @click.prevent="popup = !popup"
                             class="hover:text-gray-400 cursor-pointer">{{ Auth::guard('web')->user()->name }}</button>
-
+ 
                         <div class="z-100" x-show="popup" @click.outside="popup = false" x-transition x-cloak>
                             <span
                                 class="w-8 h-8 rotate-45 bg-gray-800 absolute bottom-[-54px] left-10 shadow-lg"></span>
                             <div
-                                class="absolute bottom-[-130px] left-[-19px] bg-gray-800 px-3 py-4 space-y-4 w-[150px] rounded-lg z-100">
+                                class="absolute bottom-[-190px] left-[-19px] bg-gray-800 px-3 py-4 space-y-3 w-[150px] rounded-lg z-100">
+                                <span class="space-x-1.5 block hover:text-gray-400">
+                                    <i class="fa-solid fa-heart text-red-400"></i>
+                                    <a href="{{ route('user.wishlist') }}">Wishlist</a>
+                                </span>
+
+                                <span class="space-x-1.5 block hover:text-gray-400">
+                                    <i class="fa-solid fa-message text-indigo-400"></i>
+                                    <a href="{{ route('user.chat') }}">Messages</a>
+                                </span>
+
                                 <span class="space-x-1.5 block hover:text-gray-400">
                                     <i class="fa-solid fa-gear"></i>
                                     <a href="{{ route('user.setting') }}">Setting</a>

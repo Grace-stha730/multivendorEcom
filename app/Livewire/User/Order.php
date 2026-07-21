@@ -79,6 +79,25 @@ class Order extends Component
         }
     }
 
+    public function startChatWithVendor($vendorId, $productId = null)
+    {
+        if (!Auth::guard('web')->check()) {
+            return redirect()->route('user.login')->with('error', 'Login first');
+        }
+
+        $userId = Auth::guard('web')->id();
+
+        $conversation = \App\Models\Conversation::firstOrCreate([
+            'user_id' => $userId,
+            'vendor_id' => $vendorId,
+            'product_id' => $productId,
+        ], [
+            'last_message_at' => now(),
+        ]);
+
+        return redirect()->route('user.chat', ['c' => $conversation->id]);
+    }
+
     public function render()
     {
         return view('livewire.user.order', [

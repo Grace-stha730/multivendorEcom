@@ -53,16 +53,14 @@ class Product extends Model
     public function productRating(){
         return $this->hasOne(productRating::class);
     }
-
-    public function embedding()
+    public function wishlists()
     {
-        return $this->hasOne(ProductEmbedding::class);
+        return $this->hasMany(Wishlist::class);
     }
 
-    public function collections()
+    public function variants()
     {
-        return $this->belongsToMany(ProductCollection::class, 'collection_products')
-            ->withTimestamps();
+        return $this->hasMany(ProductVariant::class);
     }
 
     public function getImageUrlAttribute()

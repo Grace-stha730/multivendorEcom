@@ -16,6 +16,25 @@ class CreateProduct extends Component
     public $name, $stock, $summary, $description, $discount, $category_id, $price;
     public $images = [];
     public $productId;
+    
+    // Product Variants property
+    public $variants = [];
+
+    public function addVariant()
+    {
+        $this->variants[] = [
+            'attribute_name' => '',
+            'attribute_value' => '',
+            'price_extra' => 0,
+            'stock' => 0,
+        ];
+    }
+
+    public function removeVariant($index)
+    {
+        unset($this->variants[$index]);
+        $this->variants = array_values($this->variants);
+    }
 
     public function removeImage($index)
     {
@@ -58,6 +77,19 @@ class CreateProduct extends Component
 
 
             $product = ProductModal::create($productData);
+
+            // Create product variants
+            foreach ($this->variants as $variant) {
+                if (!empty($variant['attribute_name']) && !empty($variant['attribute_value'])) {
+                    \App\Models\ProductVariant::create([
+                        'product_id' => $product->id,
+                        'attribute_name' => trim($variant['attribute_name']),
+                        'attribute_value' => trim($variant['attribute_value']),
+                        'price_extra' => $variant['price_extra'] ?: 0,
+                        'stock' => $variant['stock'] ?: 0,
+                    ]);
+                }
+            }
 
             if (!empty($this->images)) {
                 foreach ($this->images as $image) {

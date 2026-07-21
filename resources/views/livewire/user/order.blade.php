@@ -65,6 +65,80 @@
                         </div>
 
                         <div class="p-6 space-y-3">
+                            <!-- Visual Order Tracking Timeline -->
+                            @if ($order->order_status !== 'Cancelled')
+                                @php
+                                    $statusSteps = [
+                                        'Pending' => 1,
+                                        'Processing' => 2,
+                                        'Warehouse' => 3,
+                                        'Shipped' => 4,
+                                        'Out for Delivery' => 5,
+                                        'Delivered' => 6
+                                    ];
+                                    $step = $statusSteps[$order->order_status] ?? 1;
+                                    $percentages = [1 => 0, 2 => 20, 3 => 40, 4 => 60, 5 => 80, 6 => 100];
+                                    $percent = $percentages[$step] ?? 0;
+                                @endphp
+                                <div class="py-6 px-4 bg-gray-50/50 rounded-xl border border-gray-100 my-4">
+                                    <h4 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-5">Order Tracking Status</h4>
+                                    <div class="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0">
+                                        <!-- Connecting Line for Desktop -->
+                                        <div class="hidden md:block absolute top-[15px] left-0 right-0 h-1 bg-gray-200 z-0"></div>
+                                        <!-- Active Line -->
+                                        <div class="hidden md:block absolute top-[15px] left-0 h-1 bg-indigo-600 z-0 transition-all duration-300" style="width: {{ $percent }}%;"></div>
+
+                                        <!-- Step 1: Placed -->
+                                        <div class="flex md:flex-col items-center gap-3 md:gap-1.5 z-10 flex-1 w-full text-left md:text-center">
+                                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition duration-300 {{ $step >= 1 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500' }}">
+                                                @if($step > 1) <i class="fa-solid fa-check"></i> @else 1 @endif
+                                            </div>
+                                            <span class="text-[11px] font-semibold {{ $step >= 1 ? 'text-indigo-600' : 'text-gray-500' }}">Order Placed</span>
+                                        </div>
+
+                                        <!-- Step 2: Processing -->
+                                        <div class="flex md:flex-col items-center gap-3 md:gap-1.5 z-10 flex-1 w-full text-left md:text-center">
+                                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition duration-300 {{ $step >= 2 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500' }}">
+                                                @if($step > 2) <i class="fa-solid fa-check"></i> @else 2 @endif
+                                            </div>
+                                            <span class="text-[11px] font-semibold {{ $step >= 2 ? 'text-indigo-600' : 'text-gray-500' }}">Processing</span>
+                                        </div>
+
+                                        <!-- Step 3: Warehouse -->
+                                        <div class="flex md:flex-col items-center gap-3 md:gap-1.5 z-10 flex-1 w-full text-left md:text-center">
+                                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition duration-300 {{ $step >= 3 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500' }}">
+                                                @if($step > 3) <i class="fa-solid fa-check"></i> @else 3 @endif
+                                            </div>
+                                            <span class="text-[11px] font-semibold {{ $step >= 3 ? 'text-indigo-600' : 'text-gray-500' }}">In Warehouse</span>
+                                        </div>
+
+                                        <!-- Step 4: Shipped -->
+                                        <div class="flex md:flex-col items-center gap-3 md:gap-1.5 z-10 flex-1 w-full text-left md:text-center">
+                                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition duration-300 {{ $step >= 4 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500' }}">
+                                                @if($step > 4) <i class="fa-solid fa-check"></i> @else 4 @endif
+                                            </div>
+                                            <span class="text-[11px] font-semibold {{ $step >= 4 ? 'text-indigo-600' : 'text-gray-500' }}">Shipped</span>
+                                        </div>
+
+                                        <!-- Step 5: Out for Delivery -->
+                                        <div class="flex md:flex-col items-center gap-3 md:gap-1.5 z-10 flex-1 w-full text-left md:text-center">
+                                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition duration-300 {{ $step >= 5 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500' }}">
+                                                @if($step > 5) <i class="fa-solid fa-check"></i> @else 5 @endif
+                                            </div>
+                                            <span class="text-[11px] font-semibold {{ $step >= 5 ? 'text-indigo-600' : 'text-gray-500' }}">Out for Delivery</span>
+                                        </div>
+
+                                        <!-- Step 6: Delivered -->
+                                        <div class="flex md:flex-col items-center gap-3 md:gap-1.5 z-10 flex-1 w-full text-left md:text-center">
+                                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition duration-300 {{ $step >= 6 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500' }}">
+                                                @if($step > 6) <i class="fa-solid fa-check"></i> @else 6 @endif
+                                            </div>
+                                            <span class="text-[11px] font-semibold {{ $step >= 6 ? 'text-indigo-600' : 'text-gray-500' }}">Delivered</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+
                             <div class="flex flex-wrap justify-between text-sm text-gray-700">
                                 <div>
                                     <p><strong>Payment:</strong> {{ $order->payment_method }}</p>
@@ -79,27 +153,30 @@
                                 <h3 class="font-semibold mb-2 text-gray-800">Items</h3>
                                 <ul class="divide-y divide-gray-200">
                                     @foreach ($order->orderItems as $item)
-                                        <li class="py-3 flex justify-between items-center">
+                                        <li class="py-3 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
                                             <div class="flex items-center gap-3">
-<img
-    src="{{ $item->product->firstImage?->url
-        ? asset('storage/' . $item->product->firstImage->url)
-        : asset('images/2.png') }}"
-    class="w-10 h-10 rounded object-cover border"
-    alt=""
->
+                                                <img src="{{ $item->product->firstImage?->url ? asset('storage/' . $item->product->firstImage->url) : asset('images/2.png') }}"
+                                                    class="w-10 h-10 rounded object-cover border" alt="">
                                                 <div>
-                                                    <p class="font-medium">{{ $item->product->name }}</p>
+                                                    <p class="font-medium text-gray-900">{{ $item->product->name }}</p>
                                                     <p class="text-sm text-gray-500">x{{ $item->quantity }}</p>
                                                     @if ($item->vendorOrder && $item->vendorOrder->status == 'Cancelled')
-                                                        <span
-                                                            class="text-xs text-red-600 bg-red-50 px-2 py-1 rounded mt-1 inline-block">
+                                                        <span class="text-xs text-red-600 bg-red-50 px-2 py-1 rounded mt-1 inline-block">
                                                             Cancelled by {{ $item->vendorOrder->vendor->shop_name }}
                                                         </span>
                                                     @endif
                                                 </div>
                                             </div>
-                                            <span class="font-semibold text-gray-700">Rs. {{ $item->total }}</span>
+                                            <div class="flex items-center gap-4">
+                                                <span class="font-semibold text-gray-700">Rs. {{ number_format($item->total) }}</span>
+                                                @if ($item->product && $item->product->vendor_id)
+                                                    <button wire:click="startChatWithVendor({{ $item->product->vendor_id }}, {{ $item->product->id }})"
+                                                        class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-xs">
+                                                        <i class="fa-solid fa-comments text-indigo-600"></i>
+                                                        <span>Chat Vendor</span>
+                                                    </button>
+                                                @endif
+                                            </div>
                                         </li>
                                     @endforeach
                                 </ul>

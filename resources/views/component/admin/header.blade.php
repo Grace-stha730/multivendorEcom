@@ -59,6 +59,20 @@
                 </li>
 
                 <li>
+                    <a class="py-2 px-4 hover:duration-200 flex items-center gap-2 {{ request()->is('admin/coupons') ? 'bg-white text-black rounded-lg' : 'text-white hover:bg-white hover:text-black transition rounded-lg' }}"
+                        wire:navigate href="{{ route('admin.coupons') }}">
+                        <span :class="open ? 'block' : 'hidden duration-0'"><i class="fa-solid fa-ticket"></i> Coupons</span>
+                    </a>
+                </li>
+
+                <li>
+                    <a class="py-2 px-4 hover:duration-200 flex items-center gap-2 {{ request()->is('admin/payouts') ? 'bg-white text-black rounded-lg' : 'text-white hover:bg-white hover:text-black transition rounded-lg' }}"
+                        wire:navigate href="{{ route('admin.payouts') }}">
+                        <span :class="open ? 'block' : 'hidden duration-0'"><i class="fa-solid fa-hand-holding-dollar"></i> Payouts</span>
+                    </a>
+                </li>
+
+                <li>
                     <a class="py-2 px-4 hover:duration-200 flex items-center gap-2 {{ request()->is('admin/setting') ? 'bg-white text-black rounded-lg' : 'text-white hover:bg-white hover:text-black transition rounded-lg' }}"
                         wire:navigate href="{{ route('admin.setting') }}">
                         <span :class="open ? 'block' : 'hidden duration-0'"><i class="fas fa-cog"></i> Setting</span>

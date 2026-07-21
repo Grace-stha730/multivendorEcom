@@ -69,6 +69,24 @@ class VendorInfo extends Component
             return redirect()->route('user.vendorInfo',['id' => $this->vendorId])->with('error','Something went worng'. $e->getMessage());
         }
     }
+    public function startChat()
+    {
+        if (!Auth::guard('web')->check()) {
+            return redirect()->route('user.login')->with('error', 'Please login first to chat with the vendor.');
+        }
+
+        $userId = Auth::guard('web')->id();
+
+        $conversation = \App\Models\Conversation::firstOrCreate([
+            'user_id' => $userId,
+            'vendor_id' => $this->vendorId,
+        ], [
+            'last_message_at' => now(),
+        ]);
+
+        return redirect()->route('user.chat', ['c' => $conversation->id]);
+    }
+
     public function render()
     {
         return view('livewire.user.vendor-info');

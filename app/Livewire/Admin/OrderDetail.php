@@ -31,6 +31,12 @@ class OrderDetail extends Component
         $order->update(['order_status' => 'Delivered']);
         return redirect()->route('admin.order-detail',['id' => $order->id])->with('success','Order delivered to customer');
     }
+
+    public function outForDelivery($id){
+        $order = Order::find($id);
+        $order->update(['order_status' => 'Out for Delivery']);
+        return redirect()->route('admin.order-detail',['id' => $order->id])->with('success','Order marked as Out for Delivery');
+    }
     public $order;
     public function mount($id){
         $this->order = Order::with('vendorOrders')->findOrFail($id);

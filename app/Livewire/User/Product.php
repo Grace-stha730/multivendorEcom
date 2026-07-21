@@ -5,9 +5,7 @@ namespace App\Livewire\User;
 use App\Models\Cart;
 use App\Models\Cart_items;
 use App\Models\Category;
-use App\Models\ProductCollection;
-use App\Models\productRating;
-use App\Services\Search\ClusteredProductSearch;
+use App\Models\Wishlist;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
@@ -19,7 +17,7 @@ use Livewire\Attributes\Title;
 #[Layout('components/layouts/user')]
 class Product extends Component
 {
-    public $search = "", $category, $searchAlgorithm = 'kmeans', $collectionId;
+    public $search = "", $category = "";
 
     public function AddToCart($id)
     {
@@ -45,7 +43,7 @@ class Product extends Component
 
             if ($cartItem) {
                 DB::rollBack();
-                return redirect()->route('user.product')->with('error', 'This is product is already in cart');
+                return redirect()->route('user.product')->with('error', 'This product is already in cart');
             } else {
                 Cart_items::create([
                     'cart_id' => $cart->id,
@@ -58,38 +56,50 @@ class Product extends Component
                 DB::commit();
                 return redirect()->route('user.product')->with('success', 'Product added to cart');
             }
-
-
         } catch (\Exception $e) {
             DB::rollBack();
             session()->flash('error', 'Something went wrong. Please try again.');
         }
     }
 
-    public function addToCollection($productId)
+    public function toggleWishlist($id)
     {
         if (!Auth::guard('web')->check()) {
             return redirect()->route('user.login')
-                ->with('error', 'Please login first to save products.');
+                ->with('error', 'Please login first to save items to wishlist.');
         }
 
-        $this->validate([
-            'collectionId' => 'required|exists:product_collections,id',
-        ]);
+        $userId = Auth::guard('web')->id();
+        $wishlist = Wishlist::where('user_id', $userId)->where('product_id', $id)->first();
 
-        $collection = ProductCollection::where('user_id', Auth::guard('web')->id())
-            ->findOrFail($this->collectionId);
-
-        $collection->products()->syncWithoutDetaching([$productId]);
-
-        session()->flash('success', 'Product saved to collection.');
+        if ($wishlist) {
+            $wishlist->delete();
+            session()->flash('success', 'Removed from wishlist');
+        } else {
+            Wishlist::create([
+                'user_id' => $userId,
+                'product_id' => $id,
+            ]);
+            session()->flash('success', 'Added to wishlist!');
+        }
     }
 
     public function render()
     {
-        $searchGroups = app(ClusteredProductSearch::class)
-            ->search($this->search, $this->searchAlgorithm);
-        $products = collect($searchGroups)->flatMap(fn ($group) => $group['products'])->values();
+        $userWishlistProductIds = [];
+        if (Auth::guard('web')->check()) {
+            $userWishlistProductIds = Wishlist::where('user_id', Auth::guard('web')->id())
+                ->pluck('product_id')
+                ->toArray();
+        }
+
+        $products = modalProduct::where('name', 'like', '%' . $this->search . '%')
+            ->when($this->category, function ($query) {
+                $query->where('category_id', $this->category);
+            })
+            ->with(['vendor', 'firstImage'])
+            ->latest()->get();
+
         $categories = Category::all();
         $collections = Auth::guard('web')->check()
             ? ProductCollection::where('user_id', Auth::guard('web')->id())->latest()->get()
@@ -99,7 +109,7 @@ class Product extends Component
             'products' => $products,
             'searchGroups' => $searchGroups,
             'categories' => $categories,
-            'collections' => $collections,
+            'userWishlistProductIds' => $userWishlistProductIds,
         ]);
     }
 }

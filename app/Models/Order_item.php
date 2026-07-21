@@ -13,7 +13,12 @@ class Order_item extends Model
         'quantity',
         'price',
         'total',
-        'is_rate'
+        'is_rate',
+        'selected_variants',
+    ];
+
+    protected $casts = [
+        'selected_variants' => 'array',
     ];
 
     public function order()

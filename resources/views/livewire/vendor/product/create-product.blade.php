@@ -93,6 +93,56 @@
                 </div>
             @endif
         </div>
+        <!-- Product Variants -->
+        <div class="bg-gray-50 p-5 rounded-xl border border-gray-200">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-sm font-bold text-gray-700 flex items-center gap-1">
+                    <i class="fa-solid fa-sliders text-blue-500"></i> Product Variants (e.g. Size, Color)
+                </h3>
+                <button type="button" wire:click="addVariant"
+                    class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition cursor-pointer">
+                    + Add Variant
+                </button>
+            </div>
+
+            @if (count($variants) > 0)
+                <div class="space-y-3">
+                    @foreach ($variants as $index => $variant)
+                        <div class="flex flex-col md:flex-row gap-3 items-end bg-white p-3 rounded-lg border border-gray-100 shadow-sm relative">
+                            <div class="flex-1">
+                                <label class="block text-[11px] font-semibold text-gray-500 mb-1">Attribute (e.g., Size, Color)</label>
+                                <input type="text" wire:model="variants.{{ $index }}.attribute_name" placeholder="e.g. Size"
+                                    class="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none">
+                            </div>
+                            <div class="flex-1">
+                                <label class="block text-[11px] font-semibold text-gray-500 mb-1">Value (e.g., XL, Blue)</label>
+                                <input type="text" wire:model="variants.{{ $index }}.attribute_value" placeholder="e.g. XL"
+                                    class="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none">
+                            </div>
+                            <div class="w-32">
+                                <label class="block text-[11px] font-semibold text-gray-500 mb-1">Price Extra (Rs.)</label>
+                                <input type="number" step="0.01" wire:model="variants.{{ $index }}.price_extra" placeholder="0"
+                                    class="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none">
+                            </div>
+                            <div class="w-32">
+                                <label class="block text-[11px] font-semibold text-gray-500 mb-1">Stock</label>
+                                <input type="number" wire:model="variants.{{ $index }}.stock" placeholder="0"
+                                    class="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none">
+                            </div>
+                            <button type="button" wire:click="removeVariant({{ $index }})"
+                                class="bg-red-50 hover:bg-red-100 text-red-500 border border-red-200 text-xs px-2.5 py-1.5 rounded-lg font-medium transition cursor-pointer">
+                                Remove
+                            </button>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <p class="text-xs text-gray-500 text-center py-4 bg-white rounded-lg border border-dashed">
+                    No variants added. Click "+ Add Variant" to support multiple options for this product.
+                </p>
+            @endif
+        </div>
+
         <!-- Submit Button -->
         <div class="flex justify-end">
             <button

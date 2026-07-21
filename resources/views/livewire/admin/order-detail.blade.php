@@ -2,10 +2,16 @@
     <!-- Header -->
     <div class="flex justify-between items-center mb-6">
         <h2 class="text-2xl font-semibold text-gray-800">Order Details</h2>
-        <a href="{{ route('admin.order') }}"
-            class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg text-sm font-medium">
-            <i class="fa fa-arrow-left mr-1"></i> Back
-        </a>
+        <div class="flex gap-2">
+            <a href="{{ route('admin.invoice', ['id' => $order->id]) }}" target="_blank"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 cursor-pointer">
+                <i class="fa-solid fa-print"></i> Print Sales Invoice
+            </a>
+            <a href="{{ route('admin.order') }}"
+                class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1">
+                <i class="fa fa-arrow-left mr-1"></i> Back
+            </a>
+        </div>
     </div>
 
     <!-- Order Info -->
@@ -29,8 +35,14 @@
         <!-- Vendor Orders -->
         <div class="space-y-6">
             <!-- Example: Vendor 1 -->
-            <div class="bg-white shadow-md rounded-2xl p-6">
-                <h4 class="text-lg font-semibold mb-1 text-blue-600">Vendor: {{ $vendorOrder->vendor->shop_name }}</h4>
+            <div class="bg-white shadow-md rounded-2xl p-6 mb-6">
+                <div class="flex justify-between items-center mb-1">
+                    <h4 class="text-lg font-semibold text-blue-600">Vendor: {{ $vendorOrder->vendor->shop_name }}</h4>
+                    <a href="{{ route('vendor.invoice', ['id' => $vendorOrder->id]) }}" target="_blank"
+                        class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-3 py-1 rounded-md transition flex items-center gap-1">
+                        <i class="fa-solid fa-print"></i> Vendor Invoice
+                    </a>
+                </div>
                 <p class="mb-4">
                     <span class="font-semibold text-gray-700">Vendor Order Status:</span>
                     @if ($vendorOrder->status == 'Pending')
@@ -77,7 +89,7 @@
                                 <tr class="hover:bg-gray-200 duration-100">
                                     <td class="px-4 py-2 flex items-center gap-3">
                                         <img class="w-14 h-14 rounded-lg object-cover"
-                                            src="{{ asset('storage/' . $item->product->firstImage->url) }}"
+                                            src="{{ asset('storage/' . ($item->product->firstImage->url ?? 'default/product.webp')) }}"
                                             alt="">
 
                                         <span>
@@ -100,7 +112,7 @@
                         <tfoot class="bg-gray-50">
                             <tr>
                                 <td colspan="3" class="px-4 py-2 font-semibold text-right">Vendor Total:</td>
-                                <td class="px-4 py-2 font-semibold">Rs. {{ $vendorOrder->subtotal }}</td>
+                                <td class="px-4 py-2 font-semibold">Rs. {{ number_format($vendorOrder->subtotal) }}</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -122,9 +134,10 @@
 
 <!-- Overall Order Actions -->
 <div class="mt-6 flex justify-end gap-3">
-    <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm cursor-pointer">
-        Print Invoice
-    </button>
+    <a href="{{ route('admin.invoice', ['id' => $order->id]) }}" target="_blank"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 cursor-pointer">
+        <i class="fa-solid fa-print"></i> Print Sales Invoice
+    </a>
     @if ($order->vendorOrders->every(fn($v) => $v->is_received && $order->order_status == 'Warehouse'))
         <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded cursor-pointer"
             wire:click='shipOrder({{ $order->id }})'>
@@ -132,7 +145,13 @@
         </button>
     @endif
     @if ($order->order_status == 'Shipped')
-        <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded cursor-pointer"
+        <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded cursor-pointer shadow transition"
+            wire:click='outForDelivery({{ $order->id }})'>
+            Out for Delivery
+        </button>
+    @endif
+    @if ($order->order_status == 'Out for Delivery')
+        <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded cursor-pointer shadow transition"
             wire:click='DelivereOrder({{ $order->id }})'>
             Complete Order
         </button>

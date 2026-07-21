@@ -1,4 +1,7 @@
 <section class="" x-data="{ mainImage: '{{ asset('storage/' . $mainImage) }}' }">
+    <div class="w-[90%] md:w-[80%] mx-auto mt-4">
+        @include('common.message')
+    </div>
     <div class="w-[90%] md:w-[80%] mx-auto my-10 grid md:grid-cols-2 gap-6">
         <!-- Left: Product Images -->
         <div>
@@ -25,16 +28,34 @@
             <p class="text-green-500">{{ $product->vendor->shop_name }}</p>
             <p class="text-gray-600">{{ $product->summary }}</p>
 
-            <!-- Price -->
+            <!-- Price (Dynamic based on selected variants) -->
+            @php
+                $currentBasePrice = $product->price;
+                foreach ($selectedVariants as $name => $val) {
+                    if (isset($availableVariants[$name])) {
+                        foreach ($availableVariants[$name] as $var) {
+                            if ($var['attribute_value'] === $val) {
+                                $currentBasePrice += $var['price_extra'];
+                            }
+                        }
+                    }
+                }
+                $currentFinalPrice = $product->discount
+                    ? $currentBasePrice - ($currentBasePrice * $product->discount / 100)
+                    : $currentBasePrice;
+            @endphp
             <p class="text-lg font-semibold">
                 Price:
                 @if ($product->discount)
-                    <span class="line-through text-gray-400">Rs. {{ $product->price }}</span>
-                    <span class="text-red-600 ml-2">
-                        Rs. {{ $product->price - ($product->price * $product->discount) / 100 }}
+                    <span class="line-through text-gray-400">Rs. {{ number_format($currentBasePrice, 2) }}</span>
+                    <span class="text-red-600 ml-2 font-bold">
+                        Rs. {{ number_format($currentFinalPrice, 2) }}
+                    </span>
+                    <span class="text-xs bg-red-100 text-red-800 font-semibold px-2 py-0.5 rounded-full ml-1">
+                        {{ $product->discount }}% OFF
                     </span>
                 @else
-                    <span class="text-gray-800">Rs. {{ $product->price }}</span>
+                    <span class="text-gray-800 font-bold">Rs. {{ number_format($currentBasePrice, 2) }}</span>
                 @endif
             </p>
 
@@ -42,6 +63,32 @@
             <p class="text-sm text-gray-500">Available Stock:
                 <span class="font-medium text-gray-800">{{ $product->stock }}</span>
             </p>
+
+            <!-- Product Variants Selectors -->
+            @if (count($availableVariants) > 0)
+                <div class="space-y-3 py-3 border-t border-b border-gray-100 my-4">
+                    @foreach ($availableVariants as $name => $values)
+                        <div class="flex items-center space-x-3">
+                            <span class="text-gray-600 font-semibold text-xs w-16 uppercase tracking-wider">{{ $name }}:</span>
+                            <div class="flex flex-wrap gap-1.5">
+                                @foreach ($values as $var)
+                                    <button type="button" wire:click="$set('selectedVariants.{{ $name }}', '{{ $var['attribute_value'] }}')"
+                                        @class([
+                                            'px-3 py-1 rounded-full text-xs font-medium border transition cursor-pointer shadow-sm',
+                                            'bg-indigo-600 border-indigo-600 text-white' => ($selectedVariants[$name] ?? '') === $var['attribute_value'],
+                                            'bg-gray-100 border-gray-200 text-gray-700 hover:bg-gray-200' => ($selectedVariants[$name] ?? '') !== $var['attribute_value'],
+                                        ])>
+                                        {{ $var['attribute_value'] }}
+                                        @if ($var['price_extra'] > 0)
+                                            <span class="text-[9px] opacity-80 font-normal">(+ Rs. {{ number_format($var['price_extra']) }})</span>
+                                        @endif
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
 
             <!-- Quantity Input -->
             <div class="flex items-center space-x-3">
@@ -54,14 +101,20 @@
             </div>
 
             <!-- Action Buttons -->
-            <div class="flex space-x-3">
-                <button class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900 duration-150 cursor-pointer"
+            <div class="flex flex-wrap gap-3">
+                <button class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900 duration-150 cursor-pointer flex items-center gap-2"
                     wire:click.prevent='addToCart'>
-                    Add to Cart
+                    <i class="fa-solid fa-cart-plus"></i> Add to Cart
                 </button>
-                <button
-                    class="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300 duration-150 cursor-pointer">
-                    Wishlist
+                <button wire:click.prevent="toggleWishlist"
+                    class="{{ $inWishlist ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300' }} px-4 py-2 rounded duration-150 cursor-pointer flex items-center gap-2">
+                    <i class="{{ $inWishlist ? 'fa-solid fa-heart' : 'fa-regular fa-heart' }}"></i>
+                    <span>{{ $inWishlist ? 'In Wishlist' : 'Add to Wishlist' }}</span>
+                </button>
+                <button wire:click.prevent="askQuestion"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded duration-150 cursor-pointer flex items-center gap-2">
+                    <i class="fa-solid fa-comments"></i>
+                    <span>Ask Vendor a Question</span>
                 </button>
             </div>
         </div>
