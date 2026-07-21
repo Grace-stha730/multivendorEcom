@@ -18,6 +18,8 @@ class Order extends Model
         'price',
         'payment_status',
         'order_status',
+        'wallet_discount',
+        'redeemed_points',
         'is_shipped',
         'payment_method',
         'admin_id',

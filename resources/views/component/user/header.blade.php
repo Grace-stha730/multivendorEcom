@@ -39,6 +39,12 @@
                 <a href="{{ route('user.order') }}" class="hover:border-b-3 {{ request()->is('order') || request()->is('review*') ? 'border-b-3' : '' }}"
                     wire:navigate>Order</a>
             </li>
+            @if (Auth::guard('web')->check())
+                <li class="py-3 lg:py-0">
+                    <a href="{{ route('user.collections') }}" class="hover:border-b-3 {{ request()->is('collections') ? 'border-b-3' : '' }}"
+                        wire:navigate>Collections</a>
+                </li>
+            @endif
             <li class="py-3 lg:py-0">
                 <a href="{{ route('user.about-us') }}" class="hover:border-b-3 {{ request()->is('about-us') ? 'border-b-3' : '' }}"
                     wire:navigate>About Us</a>

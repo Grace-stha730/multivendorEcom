@@ -5,6 +5,7 @@ namespace App\Livewire\User;
 use App\Models\Order;
 use App\Models\Order_item;
 use App\Models\VendorOrder;
+use App\Services\Wallet\PointsWalletService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
@@ -23,6 +24,9 @@ class Cart extends Component
     public $subTotal = 0;
     public $cartItem;
     public $paymentMethod;
+    public $walletBalance = 0;
+    public $redeemPoints = 0;
+    public $walletDiscount = 0;
 
     public function mount()
     {
@@ -35,6 +39,7 @@ class Cart extends Component
             $this->userCity = $user->city;
             $this->userTole = $user->tole;
             $this->userPhone = $user->phone;
+            $this->walletBalance = app(PointsWalletService::class)->balance($user);
 
             $carts = ModalCart::where('user_id', $this->userId)
                 ->with('cartItems.product')
@@ -46,6 +51,8 @@ class Cart extends Component
                     $this->subTotal += $item->price * $item->quantity;
                 }
             }
+
+            $this->calculateWalletDiscount();
         } else {
             return redirect()->route('user.login')->with('error', 'Login to access this page');
         }
@@ -180,7 +187,26 @@ class Cart extends Component
             ->get();
 
         $this->subTotal = $carts->flatMap->cartItems->sum('sub_total');
+        $this->calculateWalletDiscount();
 
+    }
+
+    public function updatedRedeemPoints()
+    {
+        $this->calculateWalletDiscount();
+    }
+
+    public function calculateWalletDiscount()
+    {
+        if (!Auth::guard('web')->check()) {
+            $this->walletDiscount = 0;
+            return;
+        }
+
+        $wallet = app(PointsWalletService::class);
+        $maxPoints = $wallet->maxRedeemablePoints(Auth::guard('web')->user(), (float) $this->subTotal);
+        $this->redeemPoints = min(max((int) $this->redeemPoints, 0), $maxPoints);
+        $this->walletDiscount = $wallet->discountForPoints($this->redeemPoints, (float) $this->subTotal);
     }
 
     public function checkoutSubmit()
@@ -191,12 +217,23 @@ class Cart extends Component
         DB::beginTransaction();
 
         try {
+            $user = Auth::guard('web')->user();
+            $wallet = app(PointsWalletService::class);
             $cart = ModalCart::where('user_id', $this->userId)->first();
             $cart_items = Cart_items::where('cart_id', $cart->id)->get();
 
             if ($cart_items->isEmpty()) {
+                DB::rollBack();
                 return redirect()->back()->with('error', 'Your cart is empty!');
             }
+
+            $this->calculateSubTotal();
+            $pointsToRedeem = min(
+                max((int) $this->redeemPoints, 0),
+                $wallet->maxRedeemablePoints($user, (float) $this->subTotal)
+            );
+            $walletDiscount = $wallet->discountForPoints($pointsToRedeem, (float) $this->subTotal);
+            $payableTotal = max(0, $this->subTotal - $walletDiscount);
 
             // ✅ 1. Create Main Order
             $order = Order::create([
@@ -208,7 +245,9 @@ class Cart extends Component
                 'city' => $this->userCity,
                 'tole' => $this->userTole,
                 'phone' => $this->userPhone,
-                'price' => $this->subTotal,
+                'price' => $payableTotal,
+                'wallet_discount' => $walletDiscount,
+                'redeemed_points' => $pointsToRedeem,
                 'payment_status' => 'Pending',
                 'order_status' => 'Pending',
                 'payment_method' => $this->paymentMethod,
@@ -251,6 +290,9 @@ class Cart extends Component
                     }
                 }
             }
+
+            $wallet->redeem($user, $order, $pointsToRedeem, (float) $this->subTotal);
+            $wallet->awardForOrder($user, $order, (float) $payableTotal);
 
             // ✅ 4. Clear cart
             $cart_items->each->delete();

@@ -5,7 +5,9 @@ namespace App\Livewire\User;
 use App\Models\Cart;
 use App\Models\Cart_items;
 use App\Models\Category;
+use App\Models\ProductCollection;
 use App\Models\productRating;
+use App\Services\Search\ClusteredProductSearch;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
@@ -17,7 +19,7 @@ use Livewire\Attributes\Title;
 #[Layout('components/layouts/user')]
 class Product extends Component
 {
-    public $search = "", $category;
+    public $search = "", $category, $searchAlgorithm = 'kmeans', $collectionId;
 
     public function AddToCart($id)
     {
@@ -64,16 +66,40 @@ class Product extends Component
         }
     }
 
+    public function addToCollection($productId)
+    {
+        if (!Auth::guard('web')->check()) {
+            return redirect()->route('user.login')
+                ->with('error', 'Please login first to save products.');
+        }
+
+        $this->validate([
+            'collectionId' => 'required|exists:product_collections,id',
+        ]);
+
+        $collection = ProductCollection::where('user_id', Auth::guard('web')->id())
+            ->findOrFail($this->collectionId);
+
+        $collection->products()->syncWithoutDetaching([$productId]);
+
+        session()->flash('success', 'Product saved to collection.');
+    }
+
     public function render()
     {
-        $products = modalProduct::where('name', 'like', '%' . $this->search . '%')
-            ->with('vendor')
-            ->latest()->get();
+        $searchGroups = app(ClusteredProductSearch::class)
+            ->search($this->search, $this->searchAlgorithm);
+        $products = collect($searchGroups)->flatMap(fn ($group) => $group['products'])->values();
         $categories = Category::all();
+        $collections = Auth::guard('web')->check()
+            ? ProductCollection::where('user_id', Auth::guard('web')->id())->latest()->get()
+            : collect();
 
         return view('livewire.user.product', [
             'products' => $products,
+            'searchGroups' => $searchGroups,
             'categories' => $categories,
+            'collections' => $collections,
         ]);
     }
 }

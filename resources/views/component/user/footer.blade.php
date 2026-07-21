@@ -38,6 +38,7 @@
                 <a class="hover:text-gray-400" href="#"> <i class="fab fa-instagram"></i> Instagram </a>
                 <a class="hover:text-gray-400" href="#"> <i class="fab fa-linkedin"></i> Linkedin </a>
             </div>
+            
         </div>
     </div>
 </section>

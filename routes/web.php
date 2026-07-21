@@ -10,6 +10,7 @@ use App\Livewire\Auth\User\Login as UserLogin;
 use App\Livewire\Auth\User\Register as UserRegister;
 use App\Livewire\User\AboutUs;
 use App\Livewire\User\Cart;
+use App\Livewire\User\Collections;
 use App\Livewire\User\ContactUs;
 use App\Livewire\User\Order;
 use App\Livewire\User\Review;
@@ -55,6 +56,7 @@ Route::middleware('guest')->group(function () {
 Route::middleware('web')->group(function (){
     Route::post('/logout',[AuthController::class, 'userlogout'])->name('user.logout');
     Route::get('/cart',Cart::class)->name('user.cart');
+    Route::get('/collections', Collections::class)->name('user.collections');
     Route::get('/order', Order::class)->name('user.order');
     Route::get('/review/{id}', Review::class)->name('user.review');
     Route::get('/setting', Setting::class)->name('user.setting');

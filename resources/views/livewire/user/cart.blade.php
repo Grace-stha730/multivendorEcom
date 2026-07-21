@@ -106,9 +106,13 @@
                                 <span>Tax</span>
                                 <span>Rs. 000</span>
                             </div>
+                            <div class="flex justify-between w-60 md:w-80">
+                                <span>Wallet Discount</span>
+                                <span>Rs. {{ $walletDiscount }}</span>
+                            </div>
                             <div class="flex justify-between w-60 md:w-80 font-semibold text-lg">
                                 <span>Total</span>
-                                <span>Rs. {{ $subTotal }}</span>
+                                <span>Rs. {{ max(0, $subTotal - $walletDiscount) }}</span>
                             </div>
                         </div>
 
@@ -207,6 +211,16 @@
                                     @error('paymentMethod')
                                     <small class="text-red-800">{{ $message }}</small>
                                     @enderror
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">
+                                        Redeem Points
+                                        <span class="text-xs text-gray-500">(Balance: {{ $walletBalance }})</span>
+                                    </label>
+                                    <input type="number" min="0" max="{{ $walletBalance }}" wire:model.live="redeemPoints"
+                                        class="w-full border border-gray-300 rounded-md p-2 focus:ring focus:ring-blue-300">
+                                    <p class="text-xs text-gray-500 mt-1">10 points = Rs. 1 discount.</p>
                                 </div>
 
 
