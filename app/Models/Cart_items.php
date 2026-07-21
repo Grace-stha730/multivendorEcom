@@ -12,6 +12,11 @@ class Cart_items extends Model
         'quantity',
         'price',
         'sub_total',
+        'selected_variants',
+    ];
+
+    protected $casts = [
+        'selected_variants' => 'array',
     ];
 
     public function cart(){

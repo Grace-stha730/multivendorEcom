@@ -2,6 +2,7 @@
 
 namespace App\Livewire\User;
 
+use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\Order_item;
 use App\Models\VendorOrder;
@@ -15,7 +16,7 @@ use App\Models\Product;
 use Livewire\Attributes\Title;
 
 #[Title(content: 'Cart')]
-#[Layout('components.layouts.user')]
+#[Layout('components/layouts/user')]
 class Cart extends Component
 {
     public $userId, $userName, $userEmail, $userProvince, $userCity, $userTole, $userPhone;
@@ -23,6 +24,11 @@ class Cart extends Component
     public $subTotal = 0;
     public $cartItem;
     public $paymentMethod;
+
+    // Coupon Properties
+    public $couponCode = '';
+    public $appliedCoupon = null;
+    public $discountAmount = 0;
 
     public function mount()
     {
@@ -51,6 +57,91 @@ class Cart extends Component
         }
     }
 
+    public function getVendorTotals()
+    {
+        $vendorTotals = [];
+        $carts = ModalCart::where('user_id', $this->userId)
+            ->with('cartItems.product')
+            ->get();
+
+        foreach ($carts as $cart) {
+            foreach ($cart->cartItems as $item) {
+                if ($item->product) {
+                    $vendorId = $item->product->vendor_id;
+                    $vendorTotals[$vendorId] = ($vendorTotals[$vendorId] ?? 0) + $item->sub_total;
+                }
+            }
+        }
+        return $vendorTotals;
+    }
+
+    public function applyCoupon()
+    {
+        if (empty(trim($this->couponCode))) {
+            $this->addError('couponCode', 'Please enter a valid coupon code.');
+            return;
+        }
+
+        $coupon = Coupon::where('code', strtoupper(trim($this->couponCode)))->first();
+
+        if (!$coupon) {
+            $this->addError('couponCode', 'Invalid coupon code.');
+            return;
+        }
+
+        if (!$coupon->is_active) {
+            $this->addError('couponCode', 'This coupon is inactive.');
+            return;
+        }
+
+        if ($coupon->starts_at && $coupon->starts_at->isFuture()) {
+            $this->addError('couponCode', 'This coupon is not active yet.');
+            return;
+        }
+
+        if ($coupon->expires_at && $coupon->expires_at->isPast()) {
+            $this->addError('couponCode', 'This coupon has expired.');
+            return;
+        }
+
+        $vendorTotals = $this->getVendorTotals();
+
+        if ($coupon->vendor_id) {
+            if (!isset($vendorTotals[$coupon->vendor_id])) {
+                $this->addError('couponCode', 'This coupon is only valid for items from a specific store, which is not in your cart.');
+                return;
+            }
+
+            $vendorSubtotal = $vendorTotals[$coupon->vendor_id];
+
+            if ($vendorSubtotal < $coupon->min_order_amount) {
+                $this->addError('couponCode', 'Minimum order amount from this store to apply the coupon is Rs. ' . number_format($coupon->min_order_amount));
+                return;
+            }
+
+            $this->appliedCoupon = $coupon;
+            $this->discountAmount = $coupon->calculateDiscount($vendorSubtotal);
+        } else {
+            if ($this->subTotal < $coupon->min_order_amount) {
+                $this->addError('couponCode', 'Minimum order amount to apply the coupon is Rs. ' . number_format($coupon->min_order_amount));
+                return;
+            }
+
+            $this->appliedCoupon = $coupon;
+            $this->discountAmount = $coupon->calculateDiscount($this->subTotal);
+        }
+
+        session()->flash('success', 'Coupon "' . $coupon->code . '" applied successfully!');
+    }
+
+    public function removeCoupon()
+    {
+        $this->appliedCoupon = null;
+        $this->discountAmount = 0;
+        $this->couponCode = '';
+        session()->flash('info', 'Coupon removed.');
+    }
+
     public function removePopup($id)
     {
         $this->cartItem = Cart_items::with('product')->find($id);
@@ -59,112 +150,79 @@ class Cart extends Component
     public function deleteItem()
     {
         $this->cartItem->delete();
-        return redirect()->route('user.cart')->with('error', 'Product successfully removed from card');
+        return redirect()->route('user.cart')->with('error', 'Product successfully removed from cart');
     }
-
 
     public function updatedCartItems($value, $key)
     {
-        $itemId = $key; // cartItem ID
+        $itemId = $key;
         $newQuantity = (int) $value;
 
-        // Prevent invalid quantity
         if ($newQuantity < 1) {
             $newQuantity = 1;
         }
 
         $cartItem = Cart_items::with('cart')->find($itemId);
-        if (!$cartItem) {
+        if (!$cartItem || (int) $cartItem->cart->user_id !== (int) $this->userId) {
             return;
         }
 
-        // Ensure this cart belongs to the authenticated user
-        if ((int) $cartItem->cart->user_id !== (int) $this->userId) {
-            return;
-        }
-
-        // Get the related product
         $product = Product::find($cartItem->product_id);
-
         if (!$product) {
             return;
         }
 
-        // 🧠 Check stock availability
         if ($newQuantity > $product->stock) {
-            // Too many items — reset to max available
             $this->cartItems[$itemId] = $product->stock;
-
-            // Add an error message to show on the page
             $this->addError('cartItems.' . $itemId, 'Only ' . $product->stock . ' items available in stock.');
-
             return;
         }
 
-        // ✅ Update quantity if valid
         $cartItem->quantity = $newQuantity;
         $cartItem->sub_total = $cartItem->price * $newQuantity;
         $cartItem->save();
 
-        // Keep local state in sync
         $this->cartItems[$itemId] = $newQuantity;
         $this->calculateSubTotal();
     }
-
 
     public function incrementQuantity($itemId)
     {
         $cartItem = Cart_items::with('cart')->find($itemId);
-        if (!$cartItem) {
+        if (!$cartItem || (int) $cartItem->cart->user_id !== (int) $this->userId) {
             return;
         }
 
-        // Ensure this cart belongs to the authenticated user
-        if ((int) $cartItem->cart->user_id !== (int) $this->userId) {
-            return;
-        }
-
-        // Get product
         $product = Product::find($cartItem->product_id);
         if (!$product) {
             return;
         }
 
-        // Calculate new quantity
         $newQuantity = ((int) ($this->cartItems[$itemId] ?? $cartItem->quantity)) + 1;
 
-        // 🧠 Check if exceeding available stock
         if ($newQuantity > $product->stock) {
-            // Prevent going beyond stock
             $this->addError('cartItems.' . $itemId, 'Only ' . $product->stock . ' items available in stock.');
             $this->cartItems[$itemId] = $product->stock;
             return;
         }
 
-        // ✅ Update quantity in DB
         $cartItem->quantity = $newQuantity;
         $cartItem->sub_total = $cartItem->price * $newQuantity;
         $cartItem->save();
 
-        // Keep local state synced
         $this->cartItems[$itemId] = $newQuantity;
         $this->calculateSubTotal();
     }
 
-
     public function decrementQuantity($itemId)
     {
         $cartItem = Cart_items::with('cart')->find($itemId);
-        if (!$cartItem) {
-            return;
-        }
-        if ((int) $cartItem->cart->user_id !== (int) $this->userId) {
+        if (!$cartItem || (int) $cartItem->cart->user_id !== (int) $this->userId) {
             return;
         }
 
         $current = (int) ($this->cartItems[$itemId] ?? $cartItem->quantity);
         $newQuantity = max(1, $current - 1);
-        $cartItem->quantity = $newQuantity;
         $cartItem->quantity = $newQuantity;
         $cartItem->sub_total = $cartItem->price * $newQuantity;
         $cartItem->save();
@@ -174,20 +232,61 @@ class Cart extends Component
 
     public function calculateSubTotal()
     {
-        // Fetch all cart items for the authenticated user
         $carts = ModalCart::where('user_id', $this->userId)
-            ->with('cartItems')
+            ->with('cartItems.product')
             ->get();
 
-        $this->subTotal = $carts->flatMap->cartItems->sum('sub_total');
+        $this->subTotal = 0;
+        $vendorTotals = [];
 
+        foreach ($carts as $cart) {
+            foreach ($cart->cartItems as $item) {
+                $this->subTotal += $item->sub_total;
+                if ($item->product) {
+                    $vendorId = $item->product->vendor_id;
+                    $vendorTotals[$vendorId] = ($vendorTotals[$vendorId] ?? 0) + $item->sub_total;
+                }
+            }
+        }
+
+        if ($this->appliedCoupon) {
+            $coupon = $this->appliedCoupon;
+
+            // Re-validate coupon
+            $isValid = true;
+            if (!$coupon->is_active) $isValid = false;
+            if ($coupon->starts_at && $coupon->starts_at->isFuture()) $isValid = false;
+            if ($coupon->expires_at && $coupon->expires_at->isPast()) $isValid = false;
+
+            if ($isValid) {
+                if ($coupon->vendor_id) {
+                    if (isset($vendorTotals[$coupon->vendor_id]) && $vendorTotals[$coupon->vendor_id] >= $coupon->min_order_amount) {
+                        $this->discountAmount = $coupon->calculateDiscount($vendorTotals[$coupon->vendor_id]);
+                    } else {
+                        $this->appliedCoupon = null;
+                        $this->discountAmount = 0;
+                    }
+                } else {
+                    if ($this->subTotal >= $coupon->min_order_amount) {
+                        $this->discountAmount = $coupon->calculateDiscount($this->subTotal);
+                    } else {
+                        $this->appliedCoupon = null;
+                        $this->discountAmount = 0;
+                    }
+                }
+            } else {
+                $this->appliedCoupon = null;
+                $this->discountAmount = 0;
+            }
+        }
     }
 
     public function checkoutSubmit()
     {
         $this->validate([
-            'paymentMethod'=>"required",
+            'paymentMethod' => "required",
         ]);
+
         DB::beginTransaction();
 
         try {
@@ -198,7 +297,9 @@ class Cart extends Component
                 return redirect()->back()->with('error', 'Your cart is empty!');
             }
 
-            // ✅ 1. Create Main Order
+            $finalTotal = max(0, $this->subTotal - $this->discountAmount);
+
+            // Create Main Order
             $order = Order::create([
                 'user_id' => $this->userId,
                 'order_number' => 'ORD-' . strtoupper(uniqid()),
@@ -208,27 +309,27 @@ class Cart extends Component
                 'city' => $this->userCity,
                 'tole' => $this->userTole,
                 'phone' => $this->userPhone,
-                'price' => $this->subTotal,
+                'price' => $finalTotal,
                 'payment_status' => 'Pending',
                 'order_status' => 'Pending',
                 'payment_method' => $this->paymentMethod,
                 'quantity' => $cart_items->sum('quantity'),
             ]);
 
-            // ✅ 2. Group items by vendor
+            // Group items by vendor
             $groupedByVendor = $cart_items->groupBy(function ($item) {
-                return $item->product->vendor_id; // assuming relation or you can query
+                return $item->product->vendor_id;
             });
 
-            // ✅ 3. Create vendor orders and order items
+            // Create vendor orders and order items
             foreach ($groupedByVendor as $vendorId => $items) {
-                $subtotal = $items->sum(fn($i) => $i->price * $i->quantity);
+                $vendorSubtotal = $items->sum(fn($i) => $i->price * $i->quantity);
                 $quantity = $items->sum('quantity');
 
                 $vendorOrder = VendorOrder::create([
                     'order_id' => $order->id,
                     'vendor_id' => $vendorId,
-                    'subtotal' => $subtotal,
+                    'subtotal' => $vendorSubtotal,
                     'status' => 'Pending',
                     'quantity' => $quantity,
                 ]);
@@ -236,7 +337,7 @@ class Cart extends Component
                 foreach ($items as $item) {
                     Order_item::create([
                         'order_id' => $order->id,
-                        'vendor_order_id' => $vendorOrder->id, // 🔥 link vendor order
+                        'vendor_order_id' => $vendorOrder->id,
                         'product_id' => $item->product_id,
                         'quantity' => $item->quantity,
                         'price' => $item->price,
@@ -252,13 +353,13 @@ class Cart extends Component
                 }
             }
 
-            // ✅ 4. Clear cart
+            // Clear cart
             $cart_items->each->delete();
             $cart->delete();
 
             DB::commit();
 
-            return redirect()->route('user.cart')->with('success', 'Order Successfully Placed');
+            return redirect()->route('user.cart')->with('success', 'Order Successfully Placed!');
 
         } catch (\Throwable $th) {
             DB::rollBack();
@@ -266,13 +367,10 @@ class Cart extends Component
         }
     }
 
-
-
     public function render()
     {
         return view('livewire.user.cart', [
-            'carts' => ModalCart::where('user_id', $this->userId)->with('cartItems.product') // ✅ include product info
-                ->get(),
+            'carts' => ModalCart::where('user_id', $this->userId)->with('cartItems.product')->get(),
         ]);
     }
 }

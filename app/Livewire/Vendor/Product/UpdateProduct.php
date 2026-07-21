@@ -18,6 +18,25 @@ class UpdateProduct extends Component
     public $name, $stock, $summary, $description, $discount, $category_id, $price;
     public $images = [];
     public $realImg = [];
+    
+    // Product Variants property
+    public $variants = [];
+
+    public function addVariant()
+    {
+        $this->variants[] = [
+            'attribute_name' => '',
+            'attribute_value' => '',
+            'price_extra' => 0,
+            'stock' => 0,
+        ];
+    }
+
+    public function removeVariant($index)
+    {
+        unset($this->variants[$index]);
+        $this->variants = array_values($this->variants);
+    }
 
     #[On('getProductId')]
     public function getProductId($productId)
@@ -33,6 +52,9 @@ class UpdateProduct extends Component
         $this->category_id = $product->category_id;
         $this->price = $product->price;
         $this->realImg = Image::where('product_id', $productId)->get(['url'])->toArray();
+        $this->variants = \App\Models\ProductVariant::where('product_id', $productId)
+            ->get(['attribute_name', 'attribute_value', 'price_extra', 'stock'])
+            ->toArray();
 
     }
 
@@ -96,6 +118,20 @@ class UpdateProduct extends Component
                     Image::create([
                         'product_id' => $product->id,
                         'url' => $imagePath,
+                    ]);
+                }
+            }
+
+            // Sync product variants
+            \App\Models\ProductVariant::where('product_id', $this->productId)->delete();
+            foreach ($this->variants as $variant) {
+                if (!empty($variant['attribute_name']) && !empty($variant['attribute_value'])) {
+                    \App\Models\ProductVariant::create([
+                        'product_id' => $product->id,
+                        'attribute_name' => trim($variant['attribute_name']),
+                        'attribute_value' => trim($variant['attribute_value']),
+                        'price_extra' => $variant['price_extra'] ?: 0,
+                        'stock' => $variant['stock'] ?: 0,
                     ]);
                 }
             }

@@ -1,5 +1,25 @@
 <div class="p-6 space-y-8 bg-gray-50 min-h-screen">
 
+    <!-- Low Stock Alert Banner -->
+    @if ($lowStockProducts->count() > 0)
+        <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-xl shadow-sm mb-6 flex items-start gap-3">
+            <div class="text-amber-500 mt-0.5"><i class="fa-solid fa-triangle-exclamation text-xl"></i></div>
+            <div class="flex-1">
+                <h4 class="font-bold text-amber-800 text-sm">Marketplace Low Stock Warning (Admin view)</h4>
+                <p class="text-xs text-amber-700 mt-0.5">
+                    The following products across the marketplace are running out of stock (less than 5 items left):
+                </p>
+                <div class="flex flex-wrap gap-2 mt-3">
+                    @foreach ($lowStockProducts as $p)
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                            {{ $p->name }} [{{ $p->vendor->shop_name ?? 'Platform' }}] (Stock: <strong class="text-red-700">{{ $p->stock }}</strong>)
+                        </span>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    @endif
+
     <!-- ✅ Top Summary Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Total Products -->

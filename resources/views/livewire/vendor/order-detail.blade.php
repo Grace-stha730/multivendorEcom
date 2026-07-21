@@ -2,8 +2,20 @@
     <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-md p-6">
         <!-- Header -->
         <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-semibold">Order Details</h2>
-            <span class="text-gray-500 text-sm">{{ $vendorOrder->order->order_number }}</span>
+            <div>
+                <h2 class="text-2xl font-semibold">Order Details</h2>
+                <span class="text-gray-500 text-sm">{{ $vendorOrder->order->order_number }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('vendor.invoice', ['id' => $vendorOrder->id]) }}" target="_blank"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-print"></i> Print Sales Invoice
+                </a>
+                <a href="{{ route('vendor.order') }}"
+                    class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1">
+                    <i class="fa fa-arrow-left mr-1"></i> Back
+                </a>
+            </div>
         </div>
 
         <!-- Customer & Order Info -->
@@ -71,6 +83,10 @@
 
         <!-- Actions -->
         <div class="flex justify-end gap-2">
+            <a href="{{ route('vendor.invoice', ['id' => $vendorOrder->id]) }}" target="_blank"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 cursor-pointer">
+                <i class="fa-solid fa-print"></i> Print Sales Invoice
+            </a>
             @if ($vendorOrder->status == 'Pending')
                 <button
                     class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition cursor-pointer"

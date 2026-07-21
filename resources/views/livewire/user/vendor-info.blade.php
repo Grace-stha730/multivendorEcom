@@ -17,11 +17,18 @@
                     <span class="ms-2">({{ $averageRate }})</span>
                 </div>
             </div>
-            <div class="mt-4 text-gray-600">
-                <p>Email: {{ $vendor->shop_email }}</p>
-                <p>Phone: +977-{{ $vendor->shop_phone }}</p>
-                <p>Province: {{ $vendor->shop_province }}</p>
-                <p>Address: {{ $vendor->shop_city }}, {{ $vendor->shop_tole }}</p>
+            <div class="mt-4 flex flex-wrap items-center justify-between gap-4">
+                <div class="text-gray-600 text-sm">
+                    <p>Email: {{ $vendor->shop_email }}</p>
+                    <p>Phone: +977-{{ $vendor->shop_phone }}</p>
+                    <p>Province: {{ $vendor->shop_province }}</p>
+                    <p>Address: {{ $vendor->shop_city }}, {{ $vendor->shop_tole }}</p>
+                </div>
+                <button wire:click="startChat"
+                    class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold flex items-center gap-2 transition cursor-pointer shadow-md">
+                    <i class="fa-solid fa-comments"></i>
+                    <span>Chat with Vendor</span>
+                </button>
             </div>
         </div>
     </div>

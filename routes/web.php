@@ -38,6 +38,14 @@ use App\Livewire\Admin\Order as adminOrder;
 use App\Livewire\Admin\OrderDetail as adminOrderDetail;
 use App\Livewire\Admin\Setting as adminSetting;
 
+// New Feature Imports
+use App\Livewire\Vendor\Coupons as vendorCoupons;
+use App\Livewire\Vendor\Earnings as vendorEarnings;
+use App\Livewire\Vendor\Chat as vendorChat;
+use App\Livewire\Admin\Coupons as adminCoupons;
+use App\Livewire\Admin\Payouts as adminPayouts;
+use App\Livewire\User\Chat as userChat;
+
 
 // User Route
 Route::get('/', Home::class)->name('home');
@@ -52,12 +60,16 @@ Route::middleware('guest')->group(function () {
     Route::get('/register', UserRegister::class)->name('user.register');
 });
 
+use App\Livewire\User\Wishlist;
+
 Route::middleware('web')->group(function (){
     Route::post('/logout',[AuthController::class, 'userlogout'])->name('user.logout');
     Route::get('/cart',Cart::class)->name('user.cart');
+    Route::get('/wishlist', Wishlist::class)->name('user.wishlist');
     Route::get('/order', Order::class)->name('user.order');
     Route::get('/review/{id}', Review::class)->name('user.review');
     Route::get('/setting', Setting::class)->name('user.setting');
+    Route::get('/chat', userChat::class)->name('user.chat');
 });
 
 // Vendor Route
@@ -77,6 +89,10 @@ Route::prefix('vendor')->name('vendor.')->group(function () {
         Route::get('/order-detail/{id}',OrderDetail::class)->name('orderDetail');
         Route::get('/setting',vendorSetting::class)->name('setting');
         Route::get('product-review',ProductReview::class)->name('product-review');
+        Route::get('/invoice/{id}', [\App\Http\Controllers\InvoiceController::class, 'vendorInvoice'])->name('invoice');
+        Route::get('/coupons', vendorCoupons::class)->name('coupons');
+        Route::get('/earnings', vendorEarnings::class)->name('earnings');
+        Route::get('/chat', vendorChat::class)->name('chat');
     });
 });
 
@@ -97,9 +113,11 @@ Route::prefix('admin')->group(function(){
         Route::get('/category',adminCategory::class)->name('admin.category');
         Route::get('/order',adminOrder::class)->name('admin.order');
         Route::get('/order-detail/{id}',adminOrderDetail::class)->name('admin.order-detail');
+        Route::get('/invoice/{id}', [\App\Http\Controllers\InvoiceController::class, 'adminInvoice'])->name('admin.invoice');
         Route::get('/setting',adminSetting::class)->name('admin.setting');
         Route::get('/message',Message::class)->name('admin.message');
         Route::get('message-datail/{id}', ViewMessage::class)->name('admin.message-datail');
-
+        Route::get('/coupons', adminCoupons::class)->name('admin.coupons');
+        Route::get('/payouts', adminPayouts::class)->name('admin.payouts');
     });
 });

@@ -28,13 +28,16 @@ class Dashboard extends Component
             ->get();
 
 
-            return view('livewire.admin.dashboard', [
-                'products' => $products,
-                'orders' => $orders,
-                'vendorOrder' => $vendorOrder,
-                'recentOrder' => $recentOrder,
-                'report' => $report,
-            ]);
+        $lowStockProducts = Product::where('stock', '<', 5)->with('vendor')->get();
+
+        return view('livewire.admin.dashboard', [
+            'products' => $products,
+            'orders' => $orders,
+            'vendorOrder' => $vendorOrder,
+            'recentOrder' => $recentOrder,
+            'report' => $report,
+            'lowStockProducts' => $lowStockProducts,
+        ]);
         }
     }
     

@@ -32,11 +32,15 @@ class Dashboard extends Component
         ->orderByDesc('total_sold')
         ->orderByDesc('total_price')
         ->get();
+        
+        $lowStockProducts = Product::where('vendor_id', $vendorId)->where('stock', '<', 5)->get();
+
         return view('livewire.vendor.dashboard', [
             'products' => $products,
             'orders' => $orders,
             'recentOrders' =>$recentOrders,
             'report' => $report,
+            'lowStockProducts' => $lowStockProducts,
         ]);
     }
 }
