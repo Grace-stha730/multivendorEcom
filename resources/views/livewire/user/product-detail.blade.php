@@ -25,6 +25,7 @@
                 <i class="fa-solid fa-star {{ ($averateRate ?? 0) >= $i ? 'text-yellow-400' : 'text-gray-400' }}"></i>
                 @endfor
                 <span class="ms-2">({{ $averateRate }})</span>
+            <p class="text-sm text-yellow-600"><i class="fa-solid fa-ranking-star"></i> Weighted rating: {{ number_format($weightedRating, 1) }}</p>
             <p class="text-green-500">{{ $product->vendor->shop_name }}</p>
             <p class="text-gray-600">{{ $product->summary }}</p>
 
@@ -134,7 +135,20 @@
     </div>
 
     <!-- Related Products -->
-    <div>
-        @livewire('user.product', ['limit' => 5])
-    </div>
+    @if ($recommendations->isNotEmpty())
+        <div class="w-[90%] md:w-[80%] mx-auto my-10">
+            <h3 class="text-2xl font-semibold text-gray-800 mb-5">Customers with Similar Purchases Also Like</h3>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                @foreach ($recommendations as $recommended)
+                    <a href="{{ route('product.detail', ['id' => $recommended->id]) }}" class="rounded-lg border border-gray-100 bg-white overflow-hidden shadow-sm hover:shadow-md transition">
+                        <img src="{{ $recommended->firstImage ? asset('storage/' . $recommended->firstImage->url) : asset('storage/default/product.webp') }}" alt="{{ $recommended->name }}" class="w-full h-36 object-cover">
+                        <div class="p-3">
+                            <p class="font-medium text-sm text-gray-800 truncate">{{ $recommended->name }}</p>
+                            <p class="text-xs text-yellow-600"><i class="fa-solid fa-star"></i> {{ number_format($recommended->weighted_rating, 1) }}</p>
+                        </div>
+                    </a>
+                @endforeach
+            </div>
+        </div>
+    @endif
 </section>

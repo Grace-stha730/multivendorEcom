@@ -1,6 +1,26 @@
 <div class="">
     @include('component.user.carousel')
     @livewire('user.category')
+    @include('component.user.coupon-card')
+
+    @if ($recommendations->isNotEmpty())
+        <section class="w-[90%] md:w-[80%] mx-auto my-8">
+            <h2 class="text-2xl md:text-3xl font-semibold text-gray-800 mb-2 text-center">Recommended for You</h2>
+            <p class="text-sm text-gray-500 mb-6 text-center">Based on products purchased by customers with similar buying patterns.</p>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
+                @foreach ($recommendations as $product)
+                    <a href="{{ route('product.detail', ['id' => $product->id]) }}" class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:scale-[1.03] transition-all duration-300 border border-gray-100">
+                        <img src="{{ $product->firstImage ? asset('storage/' . $product->firstImage->url) : asset('storage/default/product.webp') }}" alt="{{ $product->name }}" class="w-full h-40 object-cover">
+                        <div class="p-3 text-center space-y-1">
+                            <h3 class="font-semibold text-gray-800 truncate">{{ $product->name }}</h3>
+                            <p class="text-xs text-yellow-600"><i class="fa-solid fa-star"></i> {{ number_format($product->weighted_rating, 1) }}</p>
+                            <p class="text-base font-bold text-gray-800">Rs. {{ number_format($product->price) }}</p>
+                        </div>
+                    </a>
+                @endforeach
+            </div>
+        </section>
+    @endif
 
     <section class="w-[90%] md:w-[80%] mx-auto my-8">
         <h2 class="text-2xl md:text-3xl font-semibold text-gray-800 mb-6 text-center">
@@ -40,6 +60,8 @@
                     {{-- Product Details --}}
                     <div class="p-3 text-center space-y-1">
                         <h3 class="font-semibold text-gray-800 truncate">{{ $product->name }}</h3>
+
+                        <p class="text-xs text-yellow-600"><i class="fa-solid fa-star"></i> {{ number_format($product->weighted_rating, 1) }} <span class="text-gray-400">({{ $product->reviews_count }} reviews)</span></p>
 
                         @if ($product->stock > 0)
                             <p class="text-sm text-gray-500">Stock: {{ $product->stock }}</p>

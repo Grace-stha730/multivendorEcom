@@ -53,6 +53,11 @@ class Product extends Model
     public function productRating(){
         return $this->hasOne(productRating::class);
     }
+
+    public function reviews()
+    {
+        return $this->hasMany(productRating::class);
+    }
     public function wishlists()
     {
         return $this->hasMany(Wishlist::class);

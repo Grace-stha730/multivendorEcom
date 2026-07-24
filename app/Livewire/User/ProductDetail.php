@@ -6,6 +6,8 @@ use App\Models\Cart;
 use App\Models\Cart_items;
 use App\Models\Product;
 use App\Models\productRating;
+use App\Services\Catalog\WeightedRatingService;
+use App\Services\Recommendation\PurchaseRecommendationService;
 use App\Models\Wishlist;
 use DB;
 use Illuminate\Support\Facades\Auth;
@@ -18,7 +20,7 @@ use Livewire\Attributes\Title;
 class ProductDetail extends Component
 {
     public $productId;
-    public $product, $averateRate;
+    public $product, $averateRate, $weightedRating;
     public $mainImage;
     public $quantity = 1;
 
@@ -29,8 +31,9 @@ class ProductDetail extends Component
     public function mount($id)
     {
         $this->productId = $id;
-        $this->product = Product::with(['images', 'vendor', 'variants'])->findOrFail($id);
+        $this->product = Product::with(['images', 'vendor', 'variants'])->withCount('reviews')->withAvg('reviews', 'rating')->findOrFail($id);
         $this->averateRate = round(productRating::where('product_id', $id)->avg('rating'), 1);
+        $this->weightedRating = app(WeightedRatingService::class)->rankedProducts(collect([$this->product]))->first()->weighted_rating;
 
         // Set the first image as main image
         $this->mainImage = $this->product->images->first()->url ?? 'default/product.jpg';
@@ -168,6 +171,10 @@ class ProductDetail extends Component
 
         return view('livewire.user.product-detail', [
             'inWishlist' => $inWishlist,
+            'recommendations' => Auth::guard('web')->check()
+                ? app(PurchaseRecommendationService::class)->forUser(Auth::guard('web')->user())
+                    ->reject(fn (Product $product) => $product->id === $this->productId)
+                : collect(),
         ]);
     }
 }

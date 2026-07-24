@@ -36,6 +36,10 @@
                     wire:navigate>Product</a>
             </li>
             <li class="py-3 lg:py-0">
+                <a href="{{ route('user.coupons') }}" class="hover:border-b-3 {{ request()->is('coupons') ? 'border-b-3' : '' }}"
+                    wire:navigate>Coupons</a>
+            </li>
+            <li class="py-3 lg:py-0">
                 <a href="{{ route('user.order') }}" class="hover:border-b-3 {{ request()->is('order') || request()->is('review*') ? 'border-b-3' : '' }}"
                     wire:navigate>Order</a>
             </li>
@@ -102,10 +106,15 @@
                             <span
                                 class="w-8 h-8 rotate-45 bg-gray-800 absolute bottom-[-54px] left-10 shadow-lg"></span>
                             <div
-                                class="absolute bottom-[-190px] left-[-19px] bg-gray-800 px-3 py-4 space-y-3 w-[150px] rounded-lg z-100">
+                                class="absolute bottom-[-225px] left-[-19px] bg-gray-800 px-3 py-4 space-y-3 w-[150px] rounded-lg z-100">
                                 <span class="space-x-1.5 block hover:text-gray-400">
                                     <i class="fa-solid fa-heart text-red-400"></i>
                                     <a href="{{ route('user.wishlist') }}">Wishlist</a>
+                                </span>
+
+                                <span class="space-x-1.5 block hover:text-gray-400">
+                                    <i class="fa-solid fa-ticket text-yellow-400"></i>
+                                    <a href="{{ route('user.coupons') }}">Coupons</a>
                                 </span>
 
                                 <span class="space-x-1.5 block hover:text-gray-400">

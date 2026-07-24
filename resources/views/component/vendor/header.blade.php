@@ -48,12 +48,6 @@
                     </a>
                 </li>
                 <li>
-                    <a class="py-2 px-4 hover:duration-200 flex items-center gap-2 {{ request()->is('vendor/coupons') ? 'bg-white text-black rounded-lg' : 'text-white hover:bg-white hover:text-black transition rounded-lg' }}"
-                        wire:navigate href="{{ route('vendor.coupons') }}">
-                        <span :class="open ? 'block' : 'hidden duration-0'"><i class="fa-solid fa-ticket"></i> Coupons</span>
-                    </a>
-                </li>
-                <li>
                     <a class="py-2 px-4 hover:duration-200 flex items-center gap-2 {{ request()->is('vendor/earnings') ? 'bg-white text-black rounded-lg' : 'text-white hover:bg-white hover:text-black transition rounded-lg' }}"
                         wire:navigate href="{{ route('vendor.earnings') }}">
                         <span :class="open ? 'block' : 'hidden duration-0'"><i class="fa-solid fa-wallet"></i> Earnings</span>

@@ -6,6 +6,8 @@ use App\Models\Cart;
 use App\Models\Cart_items;
 use App\Models\Category;
 use App\Models\Wishlist;
+use App\Services\Catalog\WeightedRatingService;
+use App\Services\Search\TfidfProductSearch;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
@@ -93,12 +95,16 @@ class Product extends Component
                 ->toArray();
         }
 
-        $products = modalProduct::where('name', 'like', '%' . $this->search . '%')
-            ->when($this->category, function ($query) {
-                $query->where('category_id', $this->category);
-            })
-            ->with(['vendor', 'firstImage'])
-            ->latest()->get();
+        $products = trim($this->search) !== ''
+            ? app(TfidfProductSearch::class)->search($this->search, $this->category ?: null)
+            : app(WeightedRatingService::class)->rankedProducts(
+                modalProduct::when($this->category, fn ($query) => $query->where('category_id', $this->category))
+                    ->with(['vendor', 'firstImage'])
+                    ->withCount('reviews')
+                    ->withAvg('reviews', 'rating')
+                    ->latest()
+                    ->get(),
+            );
 
         $categories = Category::all();
 

@@ -3,6 +3,7 @@
 namespace App\Livewire\User;
 
 use App\Models\Coupon;
+use App\Models\CouponUser;
 use App\Models\Order;
 use App\Models\Order_item;
 use App\Models\VendorOrder;
@@ -30,7 +31,7 @@ class Cart extends Component
     public $walletDiscount = 0;
 
     // Coupon Properties
-    public $couponCode = '';
+    public $selectedCouponId = '';
     public $appliedCoupon = null;
     public $discountAmount = 0;
 
@@ -64,80 +65,51 @@ class Cart extends Component
         }
     }
 
-    public function getVendorTotals()
+    public function getCartItems()
     {
-        $vendorTotals = [];
-        $carts = ModalCart::where('user_id', $this->userId)
-            ->with('cartItems.product')
+        return Cart_items::whereHas('cart', fn ($query) => $query->where('user_id', $this->userId))
+            ->with('product')
             ->get();
-
-        foreach ($carts as $cart) {
-            foreach ($cart->cartItems as $item) {
-                if ($item->product) {
-                    $vendorId = $item->product->vendor_id;
-                    $vendorTotals[$vendorId] = ($vendorTotals[$vendorId] ?? 0) + $item->sub_total;
-                }
-            }
-        }
-        return $vendorTotals;
     }
 
     public function applyCoupon()
     {
-        if (empty(trim($this->couponCode))) {
-            $this->addError('couponCode', 'Please enter a valid coupon code.');
+        if (!$this->selectedCouponId) {
+            $this->addError('selectedCouponId', 'Please select a collected coupon.');
             return;
         }
 
-        $coupon = Coupon::where('code', strtoupper(trim($this->couponCode)))->first();
+        $couponUser = CouponUser::where('user_id', $this->userId)
+            ->where('coupon_id', $this->selectedCouponId)
+            ->whereNull('used_at')
+            ->with('coupon')
+            ->first();
 
-        if (!$coupon) {
-            $this->addError('couponCode', 'Invalid coupon code.');
+        if (!$couponUser || !$couponUser->coupon) {
+            $this->addError('selectedCouponId', 'Please collect this coupon before using it.');
             return;
         }
 
-        if (!$coupon->is_active) {
-            $this->addError('couponCode', 'This coupon is inactive.');
+        $coupon = $couponUser->coupon;
+        $cartItems = $this->getCartItems();
+
+        if (!$coupon->isAvailable()) {
+            $this->addError('selectedCouponId', 'This coupon is not available anymore.');
             return;
         }
 
-        if ($coupon->starts_at && $coupon->starts_at->isFuture()) {
-            $this->addError('couponCode', 'This coupon is not active yet.');
+        if ($this->subTotal < $coupon->min_order_amount) {
+            $this->addError('selectedCouponId', 'Minimum order amount to apply this coupon is Rs. ' . number_format($coupon->min_order_amount));
             return;
         }
 
-        if ($coupon->expires_at && $coupon->expires_at->isPast()) {
-            $this->addError('couponCode', 'This coupon has expired.');
+        if (!$coupon->hasEligibleItem($cartItems)) {
+            $this->addError('selectedCouponId', 'Your cart needs at least one item priced Rs. ' . number_format($coupon->min_item_price) . ' or more.');
             return;
         }
 
-        $vendorTotals = $this->getVendorTotals();
-
-        if ($coupon->vendor_id) {
-            if (!isset($vendorTotals[$coupon->vendor_id])) {
-                $this->addError('couponCode', 'This coupon is only valid for items from a specific store, which is not in your cart.');
-                return;
-            }
-
-            $vendorSubtotal = $vendorTotals[$coupon->vendor_id];
-
-            if ($vendorSubtotal < $coupon->min_order_amount) {
-                $this->addError('couponCode', 'Minimum order amount from this store to apply the coupon is Rs. ' . number_format($coupon->min_order_amount));
-                return;
-            }
-
-            $this->appliedCoupon = $coupon;
-            $this->discountAmount = $coupon->calculateDiscount($vendorSubtotal);
-        } else {
-            if ($this->subTotal < $coupon->min_order_amount) {
-                $this->addError('couponCode', 'Minimum order amount to apply the coupon is Rs. ' . number_format($coupon->min_order_amount));
-                return;
-            }
-
-            $this->appliedCoupon = $coupon;
-            $this->discountAmount = $coupon->calculateDiscount($this->subTotal);
-        }
-
+        $this->appliedCoupon = $coupon;
+        $this->discountAmount = $coupon->calculateDiscount($coupon->eligibleSubtotal($cartItems));
         session()->flash('success', 'Coupon "' . $coupon->code . '" applied successfully!');
     }
 
@@ -145,7 +117,7 @@ class Cart extends Component
     {
         $this->appliedCoupon = null;
         $this->discountAmount = 0;
-        $this->couponCode = '';
+        $this->selectedCouponId = '';
         session()->flash('info', 'Coupon removed.');
     }
 
@@ -244,46 +216,25 @@ class Cart extends Component
             ->get();
 
         $this->subTotal = 0;
-        $vendorTotals = [];
+        $cartItems = collect();
 
         foreach ($carts as $cart) {
             foreach ($cart->cartItems as $item) {
                 $this->subTotal += $item->sub_total;
-                if ($item->product) {
-                    $vendorId = $item->product->vendor_id;
-                    $vendorTotals[$vendorId] = ($vendorTotals[$vendorId] ?? 0) + $item->sub_total;
-                }
+                $cartItems->push($item);
             }
         }
 
         if ($this->appliedCoupon) {
-            $coupon = $this->appliedCoupon;
+            $coupon = Coupon::find($this->appliedCoupon->id);
 
-            // Re-validate coupon
-            $isValid = true;
-            if (!$coupon->is_active) $isValid = false;
-            if ($coupon->starts_at && $coupon->starts_at->isFuture()) $isValid = false;
-            if ($coupon->expires_at && $coupon->expires_at->isPast()) $isValid = false;
-
-            if ($isValid) {
-                if ($coupon->vendor_id) {
-                    if (isset($vendorTotals[$coupon->vendor_id]) && $vendorTotals[$coupon->vendor_id] >= $coupon->min_order_amount) {
-                        $this->discountAmount = $coupon->calculateDiscount($vendorTotals[$coupon->vendor_id]);
-                    } else {
-                        $this->appliedCoupon = null;
-                        $this->discountAmount = 0;
-                    }
-                } else {
-                    if ($this->subTotal >= $coupon->min_order_amount) {
-                        $this->discountAmount = $coupon->calculateDiscount($this->subTotal);
-                    } else {
-                        $this->appliedCoupon = null;
-                        $this->discountAmount = 0;
-                    }
-                }
+            if ($coupon && $coupon->isAvailable() && $this->subTotal >= $coupon->min_order_amount && $coupon->hasEligibleItem($cartItems)) {
+                $this->appliedCoupon = $coupon;
+                $this->discountAmount = $coupon->calculateDiscount($coupon->eligibleSubtotal($cartItems));
             } else {
                 $this->appliedCoupon = null;
                 $this->discountAmount = 0;
+                $this->selectedCouponId = '';
             }
         }
     }
@@ -325,7 +276,27 @@ class Cart extends Component
                 return redirect()->back()->with('error', 'Your cart is empty!');
             }
 
-            $finalTotal = max(0, $this->subTotal - $this->discountAmount);
+            $coupon = null;
+            $couponUsage = null;
+            $couponDiscount = 0;
+
+            if ($this->appliedCoupon) {
+                $coupon = Coupon::where('id', $this->appliedCoupon->id)->lockForUpdate()->first();
+                $couponUsage = CouponUser::where('coupon_id', $this->appliedCoupon->id)
+                    ->where('user_id', $this->userId)
+                    ->whereNull('used_at')
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$coupon || !$couponUsage || !$coupon->isAvailable() || $this->subTotal < $coupon->min_order_amount || !$coupon->hasEligibleItem($cart_items)) {
+                    DB::rollBack();
+                    return redirect()->route('user.cart')->with('error', 'Selected coupon is no longer valid.');
+                }
+
+                $couponDiscount = $coupon->calculateDiscount($coupon->eligibleSubtotal($cart_items));
+            }
+
+            $finalTotal = max(0, $this->subTotal - $couponDiscount);
 
             // Create Main Order
             $order = Order::create([
@@ -338,6 +309,8 @@ class Cart extends Component
                 'tole' => $this->userTole,
                 'phone' => $this->userPhone,
                 'price' => $finalTotal,
+                'coupon_id' => $coupon?->id,
+                'coupon_discount' => $couponDiscount,
                 'payment_status' => 'Pending',
                 'order_status' => 'Pending',
                 'payment_method' => $this->paymentMethod,
@@ -381,6 +354,14 @@ class Cart extends Component
                 }
             }
 
+            if ($coupon && $couponUsage) {
+                $couponUsage->update([
+                    'order_id' => $order->id,
+                    'used_at' => now(),
+                ]);
+                $coupon->increment('used_count');
+            }
+
             // Clear cart
             $cart_items->each->delete();
             $cart->delete();
@@ -397,8 +378,21 @@ class Cart extends Component
 
     public function render()
     {
+        $cartItems = $this->getCartItems();
+        $availableCoupons = CouponUser::where('user_id', $this->userId)
+            ->whereNull('used_at')
+            ->with('coupon')
+            ->get()
+            ->pluck('coupon')
+            ->filter(fn ($coupon) => $coupon
+                && $coupon->isAvailable()
+                && $this->subTotal >= $coupon->min_order_amount
+                && $coupon->hasEligibleItem($cartItems))
+            ->values();
+
         return view('livewire.user.cart', [
             'carts' => ModalCart::where('user_id', $this->userId)->with('cartItems.product')->get(),
+            'availableCoupons' => $availableCoupons,
         ]);
     }
 }

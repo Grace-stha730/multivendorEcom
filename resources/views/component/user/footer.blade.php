@@ -25,7 +25,7 @@
             <div class="flex flex-col mt-3 space-y-4">
                 <a class="hover:text-gray-400" href="#"> <i class="fas fa-phone"></i> 01 - 4146257 </a>
                 <a class="hover:text-gray-400" href="#"> <i class="fas fa-phone"></i> 01 - 4142285 </a>
-                <a class="hover:text-gray-400" href="#"> <i class="fas fa-envelope"></i> Plantpals730@gmail.com </a>
+                <a class="hover:text-gray-400" href="#"> <i class="fas fa-envelope"></i>goods@yoursite.com </a>
                 <a class="hover:text-gray-400" href="#"> <i class="fas fa-map-marker-alt"></i> Bhaktapur, Nepal </a>
             </div>
         </div>

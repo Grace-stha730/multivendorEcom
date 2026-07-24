@@ -7,6 +7,7 @@ use App\Models\Cart_items;
 use App\Models\Product;
 use App\Models\productRating;
 use App\Models\Vendor;
+use App\Services\Catalog\WeightedRatingService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
@@ -19,8 +20,7 @@ class VendorInfo extends Component
     public function mount($id){
         $this->vendorId = $id;
         $this->vendor = Vendor::with('products')->findOrFail($id);
-        $productIds = Product::where('vendor_id',$id)->pluck('id');
-        $this->averageRate = round(productRating::whereIn('product_id',$productIds)->avg('rating'),1);
+        $this->averageRate = app(WeightedRatingService::class)->vendorRating($this->vendor);
         
         
     }

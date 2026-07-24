@@ -20,6 +20,8 @@ class Order extends Model
         'order_status',
         'wallet_discount',
         'redeemed_points',
+        'coupon_id',
+        'coupon_discount',
         'is_shipped',
         'payment_method',
         'admin_id',
@@ -32,6 +34,11 @@ class Order extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function coupon()
+    {
+        return $this->belongsTo(Coupon::class);
     }
 
     public function orderItems()

@@ -12,6 +12,7 @@ use App\Livewire\User\AboutUs;
 use App\Livewire\User\Cart;
 use App\Livewire\User\Collections;
 use App\Livewire\User\ContactUs;
+use App\Livewire\User\Coupons as UserCoupons;
 use App\Livewire\User\Order;
 use App\Livewire\User\Review;
 use App\Livewire\User\Setting;
@@ -40,7 +41,6 @@ use App\Livewire\Admin\OrderDetail as adminOrderDetail;
 use App\Livewire\Admin\Setting as adminSetting;
 
 // New Feature Imports
-use App\Livewire\Vendor\Coupons as vendorCoupons;
 use App\Livewire\Vendor\Earnings as vendorEarnings;
 use App\Livewire\Vendor\Chat as vendorChat;
 use App\Livewire\Admin\Coupons as adminCoupons;
@@ -55,6 +55,7 @@ Route::get('/product-detail/{id}',ProductDetail::class)->name('product.detail');
 Route::get('/contact-us',ContactUs::class)->name('user.contact-us');
 Route::get('/about-us',AboutUs::class)->name('user.about-us');
 Route::get('/vendor-info/{id}',VendorInfo::class)->name('user.vendorInfo');
+Route::get('/coupons', UserCoupons::class)->name('user.coupons');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', UserLogin::class)->name('user.login');
@@ -91,7 +92,6 @@ Route::prefix('vendor')->name('vendor.')->group(function () {
         Route::get('/setting',vendorSetting::class)->name('setting');
         Route::get('product-review',ProductReview::class)->name('product-review');
         Route::get('/invoice/{id}', [\App\Http\Controllers\InvoiceController::class, 'vendorInvoice'])->name('invoice');
-        Route::get('/coupons', vendorCoupons::class)->name('coupons');
         Route::get('/earnings', vendorEarnings::class)->name('earnings');
         Route::get('/chat', vendorChat::class)->name('chat');
     });

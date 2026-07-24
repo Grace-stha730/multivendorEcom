@@ -24,11 +24,11 @@
                     </li>
                     <li class="flex items-start space-x-3">
                         <span class="text-blue-600 text-xl">📞</span>
-                        <span>+977-9800000000</span>
+                        <span>+977-9856123458</span>
                     </li>
                     <li class="flex items-start space-x-3">
                         <span class="text-blue-600 text-xl">✉️</span>
-                        <span>support@yoursite.com</span>
+                        <span>goods@yoursite.com</span>
                     </li>
                 </ul>
 

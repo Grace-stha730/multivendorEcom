@@ -4,6 +4,7 @@ namespace App\Livewire\User;
 
 use App\Models\Product;
 use App\Models\productRating;
+use App\Services\Catalog\WeightedRatingService;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\Features\SupportConsoleCommands\Commands\Upgrade\ThirdPartyUpgradeNotice;
@@ -18,11 +19,7 @@ class Vendor extends Component
         $this->product = Product::with('images', 'vendor')->findOrFail($productId);
         // If you also want vendor's average rating across all products:
         $vendorId = $this->product->vendor->id;
-        $productIds = Product::where('vendor_id', $vendorId)->pluck('id');
-        $this->averageRate = round(
-            ProductRating::whereIn('product_id', $productIds)->avg('rating'),
-            1
-        );
+        $this->averageRate = app(WeightedRatingService::class)->vendorRating($this->product->vendor);
     }
     public function render()
     {

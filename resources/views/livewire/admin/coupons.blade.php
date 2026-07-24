@@ -25,6 +25,13 @@
                     @error('code') <small class="text-red-500">{{ $message }}</small> @enderror
                 </div>
 
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Description / Requirement</label>
+                    <textarea rows="3" placeholder="Explain who can use this coupon and what products qualify" wire:model="description"
+                        class="border border-gray-300 rounded-lg p-2.5 w-full text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+                    @error('description') <small class="text-red-500">{{ $message }}</small> @enderror
+                </div>
+
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Discount Type</label>
@@ -47,6 +54,22 @@
                     <input type="number" step="0.01" placeholder="0 for no limit" wire:model="min_order_amount"
                         class="border border-gray-300 rounded-lg p-2.5 w-full text-sm">
                     @error('min_order_amount') <small class="text-red-500">{{ $message }}</small> @enderror
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">User Limit</label>
+                        <input type="number" min="1" step="1" placeholder="How many users can apply" wire:model="usage_limit"
+                            class="border border-gray-300 rounded-lg p-2.5 w-full text-sm">
+                        @error('usage_limit') <small class="text-red-500">{{ $message }}</small> @enderror
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Min. Item Price (Rs.)</label>
+                        <input type="number" min="0" step="0.01" placeholder="0 for any item" wire:model="min_item_price"
+                            class="border border-gray-300 rounded-lg p-2.5 w-full text-sm">
+                        @error('min_item_price') <small class="text-red-500">{{ $message }}</small> @enderror
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
@@ -90,6 +113,8 @@
                             <th class="py-3 px-4">Code</th>
                             <th class="py-3 px-4">Discount</th>
                             <th class="py-3 px-4">Min Order</th>
+                            <th class="py-3 px-4">Min Item</th>
+                            <th class="py-3 px-4">Usage</th>
                             <th class="py-3 px-4">Expiry</th>
                             <th class="py-3 px-4">Status</th>
                             <th class="py-3 px-4 text-right">Actions</th>
@@ -98,11 +123,18 @@
                     <tbody class="divide-y divide-gray-100">
                         @forelse ($coupons as $c)
                             <tr class="hover:bg-gray-50">
-                                <td class="py-3 px-4 font-bold text-blue-700 uppercase">{{ $c->code }}</td>
+                                <td class="py-3 px-4">
+                                    <p class="font-bold text-blue-700 uppercase">{{ $c->code }}</p>
+                                    @if ($c->description)
+                                        <p class="text-xs text-gray-500 mt-1 max-w-[180px] truncate">{{ $c->description }}</p>
+                                    @endif
+                                </td>
                                 <td class="py-3 px-4 font-medium">
                                     {{ $c->type === 'percent' ? $c->value . '%' : 'Rs. ' . number_format($c->value) }}
                                 </td>
                                 <td class="py-3 px-4 text-gray-600">Rs. {{ number_format($c->min_order_amount) }}</td>
+                                <td class="py-3 px-4 text-gray-600">Rs. {{ number_format($c->min_item_price) }}</td>
+                                <td class="py-3 px-4 text-gray-600">{{ number_format($c->used_count) }} / {{ number_format($c->usage_limit) }}</td>
                                 <td class="py-3 px-4 text-xs text-gray-500">
                                     {{ $c->expires_at ? $c->expires_at->format('j M Y') : 'No Expiry' }}
                                 </td>
@@ -119,7 +151,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center py-8 text-gray-500">No coupons created yet.</td>
+                                <td colspan="8" class="text-center py-8 text-gray-500">No coupons created yet.</td>
                             </tr>
                         @endforelse
                     </tbody>

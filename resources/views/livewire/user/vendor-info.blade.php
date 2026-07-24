@@ -9,7 +9,7 @@
             <p class="text-gray-600 mt-2">We sell high-quality products ranging from electronics to fashion accessories.
                 Visit us for the best deals!</p>
             <div class="mt-4 flex items-center gap-4">
-                <span class="text-gray-700 font-semibold">Rating:</span>
+                <span class="text-gray-700 font-semibold">Weighted rating:</span>
                 <div class="flex gap-1 ">
                     @for ($i = 1; $i <= 5; $i++)
                         <i class="fa-solid fa-star {{ ($averageRate ?? 0) >= $i ? 'text-yellow-400' : 'text-gray-400' }}"></i>

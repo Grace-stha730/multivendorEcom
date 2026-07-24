@@ -53,8 +53,7 @@
                                 <div class="flex justify-center gap-2">
                                     <a href="{{ route('vendor.orderDetail', $order->id) }}"
                                         class="bg-blue-500 hover:bg-blue-600 text-white text-xs px-3 py-1 rounded-lg transition">View</a>
-                                    <button
-                                        class="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1 rounded-lg transition">Delete</button>
+                                    
                                 </div>
                             </td>
                         </tr>

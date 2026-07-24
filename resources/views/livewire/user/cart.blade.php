@@ -127,16 +127,28 @@
                                 </div>
                             @else
                                 <div class="flex gap-2">
-                                    <input type="text" placeholder="e.g. SAVE10" wire:model="couponCode"
-                                        class="uppercase border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                                    <select wire:model="selectedCouponId"
+                                        class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm w-full focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white">
+                                        <option value="">Select collected coupon</option>
+                                        @foreach ($availableCoupons as $coupon)
+                                            <option value="{{ $coupon->id }}">
+                                                {{ $coupon->code }} -
+                                                {{ $coupon->type === 'percent' ? rtrim(rtrim($coupon->value, '0'), '.') . '% off' : 'Rs. ' . number_format($coupon->value) . ' off' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
                                     <button wire:click="applyCoupon"
                                         class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-4 py-1.5 rounded-lg font-medium transition cursor-pointer">
                                         Apply
                                     </button>
                                 </div>
-                                @error('couponCode')
+                                @error('selectedCouponId')
                                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                                 @enderror
+                                <a href="{{ route('user.coupons') }}" wire:navigate
+                                    class="inline-block mt-2 text-xs font-medium text-indigo-600 hover:underline">
+                                    Collect coupons first
+                                </a>
                             @endif
                         </div>
 
