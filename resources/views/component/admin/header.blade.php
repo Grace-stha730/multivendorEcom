@@ -78,14 +78,16 @@
                         <span :class="open ? 'block' : 'hidden duration-0'"><i class="fas fa-cog"></i> Setting</span>
                     </a>
                 </li>
+                <li>
+                    <form action="{{ route('admin.logout') }}" method="POST">
+                        @csrf
+                        <button class="py-2 px-4 hover:text-gray-400 cursor-pointer">
+                            <i class="fa-solid fa-right-from-bracket"></i> Logout
+                        </button>
+                    </form>
+                </li>
             </ul>
         </nav>
 
     </div>
-    <form action="{{ route('admin.logout') }}" method="POST">
-        @csrf
-        <button class="absolute bottom-18 hover:text-gray-400 cursor-pointer left-10">
-            <i class="fa-solid fa-right-from-bracket"></i> Logout
-        </button>
-    </form>
 </header>

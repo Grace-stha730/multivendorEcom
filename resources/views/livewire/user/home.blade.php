@@ -1,6 +1,5 @@
 <div class="">
     @include('component.user.carousel')
-    @livewire('user.category')
     @include('component.user.coupon-card')
 
     @if ($recommendations->isNotEmpty())

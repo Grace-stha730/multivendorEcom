@@ -225,16 +225,24 @@
                 <!-- Modal Box -->
                 <div x-transition.scale class="bg-white w-full max-w-[95%] lg:max-w-[50%] rounded-lg shadow-lg p-6 relative">
                     <!-- Close Button -->
-                    <button @click.prevent="checkout = false"
+                    <button @click.prevent="checkout = false" wire:click="resetCheckout"
                         class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-lg cursor-pointer">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
 
                     <!-- Title -->
-                    <h2 class="text-2xl font-semibold mb-4 text-center">Checkout</h2>
+                    <h2 class="text-2xl font-semibold mb-2 text-center">Checkout</h2>
 
-                    <!-- Static Form -->
-                    <form class="" wire:submit.prevent='checkoutSubmit'>
+                    <form wire:submit.prevent='checkoutSubmit'>
+                        <div class="flex items-center justify-center gap-2 text-xs font-medium text-gray-500 mb-5">
+                            <span class="w-6 h-6 rounded-full flex items-center justify-center {{ $checkoutStep === 1 ? 'bg-indigo-600 text-white' : 'bg-green-100 text-green-700' }}">1</span>
+                            <span>Details</span>
+                            <span class="w-8 h-px bg-gray-300"></span>
+                            <span class="w-6 h-6 rounded-full flex items-center justify-center {{ $checkoutStep === 2 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500' }}">2</span>
+                            <span>Review</span>
+                        </div>
+
+                        @if ($checkoutStep === 1)
                         <div class="grid grid-cols-2 gap-4">
                             <div class="space-y-4 ">
                                 <!-- Name -->
@@ -263,9 +271,8 @@
                                     <label class="block text-sm font-medium text-gray-700">Payment Method</label>
                                     <select
                                         class="w-full border border-gray-300 rounded-md p-2 focus:ring focus:ring-blue-300"
-                                        wire:model='paymentMethod'>
+                                        wire:model.live='paymentMethod'>
                                         <option value="">--- Select Payment Option ---</option>
-                                        <option value="Credit Card">Credit Card</option>
                                         <option value="E-Sewa">E-Sewa</option>
                                         <option value="Cash">Cash on Delivery</option>
                                     </select>
@@ -273,17 +280,6 @@
                                     <small class="text-red-800">{{ $message }}</small>
                                     @enderror
                                 </div>
-
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">
-                                        Redeem Points
-                                        <span class="text-xs text-gray-500">(Balance: {{ $walletBalance }})</span>
-                                    </label>
-                                    <input type="number" min="0" max="{{ $walletBalance }}" wire:model.live="redeemPoints"
-                                        class="w-full border border-gray-300 rounded-md p-2 focus:ring focus:ring-blue-300">
-                                    <p class="text-xs text-gray-500 mt-1">10 points = Rs. 1 discount.</p>
-                                </div>
-
 
                             </div>
 
@@ -312,11 +308,35 @@
                             </div>
                         </div>
 
-                        <!-- Submit Button -->
-                        <button type="submit"
-                            class="w-full mt-3 cursor-pointer bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition">
-                            Place Order
+                        <button type="button" wire:click="proceedToReview"
+                            class="w-full mt-5 cursor-pointer bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition">
+                            Continue to Review
                         </button>
+                        @endif
+
+                        @if ($checkoutStep === 2)
+                        <div class="space-y-4">
+                            <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                                <h3 class="font-semibold text-gray-800 mb-3">Review your order</h3>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-600">
+                                    <p><span class="font-medium text-gray-800">Customer:</span> {{ $userName }}</p>
+                                    <p><span class="font-medium text-gray-800">Email:</span> {{ $userEmail }}</p>
+                                    <p><span class="font-medium text-gray-800">Delivery:</span> {{ $userCity }}, {{ $userProvince }}</p>
+                                    <p><span class="font-medium text-gray-800">Payment:</span> {{ $paymentMethod ?: 'Not selected' }}</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-3">
+                                <button type="button" wire:click="returnToCheckoutDetails"
+                                    class="flex-1 cursor-pointer bg-gray-200 text-gray-800 p-2 rounded-md hover:bg-gray-300 transition">
+                                    Back
+                                </button>
+                                <button type="submit"
+                                    class="flex-1 cursor-pointer bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700 transition">
+                                    Place Order
+                                </button>
+                            </div>
+                        </div>
+                        @endif
                     </form>
                 </div>
             </div>
@@ -328,5 +348,6 @@
             <a class="mt-6 inline-block bg-gray-800 text-white  py-2 px-5 rounded-lg hover:scale-105 duration-200" href="{{ route('user.product') }}">Shop Now</a>
         </div>
     @endif
+
 
 </section>

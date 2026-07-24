@@ -41,4 +41,19 @@ class CommerceAlgorithmsTest extends TestCase
         $this->assertGreaterThan($scores[2], $scores[1]);
         $this->assertSame(0.0, $scores[3]);
     }
+
+    public function test_tfidf_scores_partial_terms_for_live_search(): void
+    {
+        $service = new TfidfProductSearch();
+        $scores = $service->scoreDocuments([
+            1 => 'wireless headphones',
+            2 => 'wireless mouse',
+            3 => 'gaming keyboard',
+            4 => 'office chair',
+        ], 'wire');
+
+        $this->assertGreaterThan(0, $scores[1]);
+        $this->assertGreaterThan(0, $scores[2]);
+        $this->assertSame(0.0, $scores[3]);
+    }
 }

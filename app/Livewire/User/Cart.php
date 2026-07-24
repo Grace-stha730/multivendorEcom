@@ -26,6 +26,7 @@ class Cart extends Component
     public $subTotal = 0;
     public $cartItem;
     public $paymentMethod;
+    public int $checkoutStep = 1;
     public $walletBalance = 0;
     public $redeemPoints = 0;
     public $walletDiscount = 0;
@@ -257,11 +258,35 @@ class Cart extends Component
         $this->walletDiscount = $wallet->discountForPoints($this->redeemPoints, (float) $this->subTotal);
     }
 
+    public function updatedPaymentMethod()
+    {
+        $this->checkoutStep = 1;
+    }
+
+    public function proceedToReview()
+    {
+        $this->validateCheckoutDetails();
+        $this->checkoutStep = 2;
+    }
+
+    public function returnToCheckoutDetails()
+    {
+        $this->checkoutStep = 1;
+    }
+
+    public function resetCheckout()
+    {
+        $this->checkoutStep = 1;
+    }
+
     public function checkoutSubmit()
     {
-        $this->validate([
-            'paymentMethod' => "required",
-        ]);
+        $this->validateCheckoutDetails();
+
+        if ($this->checkoutStep !== 2) {
+            $this->checkoutStep = 2;
+            return;
+        }
 
         DB::beginTransaction();
 
@@ -368,12 +393,29 @@ class Cart extends Component
 
             DB::commit();
 
+            $this->checkoutStep = 1;
+
             return redirect()->route('user.cart')->with('success', 'Order Successfully Placed!');
 
         } catch (\Throwable $th) {
             DB::rollBack();
             return redirect()->route('user.cart')->with('error', 'Something went wrong: ' . $th->getMessage());
         }
+    }
+
+    private function validateCheckoutDetails(): void
+    {
+        $rules = [
+            'userName' => 'required|string|max:120',
+            'userEmail' => 'required|email|max:255',
+            'userPhone' => 'required|string|max:30',
+            'userProvince' => 'required|string|max:120',
+            'userCity' => 'required|string|max:120',
+            'userTole' => 'required|string|max:120',
+            'paymentMethod' => 'required|in:E-Sewa,Cash',
+        ];
+
+        $this->validate($rules);
     }
 
     public function render()

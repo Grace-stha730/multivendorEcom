@@ -77,7 +77,7 @@
                             </h3>
 
                             @if (isset($product->search_score))
-                                <p class="text-xs text-blue-600">Relevance: {{ number_format($product->search_score, 3) }}</p>
+                                <p class="text-xs text-blue-600"><i class="fa-solid fa-check"></i> Matched your search</p>
                             @else
                                 <p class="text-xs text-yellow-600"><i class="fa-solid fa-star"></i> {{ number_format($product->weighted_rating, 1) }} <span class="text-gray-400">({{ $product->reviews_count }} reviews)</span></p>
                             @endif

@@ -68,7 +68,7 @@ class Order extends Component
                 $order->orderItems()->delete();
                 $order->delete();
                 DB::commit();
-                session()->flash('success', 'Order Deleted Successfully');
+                return redirect()->route('user.cart')->with('success', 'Order cancelled successfully. Your cart is ready for another order.');
             } else {
                 DB::rollBack();
                 session()->flash('error', 'Oops! Your order is on its way.');

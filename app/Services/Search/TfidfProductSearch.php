@@ -16,14 +16,26 @@ class TfidfProductSearch
         }
 
         $catalog = Product::with(['vendor', 'firstImage'])->get();
-        $scores = $this->scoreDocuments(
-            $catalog->mapWithKeys(fn (Product $product) => [$product->id => $this->document($product)])->all(),
-            $query,
-        );
+        $documents = $catalog->mapWithKeys(fn (Product $product) => [$product->id => $this->document($product)])->all();
+        $scores = $this->scoreDocuments($documents, $query);
+        $matchingProductIds = collect($documents)
+            ->filter(function (string $document) use ($terms) {
+                foreach ($terms as $term) {
+                    foreach ($this->terms($document) as $token) {
+                        if ($this->tokenMatches($token, $term)) {
+                            return true;
+                        }
+                    }
+                }
+
+                return false;
+            })
+            ->keys()
+            ->all();
 
         return $catalog
             ->when($categoryId, fn (Collection $products) => $products->where('category_id', $categoryId))
-            ->filter(fn (Product $product) => ($scores[$product->id] ?? 0) > 0)
+            ->whereIn('id', $matchingProductIds)
             ->map(function (Product $product) use ($scores) {
                 $product->search_score = round($scores[$product->id], 6);
 
@@ -51,12 +63,12 @@ class TfidfProductSearch
         foreach ($terms as $term) {
             $documentsContainingTerm = count(array_filter(
                 $documentTokens,
-                fn (array $tokens) => in_array($term, $tokens, true),
+                fn (array $tokens) => collect($tokens)->contains(fn (string $token) => $this->tokenMatches($token, $term)),
             ));
             $idf = log($documentCount / (1 + $documentsContainingTerm));
 
             foreach ($documentTokens as $id => $tokens) {
-                $termFrequency = count(array_filter($tokens, fn (string $token) => $token === $term)) / max(count($tokens), 1);
+                $termFrequency = count(array_filter($tokens, fn (string $token) => $this->tokenMatches($token, $term))) / max(count($tokens), 1);
                 $scores[$id] += $termFrequency * $idf;
             }
         }
@@ -79,5 +91,10 @@ class TfidfProductSearch
         preg_match_all('/[\p{L}\p{N}]+/u', $text, $matches);
 
         return $matches[0] ?? [];
+    }
+
+    private function tokenMatches(string $token, string $term): bool
+    {
+        return str_contains($token, $term);
     }
 }
