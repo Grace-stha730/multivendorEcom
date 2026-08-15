@@ -10,9 +10,65 @@
 
 
 
+@theme {
+    --color-brand-50: #f0fdf9;
+    --color-brand-500: #0f9f7a;
+    --color-brand-600: #087e60;
+    --color-ink: #16231f;
+}
+
 body {
     font-family: 'Poppins', sans-serif;
+    color: #1b2925;
+    background: #f6f8f7;
 }
+
+body::selection { background: #b9f1de; color: #123228; }
+
+/* Shared storefront and dashboard surface system. */
+main, .app-page { min-height: calc(100vh - 9rem); }
+
+input:not([type='checkbox']):not([type='radio']), select, textarea {
+    border-color: #d8e4df !important;
+    border-radius: .75rem !important;
+    background: #fff !important;
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: #0f9f7a !important;
+    box-shadow: 0 0 0 3px rgb(15 159 122 / .14) !important;
+    outline: none;
+}
+
+button, [type='submit'], .btn {
+    transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+
+button:not(:disabled):active, [type='submit']:not(:disabled):active, .btn:not(:disabled):active {
+    transform: translateY(1px);
+}
+
+table { border-collapse: separate; border-spacing: 0; }
+thead { background: #edf6f2; color: #385248; }
+th { font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; }
+tbody tr { transition: background-color .15s ease; }
+tbody tr:hover { background: #f4faf7; }
+
+.bg-gray-800 { background-color: #102b23 !important; }
+.bg-gray-700 { background-color: #184335 !important; }
+.text-blue-500, .text-blue-600 { color: #087e60 !important; }
+.bg-blue-500, .bg-blue-600 { background-color: #0f9f7a !important; }
+.hover\:bg-blue-600:hover, .hover\:bg-blue-700:hover { background-color: #087e60 !important; }
+.bg-green-600 { background-color: #0f9f7a !important; }
+.text-green-600 { color: #087e60 !important; }
+.hover\:bg-green-700:hover { background-color: #06654e !important; }
+
+.shadow, .shadow-lg, .shadow-xl, .shadow-sm {
+    box-shadow: 0 12px 32px rgb(31 65 51 / .08) !important;
+}
+
+.rounded-lg, .rounded-xl, .rounded-2xl { border-color: #e3ece8; }
 
 .user-header {
     font-family: "Pacifico", cursive;
@@ -22,6 +78,34 @@ body {
     font-family: "Pacifico", cursive;
 }
 
-x-cloak {
-    display: hidden;
+x-cloak { display: none !important; }
+
+
+/**
+    The lines above are intact.
+    The lines below were added by maryUI installer.
+*/
+
+/** daisyUI */
+@plugin "daisyui" {
+    themes: light --default, dark --prefersdark;
+}
+
+/* maryUI */
+@source "../../vendor/robsontenorio/mary/src/View/Components/**/*.php";
+
+/* Theme toggle */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/**
+* Paginator - Traditional style
+* Because Laravel defaults does not match well the design of daisyUI.
+*/
+
+.mary-table-pagination span[aria-current="page"] > span {
+    @apply bg-primary text-base-100
+}
+
+.mary-table-pagination button {
+    @apply cursor-pointer
 }

@@ -33,6 +33,10 @@
                 </button>
             </div>
 
+            <a href="{{ route('user.google.redirect') }}" class="block w-full border border-gray-300 text-center text-sm text-gray-700 font-medium py-2 rounded-lg hover:bg-gray-50">
+                Continue with Google
+            </a>
+
             <p class="text-center text-gray-600  text-xs">
                 Don't have an account?
                 <a href="{{ route('user.register') }}" wire:navigate class="text-blue-500 hover:underline font-medium">Register</a>

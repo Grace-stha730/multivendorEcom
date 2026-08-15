@@ -41,11 +41,11 @@ class Setting extends Component
                 'email',
                 Rule::unique('users', 'email')->ignore($this->setting->id),
             ],
-            'province' => 'required|string|max:255',
-            'city' => 'required|string|max:255',
-            'tole' => 'required|string|max:255',
+            'province' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
+            'tole' => 'nullable|string|max:255',
             'photo' => 'nullable|image|max:2048',
-            'phone' => 'required|digits:10',
+            'phone' => 'nullable|digits:10',
         ];
 
         if ($this->password) {
