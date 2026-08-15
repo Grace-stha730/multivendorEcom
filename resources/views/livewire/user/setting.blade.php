@@ -21,6 +21,8 @@
                     @elseif(!$oldPhoto)
                         <img class="w-24 h-24 rounded-full object-cover border shadow-sm"
                             src="{{ asset('storage/default/vendor.jpg') }}" alt="">
+                    @elseif(str_starts_with($oldPhoto, 'http'))
+                        <img class="w-24 h-24 rounded-full object-cover border shadow-sm" src="{{ $oldPhoto }}" alt="Profile image">
                     @else
                         <img class="w-24 h-24 rounded-full object-cover border shadow-sm"
                             src="{{ asset('storage/' . $oldPhoto) }}" alt="">

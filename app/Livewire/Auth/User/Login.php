@@ -13,6 +13,11 @@ class Login extends Component
 {
     public $email, $password;
 
+    public function mount(): void
+    {
+        $this->email = request('email', '');
+    }
+
     public function login()
     {
         $validation = $this->validate([
