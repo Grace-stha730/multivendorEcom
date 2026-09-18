@@ -4,7 +4,7 @@ namespace App\Services\Catalog;
 
 use App\Models\Product;
 use App\Models\productRating;
-use App\Models\Vendor;
+use App\Models\Shop;
 use Illuminate\Support\Collection;
 
 class WeightedRatingService
@@ -25,7 +25,7 @@ class WeightedRatingService
 
     public function rankedProducts(?Collection $products = null): Collection
     {
-        $products ??= Product::with(['vendor', 'firstImage'])
+        $products ??= Product::with(['shop', 'firstImage'])
             ->withCount('reviews')
             ->withAvg('reviews', 'rating')
             ->get();
@@ -43,10 +43,10 @@ class WeightedRatingService
         })->sortByDesc('weighted_rating')->values();
     }
 
-    public function vendorRating(Vendor $vendor): float
+    public function shopRating(Shop $shop): float
     {
         $reviews = productRating::query()
-            ->whereIn('product_id', $vendor->products()->select('id'));
+            ->whereIn('product_id', $shop->products()->select('id'));
 
         return $this->calculate(
             (int) $reviews->count(),

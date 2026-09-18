@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Vendor;
 
-use App\Models\Vendor;
+use App\Models\ShopUser;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -19,7 +19,7 @@ class Setting extends Component
 
     public function mount()
     {
-        $setting = Vendor::find(Auth::guard('vendor')->user()->id);
+        $setting = ShopUser::find(Auth::guard('shop_user')->id());
         $this->setting = $setting;
         $this->shop_name = $setting->shop_name;
         $this->owner_name = $setting->owner_name;
@@ -56,7 +56,7 @@ class Setting extends Component
         $validation = $this->validate($rule);
         DB::beginTransaction();
         try {
-            $setting = Vendor::find(Auth::guard('vendor')->user()->id);
+            $setting = ShopUser::find(Auth::guard('shop_user')->id());
             if ($validation['shop_image']) {
                 $validation['shop_image'] = $validation['shop_image']->store('vendors', 'public');
             } else {
@@ -69,10 +69,10 @@ class Setting extends Component
 
             $setting->update($validation);
             DB::commit();
-            return redirect()->route('vendor.setting')->with('success','Profile update successfully');
+            return redirect()->route('shop-user.setting')->with('success','Profile update successfully');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->route('vendor.setting')->with('error', 'Something went wrong' . $e->getMessage());
+            return redirect()->route('shop-user.setting')->with('error', 'Something went wrong' . $e->getMessage());
         }
     }
 

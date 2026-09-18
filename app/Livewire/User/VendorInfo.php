@@ -6,7 +6,7 @@ use App\Models\Cart;
 use App\Models\Cart_items;
 use App\Models\Product;
 use App\Models\productRating;
-use App\Models\Vendor;
+use App\Models\Shop;
 use App\Services\Catalog\WeightedRatingService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,11 +16,10 @@ use Livewire\Component;
 #[Layout('components.layouts.user')]
 class VendorInfo extends Component
 {
-    public $vendorId, $vendor, $averageRate;
+    public $shopId, $shop;
     public function mount($id){
-        $this->vendorId = $id;
-        $this->vendor = Vendor::with('products')->findOrFail($id);
-        $this->averageRate = app(WeightedRatingService::class)->vendorRating($this->vendor);
+        $this->shopId = $id;
+        $this->shop = Shop::with('products')->findOrFail($id);
         
         
     }
@@ -60,13 +59,13 @@ class VendorInfo extends Component
                 ]);
 
                 DB::commit();
-                return redirect()->route('user.vendorInfo',['id' => $this->vendorId])->with('success', 'Product added to cart');
+                return redirect()->route('user.shop',['id' => $this->shopId])->with('success', 'Product added to cart');
             }
 
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->route('user.vendorInfo',['id' => $this->vendorId])->with('error','Something went worng'. $e->getMessage());
+            return redirect()->route('user.shop',['id' => $this->shopId])->with('error','Something went wrong'. $e->getMessage());
         }
     }
     public function startChat()
@@ -79,7 +78,7 @@ class VendorInfo extends Component
 
         $conversation = \App\Models\Conversation::firstOrCreate([
             'user_id' => $userId,
-            'vendor_id' => $this->vendorId,
+            'shop_user_id' => $this->shop->shopUsers()->value('id'),
         ], [
             'last_message_at' => now(),
         ]);

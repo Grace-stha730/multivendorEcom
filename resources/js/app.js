@@ -4,3 +4,4 @@ import './product';
 import './slick'
 import './cart'
 import './order'
+import './shop'

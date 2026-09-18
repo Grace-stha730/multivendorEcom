@@ -11,25 +11,25 @@ use Livewire\Component;
 #[Title('Login')]
 class Login extends Component
 {
-    public $shop_email, $password;
+    public $username, $password;
 
     public function login()
     {
         $validation = $this->validate([
-            'shop_email' => 'required|email',
+            'username' => 'required|string',
             'password' => 'required|min:2|max:20',
         ]);
 
         if (
-            Auth::guard('vendor')->attempt([
-                'shop_email' => $validation['shop_email'],
+            Auth::guard('shop_user')->attempt([
+                'username' => $validation['username'],
                 'password' => $validation['password'],
             ])
         ) {
 
-            return redirect()->route('vendor.dashboard')->with('success', 'Login Successfull');
+            return redirect()->route('shop-user.dashboard')->with('success', 'Login successful');
         } else {
-            return redirect()->route('vendor.login')->with('error', 'Invalid Credential');
+            return redirect()->route('shop-user.login')->with('error', 'Invalid credentials');
         }
     }
 

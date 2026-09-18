@@ -25,7 +25,8 @@ class ProductFactory extends Factory
             'discount' => $this->faker->numberBetween(0, 30),
             'discount_amount' => $this->faker->numberBetween(0, 100),
             'category_id' => 1,
-            'vendor_id' =>1,
+            'shop_id' => 1,
+            'shop_user_id' => 1,
         ];
     }
 }

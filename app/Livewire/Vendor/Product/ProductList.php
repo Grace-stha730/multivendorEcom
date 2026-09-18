@@ -22,12 +22,12 @@ class ProductList extends Component
 
     public function deleteProduct(){
         $product = Product::find( $this->productIds)->delete();
-        return redirect()->route('vendor.product')->with('success','Product Delete Successfully');
+        return redirect()->route('shop-user.product')->with('success','Product deleted successfully');
     }
     public function render()
     {
         return view('livewire.vendor.product.product-list', [
-            'products' => Product::where('vendor_id', Auth::guard('vendor')->user()->id)->with('category', 'images')->latest()->paginate(20),
+            'products' => Product::where('shop_id', Auth::guard('shop_user')->user()->shop_id)->with('category', 'images')->latest()->paginate(20),
         ]);
     }
 }

@@ -11,7 +11,7 @@ class Conversation extends Model
 
     protected $fillable = [
         'user_id',
-        'vendor_id',
+        'shop_user_id',
         'product_id',
         'last_message_at',
     ];
@@ -25,9 +25,9 @@ class Conversation extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function vendor()
+    public function shopUser()
     {
-        return $this->belongsTo(Vendor::class);
+        return $this->belongsTo(ShopUser::class);
     }
 
     public function product()

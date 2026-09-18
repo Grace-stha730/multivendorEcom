@@ -93,7 +93,8 @@ class UpdateProduct extends Component
                 'discount' => $this->discount,
                 'category_id' => $this->category_id,
                 'price' => $this->price,
-                'vendor_id' => Auth('vendor')->user()->id,
+                'shop_id' => Auth::guard('shop_user')->user()->shop_id,
+                'shop_user_id' => Auth::guard('shop_user')->id(),
             ]);
             // Re-sync product images based on current state
             Image::where('product_id', $this->productId)->delete();
@@ -138,7 +139,7 @@ class UpdateProduct extends Component
 
             DB::commit();
             $this->reset();
-            return redirect()->route('vendor.product')->with('success', "product update Successfully");
+            return redirect()->route('shop-user.product')->with('success', "Product updated successfully");
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;

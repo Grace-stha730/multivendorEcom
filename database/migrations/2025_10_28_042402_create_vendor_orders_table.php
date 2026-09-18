@@ -13,7 +13,7 @@ return new class extends Migration {
         Schema::create('vendor_orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
-            $table->foreignId('vendor_id')->constrained('vendors')->cascadeOnDelete();
+            $table->foreignId('shop_id')->constrained('shops')->cascadeOnDelete();
             $table->decimal('subtotal', 10, 2);
             $table->string('status')->default('pending');
             $table->timestamps();

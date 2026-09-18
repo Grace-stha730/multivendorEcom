@@ -1,17 +1,17 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\SearchSelect2Controller;
 use App\Livewire\Admin\Message;
 use App\Livewire\Admin\Products;
-use App\Livewire\Admin\Vendor;
 use App\Livewire\Admin\ViewMessage;
-use App\Livewire\Auth\Login;
 use App\Livewire\Auth\User\Login as UserLogin;
 use App\Livewire\Auth\User\Register as UserRegister;
 use App\Livewire\User\AboutUs;
 use App\Livewire\User\Cart;
 use App\Livewire\User\ContactUs;
 use App\Livewire\User\Coupons as UserCoupons;
+use App\Livewire\User\Collections;
 use App\Livewire\User\Order;
 use App\Livewire\User\Review;
 use App\Livewire\User\Setting;
@@ -19,7 +19,6 @@ use App\Livewire\User\VendorInfo;
 use App\Livewire\User\Wishlist;
 use App\Livewire\Vendor\Order as VendorOrder;
 use App\Livewire\User\Product as UserProduct;
-use App\Livewire\Auth\Register as VendorRegister;
 use App\Livewire\User\Home;
 use App\Livewire\User\ProductDetail;
 use App\Livewire\Vendor\Category;
@@ -38,17 +37,20 @@ use App\Livewire\Admin\OrderDetail as AdminOrderDetail;
 use App\Livewire\Admin\Setting as AdminSetting;
 use App\Livewire\Vendor\Earnings as VendorEarnings;
 use App\Livewire\Vendor\Chat as VendorChat;
+use App\Livewire\Vendor\Coupons as VendorCoupons;
 use App\Livewire\Admin\Coupons as AdminCoupons;
 use App\Livewire\Admin\Payouts as AdminPayouts;
+use App\Livewire\Admin\Shop as AdminShop;
 use App\Livewire\User\Chat as UserChat;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', Home::class)->name('home');
+Route::get('/searchSelect2', SearchSelect2Controller::class)->name('searchSelect2');
 Route::get('product', UserProduct::class)->name('user.product');
 Route::get('/product-detail/{id}', ProductDetail::class)->name('product.detail');
 Route::get('/contact-us', ContactUs::class)->name('user.contact-us');
 Route::get('/about-us', AboutUs::class)->name('user.about-us');
-Route::get('/vendor-info/{id}', VendorInfo::class)->name('user.vendorInfo');
+Route::get('/shop/{id}', VendorInfo::class)->name('user.shop');
 Route::get('/coupons', UserCoupons::class)->name('user.coupons');
 
 Route::middleware('guest')->group(function () {
@@ -68,16 +70,16 @@ Route::middleware('web')->group(function () {
     Route::get('/review/{id}', Review::class)->name('user.review');
     Route::get('/setting', Setting::class)->name('user.setting');
     Route::get('/chat', UserChat::class)->name('user.chat');
+    Route::get('/collections', Collections::class)->middleware('auth')->name('user.collections');
 });
 
-Route::prefix('vendor')->name('vendor.')->group(function () {
+Route::prefix('shop-user')->name('shop-user.')->group(function () {
     Route::middleware('guest')->group(function () {
-        Route::get('/register', VendorRegister::class)->name('register');
-        Route::get('/login', Login::class)->name('login');
+        Route::get('/login', \App\Livewire\Auth\Login::class)->name('login');
     });
 
-    Route::middleware('vendor')->group(function () {
-        Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::middleware('shop_user')->group(function () {
+        Route::post('/logout', [AuthController::class, 'shopUserLogout'])->name('logout');
         Route::get('/dashboard', Dashboard::class)->name('dashboard');
         Route::get('category', Category::class)->name('category');
         Route::get('/product', Product::class)->name('product');
@@ -88,6 +90,7 @@ Route::prefix('vendor')->name('vendor.')->group(function () {
         Route::get('/invoice/{id}', [\App\Http\Controllers\InvoiceController::class, 'vendorInvoice'])->name('invoice');
         Route::get('/earnings', VendorEarnings::class)->name('earnings');
         Route::get('/chat', VendorChat::class)->name('chat');
+        Route::get('/coupons', VendorCoupons::class)->name('coupons');
     });
 });
 
@@ -100,7 +103,6 @@ Route::prefix('admin')->group(function () {
     Route::middleware('admin')->group(function () {
         Route::post('/logout', [AuthController::class, 'adminLogout'])->name('admin.logout');
         Route::get('/dashboard', AdminDashboard::class)->name('admin.dashboard');
-        Route::get('/vendors', Vendor::class)->name('admin.vendor');
         Route::get('/products', Products::class)->name('admin.product');
         Route::get('/product-detail/{id}', AdminProductDetail::class)->name('admin.product-detail');
         Route::get('/category', AdminCategory::class)->name('admin.category');
@@ -112,5 +114,6 @@ Route::prefix('admin')->group(function () {
         Route::get('message-datail/{id}', ViewMessage::class)->name('admin.message-datail');
         Route::get('/coupons', AdminCoupons::class)->name('admin.coupons');
         Route::get('/payouts', AdminPayouts::class)->name('admin.payouts');
+        Route::get('/shops', AdminShop::class)->name('admin.shops');
     });
 });

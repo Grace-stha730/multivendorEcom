@@ -20,15 +20,15 @@ class Category extends Component
                 'description'=>'nullable|string',
             ]);
 
-            $validation['vendor_id']= Auth::guard('vendor')->user()->id;
+            $validation['shop_id'] = Auth::guard('shop_user')->user()->shop_id;
             $validation['name'] = ucwords(strtolower($validation['name']));
             ModelsCategory::create($validation);
             DB::commit();
-            return redirect()->route('vendor.category')->with('success','Category Added Successfully');
+            return redirect()->route('shop-user.category')->with('success','Category added successfully');
         }
         catch(\Exception $e){
             DB::rollBack();
-            return redirect()->route('vendor.category')->with('error',$e->getMessage());
+            return redirect()->route('shop-user.category')->with('error',$e->getMessage());
         }
     }
 
@@ -53,11 +53,11 @@ class Category extends Component
             $category->description = $validation['new_description'];
             $category->save();
             DB::commit();
-            return redirect()->route('vendor.category')->with('success','Category Updated Successfully');
+            return redirect()->route('shop-user.category')->with('success','Category updated successfully');
         }
         catch(\Exception $e){
             DB::rollBack();
-            return redirect()->route('vendor.category')->with('error',$e->getMessage());
+            return redirect()->route('shop-user.category')->with('error',$e->getMessage());
         }
     }
 
@@ -67,11 +67,11 @@ class Category extends Component
             $category = ModelsCategory::find($id);
             $category->delete();
             DB::commit();
-            return redirect()->route('vendor.category')->with('success','Category Deleted Successfully');
+            return redirect()->route('shop-user.category')->with('success','Category deleted successfully');
         }
         catch(\Exception $e){
             DB::rollBack();
-            return redirect()->route('vendor.category')->with('error',$e->getMessage());
+            return redirect()->route('shop-user.category')->with('error',$e->getMessage());
         }
     }
     public function render()

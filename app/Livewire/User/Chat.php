@@ -80,7 +80,7 @@ class Chat extends Component
     {
         if ($this->activeConversationId) {
             ChatMessage::where('conversation_id', $this->activeConversationId)
-                ->where('sender_type', 'vendor')
+                ->where('sender_type', 'shop_user')
                 ->where('is_read', false)
                 ->update(['is_read' => true]);
         }
@@ -91,7 +91,7 @@ class Chat extends Component
         $userId = Auth::guard('web')->id();
 
         $conversations = Conversation::where('user_id', $userId)
-            ->with(['vendor', 'product.firstImage', 'latestMessage'])
+            ->with(['shopUser.shop', 'product.firstImage', 'latestMessage'])
             ->orderByRaw('last_message_at IS NULL, last_message_at DESC')
             ->orderBy('updated_at', 'desc')
             ->get();

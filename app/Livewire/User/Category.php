@@ -7,8 +7,9 @@ use App\Models\Category as modalCategoery;
 
 class Category extends Component
 {
-    public function catProduct($id){
-        dd($id);
+    public function catProduct($id)
+    {
+        return redirect()->route('user.product', ['category' => $id]);
     }
     public function render()
     {

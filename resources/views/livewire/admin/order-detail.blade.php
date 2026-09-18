@@ -38,7 +38,7 @@
             <div class="bg-white shadow-md rounded-2xl p-6 mb-6">
                 <div class="flex justify-between items-center mb-1">
                     <h4 class="text-lg font-semibold text-blue-600">Vendor: {{ $vendorOrder->vendor->shop_name }}</h4>
-                    <a href="{{ route('vendor.invoice', ['id' => $vendorOrder->id]) }}" target="_blank"
+                    <a href="{{ route('shop-user.invoice', ['id' => $vendorOrder->id]) }}" target="_blank"
                         class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-3 py-1 rounded-md transition flex items-center gap-1">
                         <i class="fa-solid fa-print"></i> Vendor Invoice
                     </a>

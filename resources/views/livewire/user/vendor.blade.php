@@ -5,7 +5,7 @@
            <img class="w-24 h-24 object-cover rounded-full border"
                src="{{ asset('storage/' . $product->vendor->shop_image) }}" alt="">
            <div>
-               <a href="{{ route('user.vendorInfo', ['id' => $product->vendor->id]) }}"
+               <a href="{{ route('user.shop', ['id' => $product->shop->id]) }}"
                    class="text-xl font-semibold text-gray-600 hover:text-gray-800"
                    title="view Vendor">{{ $product->vendor->shop_name }}</a>
                {{-- <p class="text-gray-600 mb-1">{{ $product->vendor->shop_name }}</p> --}}

@@ -46,16 +46,16 @@ class Chat extends Component
             'messageText' => 'required|string|max:1000',
         ]);
 
-        $vendorId = Auth::guard('vendor')->id();
-        if (!$vendorId) return;
+        $shopUserId = Auth::guard('shop_user')->id();
+        if (!$shopUserId) return;
 
-        $conversation = Conversation::where('vendor_id', $vendorId)
+        $conversation = Conversation::where('shop_user_id', $shopUserId)
             ->findOrFail($this->activeConversationId);
 
         $chatMessage = ChatMessage::create([
             'conversation_id' => $conversation->id,
-            'sender_type' => 'vendor',
-            'sender_id' => $vendorId,
+            'sender_type' => 'shop_user',
+            'sender_id' => $shopUserId,
             'message' => trim($this->messageText),
             'is_read' => false,
         ]);
@@ -86,9 +86,9 @@ class Chat extends Component
 
     public function render()
     {
-        $vendorId = Auth::guard('vendor')->id();
+        $shopUserId = Auth::guard('shop_user')->id();
 
-        $conversations = Conversation::where('vendor_id', $vendorId)
+        $conversations = Conversation::where('shop_user_id', $shopUserId)
             ->with(['user', 'product.firstImage', 'latestMessage'])
             ->orderByRaw('last_message_at IS NULL, last_message_at DESC')
             ->orderBy('updated_at', 'desc')

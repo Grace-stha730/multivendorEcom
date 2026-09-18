@@ -7,7 +7,7 @@
                 <img class="w-20 h-20 rounded-full object-cover"
                     src="{{ asset('storage/' . Auth::guard('admin')->user()->image) }}" alt="">
             @else
-                <img class="w-20 h-20 rounded-full object-cover" src="{{ asset('default/vendor.jpg') }}" alt="">
+                <img class="w-20 h-20 rounded-full object-cover" src="{{ asset('default/vendor.svg') }}" alt="">
             @endif
             <h1 class="text-base">{{ Auth::guard('admin')->user()->name }}</h1>
         </div>
@@ -42,10 +42,10 @@
                 </li>
 
                 <li>
-                    <a class="py-2 px-4 hover:duration-200 flex items-center gap-2 {{ request()->is('admin/vendors') || request()->is('vendor/order-detail*') ? 'bg-white text-black rounded-lg' : 'text-white hover:bg-white hover:text-black transition rounded-lg' }}"
-                        wire:navigate href="{{ route('admin.vendor') }}">
+                    <a class="py-2 px-4 hover:duration-200 flex items-center gap-2 {{ request()->is('admin/shops') ? 'bg-white text-black rounded-lg' : 'text-white hover:bg-white hover:text-black transition rounded-lg' }}"
+                        wire:navigate href="{{ route('admin.shops') }}">
                         <span :class="open ? 'block' : 'hidden duration-0'"><i class="fa-solid fa-shop"></i>
-                            Vendors</span>
+                            Shops</span>
                     </a>
                 </li>
 

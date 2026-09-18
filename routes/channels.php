@@ -13,9 +13,9 @@ Broadcast::channel('chat.{conversationId}', function ($user, $conversationId) {
         return false;
     }
 
-    if ($user instanceof \App\Models\Vendor) {
-        return (int) $conversation->vendor_id === (int) $user->id;
+    if ($user instanceof \App\Models\ShopUser) {
+        return (int) $conversation->shop_user_id === (int) $user->id;
     }
 
     return (int) $conversation->user_id === (int) $user->id;
-}, ['guards' => ['web', 'vendor']]);
+}, ['guards' => ['web', 'shop_user']]);

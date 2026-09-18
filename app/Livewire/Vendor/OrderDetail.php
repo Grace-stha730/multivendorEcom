@@ -31,7 +31,7 @@ class OrderDetail extends Component
                 ]);
                 $order->update(['order_status' => 'Processing']);
                 DB::commit();
-                return redirect()->route('vendor.orderDetail', ['id' => $this->vendorId])->with('success', 'Order updated to Processing.');
+                return redirect()->route('shop-user.orderDetail', ['id' => $this->vendorId])->with('success', 'Order updated to Processing.');
             } elseif ($this->vendorOrder->status == 'Processing') {
                 $this->vendorOrder->update([
                     'status' => 'Delivered',
@@ -41,12 +41,12 @@ class OrderDetail extends Component
                     'is_shipped' => 1,
                 ]);
                 DB::commit();
-                return redirect()->route('vendor.orderDetail', ['id' => $this->vendorId])->with('success', 'Order updated to Delivered.');
+                return redirect()->route('shop-user.orderDetail', ['id' => $this->vendorId])->with('success', 'Order updated to Delivered.');
             }
             // $order->save();
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->route('vendor.orderDetail', ['id' => $this->vendorId])->with('error', 'Something went wrong: ' . $e->getMessage());
+            return redirect()->route('shop-user.orderDetail', ['id' => $this->vendorId])->with('error', 'Something went wrong: ' . $e->getMessage());
         }
 
     }
@@ -61,15 +61,15 @@ class OrderDetail extends Component
                     'status' => 'Cancelled',
                 ]);
                 DB::commit();
-                return redirect()->route('vendor.orderDetail', ['id' => $this->vendorId])->with('success', 'Order has been cancelled');
+                return redirect()->route('shop-user.orderDetail', ['id' => $this->vendorId])->with('success', 'Order has been cancelled');
             } else {
                 DB::rollBack();
-                return redirect()->route('vendor.orderDetail', ['id' => $this->vendorId])->with('success', 'Order has been cancelled');
+                return redirect()->route('shop-user.orderDetail', ['id' => $this->vendorId])->with('success', 'Order has been cancelled');
 
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->route('vendor.orderDetail')->with('error', 'Some error occur' . $e->getMessage());
+            return redirect()->route('shop-user.orderDetail')->with('error', 'Some error occur' . $e->getMessage());
         }
 
     }
@@ -84,15 +84,15 @@ class OrderDetail extends Component
                     'status' => 'Pending',
                 ]);
                 DB::commit();
-                return redirect()->route('vendor.orderDetail', ['id' => $this->vendorId])->with('success', 'Order has been cancelled');
+                return redirect()->route('shop-user.orderDetail', ['id' => $this->vendorId])->with('success', 'Order has been cancelled');
             } else {
                 DB::rollBack();
-                return redirect()->route('vendor.orderDetail', ['id' => $this->vendorId])->with('success', 'Order reset to pending');
+                return redirect()->route('shop-user.orderDetail', ['id' => $this->vendorId])->with('success', 'Order reset to pending');
 
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->route('vendor.orderDetail')->with('error', 'Some error occur' . $e->getMessage());
+            return redirect()->route('shop-user.orderDetail')->with('error', 'Some error occur' . $e->getMessage());
         }
 
     }

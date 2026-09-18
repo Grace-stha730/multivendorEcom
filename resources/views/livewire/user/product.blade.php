@@ -5,7 +5,7 @@
     <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
         <div>
             <h2 class="text-3xl font-bold text-gray-800">Our Products</h2>
-            <p class="text-sm text-gray-500 mt-1">Browse our wide selection of items from various vendors</p>
+            <p class="text-sm text-gray-500 mt-1">Browse our wide selection of items from independent shops</p>
         </div>
 
         <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
@@ -53,10 +53,10 @@
                                 </span>
                             @endif
 
-                            @if ($product->vendor)
+                            @if ($product->shop)
                                 <p
                                     class="absolute top-2 right-2 bg-green-600 text-white text-xs font-semibold px-2 py-1 rounded-full">
-                                    {{ $product->vendor->shop_name }}
+                                    {{ $product->shop->name }}
                                 </p>
                             @endif
 

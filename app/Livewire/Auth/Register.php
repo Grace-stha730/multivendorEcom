@@ -2,7 +2,6 @@
 
 namespace App\Livewire\Auth;
 
-use App\Models\Vendor;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Attributes\Layout;

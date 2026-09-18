@@ -39,6 +39,12 @@
                 <a href="{{ route('user.coupons') }}" class="hover:border-b-3 {{ request()->is('coupons') ? 'border-b-3' : '' }}"
                     wire:navigate>Coupons</a>
             </li>
+            @if (Auth::guard('web')->check())
+                <li class="py-3 lg:py-0">
+                    <a href="{{ route('user.collections') }}" class="hover:border-b-3 {{ request()->is('collections') ? 'border-b-3' : '' }}"
+                        wire:navigate>Collections</a>
+                </li>
+            @endif
             <li class="py-3 lg:py-0">
                 <a href="{{ route('user.order') }}" class="hover:border-b-3 {{ request()->is('order') || request()->is('review*') ? 'border-b-3' : '' }}"
                     wire:navigate>Order</a>
@@ -98,6 +104,11 @@
                                 <span class="space-x-1.5 block hover:text-gray-400">
                                     <i class="fa-solid fa-ticket text-yellow-400"></i>
                                     <a href="{{ route('user.coupons') }}">Coupons</a>
+                                </span>
+
+                                <span class="space-x-1.5 block hover:text-gray-400">
+                                    <i class="fa-solid fa-list text-cyan-400"></i>
+                                    <a href="{{ route('user.collections') }}">Collections</a>
                                 </span>
 
                                 <span class="space-x-1.5 block hover:text-gray-400">

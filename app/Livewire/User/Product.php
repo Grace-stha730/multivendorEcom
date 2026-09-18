@@ -14,12 +14,16 @@ use Livewire\Attributes\Layout;
 use Livewire\Component;
 use App\Models\Product as modalProduct;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 
 #[Title(content: 'Product')]
 #[Layout('components/layouts/user')]
 class Product extends Component
 {
-    public $search = "", $category = "";
+    public $search = '';
+
+    #[Url]
+    public $category = '';
 
     public function AddToCart($id)
     {
@@ -99,7 +103,7 @@ class Product extends Component
             ? app(TfidfProductSearch::class)->search($this->search, $this->category ?: null)
             : app(WeightedRatingService::class)->rankedProducts(
                 modalProduct::when($this->category, fn ($query) => $query->where('category_id', $this->category))
-                    ->with(['vendor', 'firstImage'])
+                    ->with(['shop', 'firstImage'])
                     ->withCount('reviews')
                     ->withAvg('reviews', 'rating')
                     ->latest()

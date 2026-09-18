@@ -68,7 +68,7 @@
     <div class="bg-white rounded-xl shadow p-6">
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-lg font-semibold text-gray-800">Recent Orders</h2>
-            <a href="{{ route('vendor.order') }}" class="text-blue-600 text-sm hover:underline">View All</a>
+            <a href="{{ route('shop-user.order') }}" class="text-blue-600 text-sm hover:underline">View All</a>
         </div>
 
         <div class="overflow-x-auto">
@@ -122,7 +122,7 @@
         </div>
     </div>
 
-    <!-- Analytics / Graph placeholder -->
+    <!-- Sales analytics -->
     <div class="bg-white rounded-2xl shadow p-6">
         <h2 class="text-lg font-semibold text-gray-800 mb-6">Sales Overview</h2>
 

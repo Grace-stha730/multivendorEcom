@@ -20,7 +20,7 @@
                             src="{{ $photo->temporaryUrl() }}" alt="Admin Image">
                     @elseif(!$oldPhoto)
                         <img class="w-24 h-24 rounded-full object-cover border shadow-sm"
-                            src="{{ asset('storage/default/vendor.jpg') }}" alt="">
+                            src="{{ asset('default/vendor.svg') }}" alt="">
                     @elseif(str_starts_with($oldPhoto, 'http'))
                         <img class="w-24 h-24 rounded-full object-cover border shadow-sm" src="{{ $oldPhoto }}" alt="Profile image">
                     @else

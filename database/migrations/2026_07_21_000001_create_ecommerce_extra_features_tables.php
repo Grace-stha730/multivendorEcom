@@ -19,7 +19,7 @@ return new class extends Migration
                 $table->enum('type', ['fixed', 'percent'])->default('fixed');
                 $table->decimal('value', 10, 2);
                 $table->decimal('min_order_amount', 10, 2)->default(0);
-                $table->foreignId('vendor_id')->nullable()->constrained()->onDelete('cascade');
+                $table->foreignId('shop_id')->nullable()->constrained('shops')->cascadeOnDelete();
                 $table->boolean('is_active')->default(true);
                 $table->timestamp('starts_at')->nullable();
                 $table->timestamp('expires_at')->nullable();
@@ -31,7 +31,7 @@ return new class extends Migration
         if (!Schema::hasTable('vendor_payouts')) {
             Schema::create('vendor_payouts', function (Blueprint $table) {
                 $table->id();
-                $table->foreignId('vendor_id')->constrained()->onDelete('cascade');
+                $table->foreignId('shop_id')->constrained('shops')->cascadeOnDelete();
                 $table->decimal('amount', 10, 2);
                 $table->enum('status', ['Pending', 'Approved', 'Paid', 'Rejected'])->default('Pending');
                 $table->string('payment_method')->nullable();
@@ -59,12 +59,12 @@ return new class extends Migration
             Schema::create('conversations', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('user_id')->constrained()->onDelete('cascade');
-                $table->foreignId('vendor_id')->constrained()->onDelete('cascade');
+                $table->foreignId('shop_user_id')->constrained('shop_users')->cascadeOnDelete();
                 $table->foreignId('product_id')->nullable()->constrained()->onDelete('cascade');
                 $table->timestamp('last_message_at')->nullable();
                 $table->timestamps();
 
-                $table->unique(['user_id', 'vendor_id', 'product_id']);
+                $table->unique(['user_id', 'shop_user_id', 'product_id']);
             });
         }
 
@@ -73,7 +73,7 @@ return new class extends Migration
             Schema::create('chat_messages', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('conversation_id')->constrained()->onDelete('cascade');
-                $table->enum('sender_type', ['user', 'vendor']);
+                $table->enum('sender_type', ['user', 'shop_user']);
                 $table->unsignedBigInteger('sender_id');
                 $table->text('message');
                 $table->boolean('is_read')->default(false);

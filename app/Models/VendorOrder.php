@@ -8,7 +8,7 @@ class VendorOrder extends Model
 {
     protected $fillable = [
         'order_id',
-        'vendor_id',
+        'shop_id',
         'subtotal',
         'status',
         'is_received',
@@ -20,9 +20,9 @@ class VendorOrder extends Model
         return $this->belongsTo(Order::class);
     }
 
-    public function vendor()
+    public function shop()
     {
-        return $this->belongsTo(Vendor::class);
+        return $this->belongsTo(Shop::class);
     }
 
     public function items()

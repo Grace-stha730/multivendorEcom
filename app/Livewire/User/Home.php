@@ -64,7 +64,7 @@ class Home extends Component
     public function render()
     {
         $products = app(WeightedRatingService::class)
-            ->rankedProducts(Product::with(['vendor', 'firstImage'])->withCount('reviews')->withAvg('reviews', 'rating')->latest()->get())
+            ->rankedProducts(Product::with(['shop', 'firstImage'])->withCount('reviews')->withAvg('reviews', 'rating')->latest()->get())
             ->take(10);
         $recommendations = Auth::guard('web')->check()
             ? app(PurchaseRecommendationService::class)->forUser(Auth::guard('web')->user())

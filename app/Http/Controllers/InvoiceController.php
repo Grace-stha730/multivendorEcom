@@ -27,7 +27,7 @@ class InvoiceController extends Controller
         $vendorOrder = VendorOrder::with(['order', 'vendor', 'items.product'])->findOrFail($id);
 
         // Ensure vendor accesses only their own order
-        if (Auth::guard('vendor')->check() && Auth::guard('vendor')->id() != $vendorOrder->vendor_id) {
+        if (Auth::guard('shop_user')->check() && Auth::guard('shop_user')->user()->shop_id != $vendorOrder->shop_id) {
             abort(403, 'Unauthorized access to this sales invoice.');
         }
 

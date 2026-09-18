@@ -51,9 +51,9 @@ class AuthController extends Controller
         }
     }
 
-    public function logout(){
-        Auth::guard('vendor')->logout();
-        return redirect()->route('vendor.login')->with('success','Logged out successfully');
+    public function shopUserLogout(){
+        Auth::guard('shop_user')->logout();
+        return redirect()->route('shop-user.login')->with('success','Logged out successfully');
     }
 
     public function userlogout(){
