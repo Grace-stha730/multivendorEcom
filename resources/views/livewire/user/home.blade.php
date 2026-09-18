@@ -2,6 +2,21 @@
     @include('component.user.carousel')
     @include('component.user.coupon-card')
 
+    <section class="mx-auto my-8 w-[90%] overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-950 via-emerald-800 to-teal-700 text-white shadow-lg md:w-[80%]">
+        <div class="flex flex-col items-start justify-between gap-6 px-6 py-8 sm:px-10 md:flex-row md:items-center">
+            <div>
+                <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-emerald-100">
+                    <i class="fa-solid fa-store"></i> Grow with us
+                </span>
+                <h2 class="mt-3 text-2xl font-bold sm:text-3xl">Sell your products on our marketplace</h2>
+                <p class="mt-2 max-w-2xl text-sm leading-6 text-emerald-50/80">Manage your shop, products, orders, and earnings from one simple vendor workspace.</p>
+            </div>
+            <a href="{{ route('shop-user.login') }}" class="inline-flex shrink-0 items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-emerald-900 shadow-sm transition hover:bg-emerald-50" wire:navigate>
+                Vendor login <i class="fa-solid fa-arrow-right"></i>
+            </a>
+        </div>
+    </section>
+
     @if ($recommendations->isNotEmpty())
         <section class="w-[90%] md:w-[80%] mx-auto my-8">
             <h2 class="text-2xl md:text-3xl font-semibold text-gray-800 mb-2 text-center">Recommended for You</h2>
