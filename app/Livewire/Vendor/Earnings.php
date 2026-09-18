@@ -6,8 +6,10 @@ use App\Models\VendorOrder;
 use App\Models\VendorPayout;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
+#[Layout('components.layouts.app')]
 #[Title('Vendor Earnings & Payouts')]
 class Earnings extends Component
 {

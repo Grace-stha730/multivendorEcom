@@ -14,9 +14,9 @@
 </head>
 
 <body class="min-h-screen bg-[#f6f8f7] antialiased">
-    @include('common.message')
     {{ $slot }}
     @livewireScripts
+    <x-toast position="toast-bottom toast-end" />
 </body>
 
 </html>

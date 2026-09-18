@@ -2,36 +2,11 @@
     <div class="w-[60%] max-w-lg bg-white shadow-lg rounded-2xl p-8">
         <h1 class="text-xl font-bold text-gray-800 mb-6 text-center">🛍️ Admin Login</h1>
 
-        <form wire:submit="login" class="space-y-5">
-            <!-- Email -->
-            <div>
-                <label for="email" class="block text-gray-700  text-sm font-medium mb-1">Email Address</label>
-                <input type="email" id="email" wire:model="email"
-                    class="w-full border border-gray-300 rounded-lg px-3 text-sm py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    placeholder="Enter your email">
-                @error('email')
-                    <small class="text-red-500">{{ $message }}</small>
-                @enderror
-            </div>
+        <form wire:submit.prevent="login" class="space-y-5">
+            <x-input label="Email address" wire:model="email" type="email" icon="o-envelope" placeholder="Enter your email" class="login-input" />
+            <x-password label="Password" wire:model="password" right placeholder="Enter password" class="login-password" />
 
-            <!-- Password -->
-            <div>
-                <label for="password" class="block text-gray-700 font-medium mb-1 text-sm">Password</label>
-                <input type="password" id="password" wire:model="password"
-                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    placeholder="Enter password">
-                @error('password')
-                    <small class="text-red-500">{{ $message }}</small>
-                @enderror
-            </div>
-
-            <!-- Submit Button -->
-            <div>
-                <button type="submit"
-                    class="w-full bg-blue-500 text-white text-sm font-semibold py-2 rounded-lg hover:bg-blue-600 transition duration-200 cursor-pointer">
-                    Login
-                </button>
-            </div>
+            <x-button label="Login" icon="o-arrow-right-on-rectangle" type="submit" class="btn-primary w-full" spinner="login" />
 
 
         </form>

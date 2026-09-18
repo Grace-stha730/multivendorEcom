@@ -5,8 +5,10 @@ namespace App\Livewire\Vendor;
 use App\Models\Coupon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
+#[Layout('components.layouts.app')]
 #[Title('Vendor Coupons')]
 class Coupons extends Component
 {

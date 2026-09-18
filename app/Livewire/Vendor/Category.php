@@ -7,7 +7,9 @@ use App\Models\Category as ModelsCategory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Layout;
 
+#[Layout('components.layouts.app')]
 #[Title(content: 'Category')]
 class Category extends Component
 {

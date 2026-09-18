@@ -7,7 +7,9 @@ use App\Models\Product;
 use App\Models\productRating;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Livewire\Attributes\Layout;
 
+#[Layout('components.layouts.app')]
 class ProductReview extends Component
 {
 

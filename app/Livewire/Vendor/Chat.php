@@ -7,8 +7,10 @@ use App\Models\ChatMessage;
 use App\Events\MessageSent;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
+#[Layout('components.layouts.app')]
 #[Title('Customer Chats')]
 class Chat extends Component
 {

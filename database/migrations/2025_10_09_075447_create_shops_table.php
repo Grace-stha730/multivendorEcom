@@ -19,7 +19,6 @@ return new class extends Migration {
             $table->string('city');
             $table->string('tole');
             $table->string('email')->unique();
-            $table->string('phone');
             $table->string('status')->default('active');
             $table->timestamps();
         });

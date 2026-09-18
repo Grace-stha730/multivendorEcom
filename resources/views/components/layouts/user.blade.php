@@ -17,10 +17,9 @@
 </head>
 
 <body class="bg-[#f6f8f7] antialiased">
-    @include('common.message')
     <div class="relative z-50">
         @include('component.user.header')
-    </div class="z-0">
+    </div>
     <main class="app-page">{{ $slot }}</main>
 
     <div class="z-10">
@@ -32,6 +31,7 @@
     <!-- Slick JS -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
     @livewireScripts
+    <x-toast position="toast-bottom toast-end" />
 </body>
 
 </html>

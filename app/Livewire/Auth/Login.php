@@ -6,11 +6,14 @@ use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
+use Mary\Traits\Toast;
 
 #[Layout('components.layouts.auth')]
 #[Title('Login')]
 class Login extends Component
 {
+    use Toast;
+
     public $username, $password;
 
     public function login()
@@ -27,9 +30,9 @@ class Login extends Component
             ])
         ) {
 
-            return redirect()->route('shop-user.dashboard')->with('success', 'Login successful');
+            return $this->success('Login successful', position: 'toast-bottom toast-end', redirectTo: route('shop-user.dashboard'));
         } else {
-            return redirect()->route('shop-user.login')->with('error', 'Invalid credentials');
+            $this->error('Invalid credentials', 'Please check your username and password.', 'toast-bottom toast-end');
         }
     }
 

@@ -1,9 +1,2 @@
-<div class="flex justify-between px-5 items-center " >
-    <div class="text-xl cursor-pointer" @click.prevent="toggle">
-        <i class="fa-solid fa-bars-staggered"></i>
-    </div>
-
-    <div class="text-sm">
-        <p>{{ Auth::guard('vendor')->user()->owner_name }}</p>
-    </div>
-</div>
+@php($shopUser = Auth::guard('shop_user')->user())
+<div class="flex h-18 items-center justify-between px-4 sm:px-6 lg:px-8"><div class="flex items-center gap-3"><button type="button" @click="sidebarOpen = true" class="grid h-10 w-10 place-items-center rounded-xl border border-emerald-950/10 text-emerald-800 lg:hidden"><i class="fa-solid fa-bars"></i></button><div><p class="text-xs font-medium text-emerald-800/50">Shop portal</p><h1 class="text-sm font-bold text-emerald-950">{{ $title ?? 'Dashboard' }}</h1></div></div><div class="flex items-center gap-3"><span class="hidden text-right sm:block"><span class="block text-sm font-semibold text-emerald-950">{{ $shopUser?->name }}</span><span class="block text-xs text-emerald-800/50">Shop user</span></span><div class="grid h-10 w-10 place-items-center rounded-xl bg-emerald-100 text-emerald-700"><i class="fa-solid fa-user"></i></div></div></div>

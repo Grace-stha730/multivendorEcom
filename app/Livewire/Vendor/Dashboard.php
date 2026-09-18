@@ -8,7 +8,9 @@ use App\Models\VendorOrder;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Layout;
 
+#[Layout('components.layouts.app')]
 #[Title('Dashboard')]
 class Dashboard extends Component
 {
@@ -32,7 +34,7 @@ class Dashboard extends Component
         ->orderByDesc('total_sold')
         ->orderByDesc('total_price')
         ->get();
-        
+
         $lowStockProducts = Product::where('shop_id', $shopId)->where('stock', '<', 5)->get();
 
         return view('livewire.vendor.dashboard', [

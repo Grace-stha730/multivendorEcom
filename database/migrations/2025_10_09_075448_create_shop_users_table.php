@@ -15,9 +15,9 @@ return new class extends Migration {
             $table->string('name');
             $table->string('username')->unique();
             $table->string('personal_email')->nullable();
-            $table->string('address');
+            $table->string('address')->nullable();
             $table->string('password');
-            $table->string('contact');
+            $table->string('contact')->nullable();
             $table->string('image')->nullable();
             $table->string('pan_number')->nullable();
             $table->foreignId('shop_id')->constrained('shops')->cascadeOnDelete();
