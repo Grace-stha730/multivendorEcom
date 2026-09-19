@@ -3,18 +3,14 @@
 namespace App\Services\Search;
 
 use App\Models\Product;
-use App\Models\ProductEmbedding;
+use App\Models\ProductVector;
 use Illuminate\Support\Collection;
 
 class ClusteredProductSearch
 {
-    public function __construct(private ProductEmbeddingService $embeddingService)
-    {
-    }
-
     public function search(string $query = '', string $algorithm = 'kmeans'): array
     {
-        $products = Product::with(['vendor', 'category', 'firstImage', 'productRating'])->get();
+        $products = Product::with(['shop', 'category', 'firstImage', 'productRating'])->get();
 
         if ($products->isEmpty()) {
             return [];
@@ -29,7 +25,7 @@ class ClusteredProductSearch
             ];
         })->values();
 
-        $queryEmbedding = $this->embeddingService->embedText($query);
+        $queryEmbedding = [];
         $ranked = $points->map(function (array $point) use ($query, $queryEmbedding) {
             $point['score'] = $this->rankScore($point['product'], $point['embedding'], $queryEmbedding, $query);
 
@@ -49,21 +45,7 @@ class ClusteredProductSearch
 
     private function embeddingFor(Product $product): array
     {
-        $hash = $this->embeddingService->productTextHash($product);
-        $stored = ProductEmbedding::where('product_id', $product->id)->first();
-
-        if ($stored && $stored->text_hash === $hash) {
-            return $stored->embedding;
-        }
-
-        $embedding = $this->embeddingService->embedProduct($product);
-
-        ProductEmbedding::updateOrCreate(
-            ['product_id' => $product->id],
-            ['embedding' => $embedding, 'text_hash' => $hash]
-        );
-
-        return $embedding;
+        return ProductVector::where('product_id', $product->id)->value('vector') ?: [];
     }
 
     private function rankScore(Product $product, array $embedding, array $queryEmbedding, string $query): float
@@ -84,10 +66,6 @@ class ClusteredProductSearch
             $label = $labels[$index] ?? -1;
             $groups[$label][] = $point;
 
-            ProductEmbedding::where('product_id', $point['product']->id)->update([
-                'cluster_algorithm' => $algorithm,
-                'cluster_label' => $label,
-            ]);
         }
 
         ksort($groups);
@@ -204,15 +182,9 @@ class ClusteredProductSearch
 
     private function meanVector(array $vectors): array
     {
-        $mean = array_fill(0, ProductEmbeddingService::DIMENSIONS, 0.0);
-
-        foreach ($vectors as $vector) {
-            foreach ($vector as $index => $value) {
-                $mean[$index] += $value;
-            }
-        }
-
-        return array_map(fn ($value) => $value / count($vectors), $mean);
+        $mean = [];
+        foreach ($vectors as $vector) foreach ($vector as $term => $value) $mean[$term] = ($mean[$term] ?? 0) + $value;
+        return collect($mean)->map(fn ($value) => $value / count($vectors))->all();
     }
 
     private function cosine(array $a, array $b): float

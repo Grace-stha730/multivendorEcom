@@ -2,13 +2,20 @@
    <div class="mt-10 bg-gray-50 p-6 rounded-xl shadow-sm">
        <h3 class="font-semibold text-lg mb-4">Store Information</h3>
        <div class="flex items-center gap-5">
-           <img class="w-24 h-24 object-cover rounded-full border"
-               src="{{ asset('storage/' . $product->vendor->shop_image) }}" alt="">
-           <div>
-               <a href="{{ route('user.shop', ['id' => $product->shop->id]) }}"
-                   class="text-xl font-semibold text-gray-600 hover:text-gray-800"
-                   title="view Vendor">{{ $product->vendor->shop_name }}</a>
-               {{-- <p class="text-gray-600 mb-1">{{ $product->vendor->shop_name }}</p> --}}
+           @if ($product->shop)
+               <img class="w-24 h-24 object-cover rounded-full border"
+                   src="{{ $product->shop->image ? asset('storage/' . $product->shop->image) : asset('default/vendor.svg') }}"
+                   alt="{{ $product->shop->name }}">
+               <div>
+                   <a href="{{ route('user.shop', ['id' => $product->shop->id]) }}"
+                       class="text-xl font-semibold text-gray-600 hover:text-gray-800"
+                       title="View store">{{ $product->shop->name }}</a>
+           @else
+               <img class="w-24 h-24 object-cover rounded-full border" src="{{ asset('default/vendor.svg') }}"
+                   alt="Store unavailable">
+               <div>
+                   <span class="text-xl font-semibold text-gray-600">Store unavailable</span>
+           @endif
 
                <!-- Static Rating -->
                <div class="flex items-center gap-1 text-yellow-400 mb-1">
@@ -21,6 +28,6 @@
 
                <p class="text-gray-500 text-sm italic">“Excellent service and good quality products. Highly
                    recommended!”</p>
-           </div>
+               </div>
        </div>
    </div>

@@ -12,6 +12,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use App\Services\Catalog\RatingService;
 
 #[Layout('components.layouts.user')]
 #[Title('Review')]
@@ -75,6 +76,9 @@ class Review extends Component
             }
 
             DB::commit();
+            app(RatingService::class)->clearPlatformMeans();
+            // Keep stored ranking values current immediately after new feedback.
+            \Illuminate\Support\Facades\Artisan::call('ratings:recalculate');
             return redirect()
                 ->route('user.order')
                 ->with('success', 'Thank you for your valuable feedback! Your reviews have been submitted successfully.');

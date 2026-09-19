@@ -13,6 +13,7 @@
                                 <th class="px-4 py-3 text-left">Product</th>
                                 <th class="px-4 py-3 text-center">Price</th>
                                 <th class="px-4 py-3 text-center">Quantity</th>
+                                <th class="px-4 py-3 text-center">Discount</th>
                                 <th class="px-4 py-3 text-center">Subtotal</th>
                                 <th class="px-4 py-3 text-center">Action</th>
                             </tr>
@@ -34,15 +35,20 @@
                                                 <p class="text-gray-500 text-xs truncate">{{ $item->product->summary }}
                                                 </p>
                                                 <p class="text-xs text-gray-400">Stock Left: {{ $item->product->stock }}</p>
-                                                @if($item->selected_variants)
+                                                @if(!empty($item->selected_variants['variants']))
                                                     <div class="flex flex-wrap gap-1 mt-1">
-                                                        @foreach($item->selected_variants as $name => $val)
-                                                            <span class="inline-block bg-indigo-50 text-indigo-700 text-[10px] px-1.5 py-0.5 rounded border border-indigo-100 font-semibold">
-                                                                {{ $name }}: {{ $val }}
-                                                            </span>
+                                                        @foreach($item->selected_variants['variants'] as $variant)
+                                                            <span class="inline-block bg-indigo-50 text-indigo-700 text-[10px] px-1.5 py-0.5 rounded border border-indigo-100 font-semibold">{{ $variant['attribute_value'] ?: $variant['attribute_name'] }} × {{ $variant['quantity'] }}</span>
                                                         @endforeach
                                                     </div>
                                                 @endif
+                                                @if($item->product->variants->where('stock', '>', 0)->isNotEmpty())
+                                                    <button type="button" wire:click="openVariantModal({{ $item->id }})" class="mt-2 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold px-2 py-1 rounded border border-indigo-200">{{ !empty($item->selected_variants['variants']) ? 'Change variants' : 'Choose variants' }}</button>
+                                                @endif
+                                                @if($this->vendorCouponsFor($item->product)->isNotEmpty())
+                                                    <button type="button" wire:click="openCouponModal({{ $item->id }})" class="mt-2 ml-1 text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 font-semibold px-2 py-1 rounded border border-amber-200">{{ isset($vendorCouponSelections[$item->id]) ? 'Change coupon' : 'View coupons' }}</button>
+                                                @endif
+                                                @if(!empty($couponMessages[$item->id]))<p class="text-xs text-red-600 mt-1">{{ $couponMessages[$item->id] }}</p>@endif
                                             </div>
                                         </td>
 
@@ -55,12 +61,12 @@
                                                     </span>
                                                     <span class="text-red-500 font-semibold">
                                                         Rs.
-                                                        {{ $item->product->price - $item->product->discount_amount }}
+                                                        {{ number_format($item->price, 2) }}
                                                     </span>
                                                 </div>
                                             @else
                                                 <span class="text-gray-700 font-semibold">
-                                                    Rs. {{ $item->product->price }}
+                                                    Rs. {{ number_format($item->price, 2) }}
                                                 </span>
                                             @endif
                                         </td>
@@ -85,9 +91,19 @@
                                             @enderror
                                         </td>
 
-                                        <!-- Subtotal -->
+                                        <!-- Coupon discount -->
+                                        <td class="px-4 py-4 text-center whitespace-nowrap">
+                                            @if(($vendorCouponDiscounts[$item->id] ?? 0) > 0)
+                                                <p class="font-semibold text-green-600">- Rs. {{ number_format($vendorCouponDiscounts[$item->id], 2) }}</p>
+                                                <button wire:click="removeVendorCoupon({{ $item->id }})" class="mt-1 text-xs text-red-600 hover:underline">Remove coupon</button>
+                                            @else
+                                                <span class="text-gray-400">—</span>
+                                            @endif
+                                        </td>
+
+                                        <!-- Final subtotal -->
                                         <td class="px-4 py-4 text-center font-semibold text-gray-800 whitespace-nowrap">
-                                            Rs. {{ $item->sub_total }}
+                                            Rs. {{ number_format(max(0, $item->sub_total - ($vendorCouponDiscounts[$item->id] ?? 0)), 2) }}
                                         </td>
 
                                         <!-- Remove -->
@@ -102,6 +118,42 @@
                         </tbody>
                     </table>
                 </div>
+
+                @if($variantCartItem)
+                    <div class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+                        <div class="w-full max-w-lg bg-white rounded-xl shadow-xl p-6">
+                            <div class="flex items-start justify-between gap-4 mb-4"><div><h3 class="text-lg font-bold">Choose variants and quantities</h3><p class="text-sm text-gray-500">Only available variants are shown. You can order more than one variant.</p></div><button type="button" wire:click="closeVariantModal" class="text-xl text-gray-500">&times;</button></div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                @foreach($variantCartItem->product->variants->where('stock', '>', 0) as $variant)
+                                    <div class="text-left border rounded-lg p-3 border-gray-200">
+                                        <span class="block font-semibold">{{ $variant->attribute_value ?: $variant->attribute_name }}</span>
+                                        @if($variant->attribute_value)<span class="block text-xs text-gray-500">{{ $variant->attribute_name }}</span>@endif
+                                        <span class="block mt-1 text-sm {{ $variant->price_extra >= 0 ? 'text-indigo-700' : 'text-green-700' }}">{{ $variant->price_extra >= 0 ? '+' : '' }}Rs. {{ number_format($variant->price_extra, 2) }}</span>
+                                        <span class="block text-xs text-gray-500">{{ $variant->stock }} available</span>
+                                        <label class="block text-xs font-medium mt-2">Quantity <input type="number" min="0" max="{{ $variant->stock }}" wire:model.live="variantQuantities.{{ $variant->id }}" class="ml-2 w-16 border rounded p-1 text-center"></label>
+                                        @error('variantQuantities.'.$variant->id)<p class="text-xs text-red-600 mt-1">{{ $message }}</p>@enderror
+                                    </div>
+                                @endforeach
+                            </div>
+                            <div class="mt-5 flex justify-end gap-3"><button type="button" wire:click="closeVariantModal" class="px-4 py-2 border rounded">Cancel</button><button type="button" wire:click="applyVariantQuantities" class="px-4 py-2 bg-indigo-600 text-white rounded">Update cart</button></div>
+                        </div>
+                    </div>
+                @endif
+
+                @if($couponCartItem)
+                    <div class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+                        <div class="w-full max-w-lg bg-white rounded-xl shadow-xl p-6">
+                            <div class="flex items-start justify-between gap-4 mb-4"><div><h3 class="text-lg font-bold">Available coupons</h3><p class="text-sm text-gray-500">Choose one vendor coupon for this product.</p></div><button type="button" wire:click="closeCouponModal" class="text-xl text-gray-500">&times;</button></div>
+                            <div class="space-y-3">
+                                @foreach($this->vendorCouponsFor($couponCartItem->product) as $coupon)
+                                    @php($collected = \App\Models\CouponUser::where('coupon_id', $coupon->id)->where('user_id', $userId)->exists())
+                                    <div class="border rounded-lg p-3 flex items-center justify-between gap-3"><div><p class="font-semibold">{{ $coupon->code }}</p><p class="text-xs text-gray-500">{{ $coupon->type === 'percent' ? $coupon->value.'%' : 'Rs. '.$coupon->value }} off{{ $coupon->max_discount_amount ? ', max Rs. '.$coupon->max_discount_amount : '' }}</p></div><div class="flex gap-2">@if(!$collected)<button wire:click="collectVendorCoupon({{ $coupon->id }})" class="text-xs px-3 py-1 bg-gray-100 rounded">Collect</button>@endif<button wire:click="applyVendorCoupon({{ $coupon->id }})" @disabled(!$collected) class="text-xs px-3 py-1 bg-indigo-600 text-white rounded disabled:opacity-40">Apply</button></div></div>
+                                @endforeach
+                            </div>
+                            @error('couponModal')<p class="text-sm text-red-600 mt-3">{{ $message }}</p>@enderror
+                        </div>
+                    </div>
+                @endif
 
                 <!-- Cart Summary & Coupon -->
                 <div class="mt-8 border-t pt-6">
@@ -166,6 +218,10 @@
                                 </div>
                             @endif
 
+                            @if (collect($vendorCouponDiscounts)->sum() > 0)
+                                <div class="flex justify-between w-60 md:w-80 text-green-600 font-medium"><span>Vendor coupons</span><span>- Rs. {{ number_format(collect($vendorCouponDiscounts)->sum()) }}</span></div>
+                            @endif
+
                             <div class="flex justify-between w-60 md:w-80">
                                 <span>Tax & Delivery</span>
                                 <span class="text-green-600 font-medium">Free</span>
@@ -173,7 +229,7 @@
 
                             <div class="flex justify-between w-60 md:w-80 font-bold text-lg border-t pt-2 text-gray-900">
                                 <span>Total Amount</span>
-                                <span class="text-indigo-600">Rs. {{ number_format(max(0, $subTotal - $discountAmount)) }}</span>
+                                <span class="text-indigo-600">Rs. {{ number_format(max(0, $subTotal - $discountAmount - collect($vendorCouponDiscounts)->sum())) }}</span>
                             </div>
                         </div>
 
@@ -182,11 +238,7 @@
                                 class="text-gray-600 hover:underline text-sm md:text-base flex items-center gap-1">
                                 ← Continue Shopping
                             </a>
-                            <button
-                                class="bg-indigo-600 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 transition cursor-pointer font-medium shadow"
-                                @click.prevent='checkoutTrue'>
-                                Proceed to Checkout
-                            </button>
+                            <a href="{{ route('user.checkout') }}" class="bg-indigo-600 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 transition cursor-pointer font-medium shadow">Proceed to Checkout</a>
                         </div>
                     </div>
                 </div>

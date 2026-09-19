@@ -15,7 +15,7 @@ class TfidfProductSearch
             return collect();
         }
 
-        $catalog = Product::with(['vendor', 'firstImage'])->get();
+        $catalog = Product::with(['shop', 'firstImage'])->get();
         $documents = $catalog->mapWithKeys(fn (Product $product) => [$product->id => $this->document($product)])->all();
         $scores = $this->scoreDocuments($documents, $query);
         $matchingProductIds = collect($documents)

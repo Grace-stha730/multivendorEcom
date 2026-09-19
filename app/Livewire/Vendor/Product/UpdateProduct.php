@@ -5,8 +5,11 @@ namespace App\Livewire\Vendor\Product;
 use App\Models\Category;
 use App\Models\Image;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
+use App\Services\AiContentService;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -21,6 +24,19 @@ class UpdateProduct extends Component
     
     // Product Variants property
     public $variants = [];
+
+    public function generateDescription(AiContentService $ai)
+    {
+        $shopUserId = Auth::guard('shop_user')->id(); $key = "ai:product-description:$shopUserId";
+        if (RateLimiter::tooManyAttempts($key, 10)) { $this->addError('description', 'AI generation limit reached. Try again later.'); return; }
+        try {
+            $this->description = $ai->generateProductDescription([
+                'name' => $this->name, 'category' => Category::find($this->category_id)?->name,
+                'summary' => $this->summary, 'price' => $this->price, 'variants' => $this->variants,
+            ], $shopUserId);
+            RateLimiter::hit($key, 3600);
+        } catch (\Throwable $e) { report($e); $this->addError('description', 'Could not generate a description. Please try again.'); }
+    }
 
     public function addVariant()
     {
@@ -41,7 +57,7 @@ class UpdateProduct extends Component
     #[On('getProductId')]
     public function getProductId($productId)
     {
-        $product = Product::find($productId);
+        $product = Product::where('shop_id', Auth::guard('shop_user')->user()->shop_id)->findOrFail($productId);
         // dd($product);
         $this->productId = $productId;
         $this->name = $product->name;
@@ -52,8 +68,8 @@ class UpdateProduct extends Component
         $this->category_id = $product->category_id;
         $this->price = $product->price;
         $this->realImg = Image::where('product_id', $productId)->get(['url'])->toArray();
-        $this->variants = \App\Models\ProductVariant::where('product_id', $productId)
-            ->get(['attribute_name', 'attribute_value', 'price_extra', 'stock'])
+        $this->variants = ProductVariant::where('product_id', $productId)
+            ->get(['id', 'attribute_name', 'attribute_value', 'price_extra', 'stock'])
             ->toArray();
 
     }
@@ -80,17 +96,24 @@ class UpdateProduct extends Component
             'category_id' => 'required|exists:categories,id',
             'price' => 'required|numeric|min:0',
             'images.*' => 'nullable|image', // each image must be an image file and max 1MB
+            'variants' => 'array',
+            'variants.*.id' => 'nullable|integer',
+            'variants.*.attribute_name' => 'nullable|string|max:100',
+            'variants.*.attribute_value' => 'nullable|string|max:100',
+            'variants.*.price_extra' => 'nullable|numeric',
+            'variants.*.stock' => 'nullable|integer|min:0',
         ]);
 
         DB::beginTransaction();
         try {
-            $product = Product::find($this->productId);
+            $product = Product::where('shop_id', Auth::guard('shop_user')->user()->shop_id)->findOrFail($this->productId);
             $product->update([
                 'name' => $this->name,
                 'stock' => $this->stock,
                 'summary' => $this->summary,
                 'description' => $this->description,
                 'discount' => $this->discount,
+                'discount_amount' => $this->discount > 0 ? ($this->price * $this->discount) / 100 : null,
                 'category_id' => $this->category_id,
                 'price' => $this->price,
                 'shop_id' => Auth::guard('shop_user')->user()->shop_id,
@@ -123,19 +146,7 @@ class UpdateProduct extends Component
                 }
             }
 
-            // Sync product variants
-            \App\Models\ProductVariant::where('product_id', $this->productId)->delete();
-            foreach ($this->variants as $variant) {
-                if (!empty($variant['attribute_name']) && !empty($variant['attribute_value'])) {
-                    \App\Models\ProductVariant::create([
-                        'product_id' => $product->id,
-                        'attribute_name' => trim($variant['attribute_name']),
-                        'attribute_value' => trim($variant['attribute_value']),
-                        'price_extra' => $variant['price_extra'] ?: 0,
-                        'stock' => $variant['stock'] ?: 0,
-                    ]);
-                }
-            }
+            $this->syncVariants($product);
 
             DB::commit();
             $this->reset();
@@ -143,6 +154,24 @@ class UpdateProduct extends Component
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
+        }
+    }
+
+    private function syncVariants(Product $product): void
+    {
+        $submittedIds = collect($this->variants)->pluck('id')->filter()->map(fn ($id) => (int) $id);
+        $product->variants()->whereNotIn('id', $submittedIds)->delete();
+
+        foreach ($this->variants as $variant) {
+            if (!filled($variant['attribute_name'] ?? null)) continue;
+            $data = [
+                'attribute_name' => trim($variant['attribute_name']),
+                'attribute_value' => trim($variant['attribute_value'] ?? ''),
+                'price_extra' => $variant['price_extra'] ?? 0,
+                'stock' => $variant['stock'] ?? 0,
+            ];
+            if (!empty($variant['id'])) $product->variants()->whereKey($variant['id'])->update($data);
+            else $product->variants()->create($data);
         }
     }
     public function render()

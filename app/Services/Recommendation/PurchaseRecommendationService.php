@@ -53,7 +53,7 @@ class PurchaseRecommendationService
             return collect();
         }
 
-        $products = Product::with(['vendor', 'firstImage'])
+        $products = Product::with(['shop', 'firstImage'])
             ->withCount('reviews')
             ->withAvg('reviews', 'rating')
             ->whereIn('id', array_keys($scores))

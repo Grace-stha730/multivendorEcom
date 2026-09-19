@@ -144,4 +144,14 @@
             </div>
         </form>
     </div>
+
+    <div class="mt-6 rounded-2xl bg-white p-6 shadow">
+        <h3 class="text-lg font-semibold text-gray-800">AI support</h3>
+        <p class="mt-1 text-sm text-gray-500">Let the AI send a first response after the configured delay when your team has not replied.</p>
+        <label class="mt-4 flex items-center gap-3 text-sm font-medium text-gray-700">
+            <input type="checkbox" wire:model="aiAutoReplyEnabled" class="rounded border-gray-300 text-indigo-600">
+            Enable AI auto-replies for this shop
+        </label>
+        <button wire:click="updateAiAutoReply" class="mt-4 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">Save AI setting</button>
+    </div>
 </div>

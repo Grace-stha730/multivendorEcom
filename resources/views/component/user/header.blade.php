@@ -52,7 +52,7 @@
             @if (Auth::guard('web')->check())
                 <li class="py-3 lg:py-0">
                     <a href="{{ route('user.chat') }}" class="hover:border-b-3 {{ request()->is('chat') ? 'border-b-3' : '' }}"
-                        wire:navigate>Messages</a>
+                        wire:navigate><i class="fa-solid fa-robot mr-1"></i>AI Chat & Messages</a>
                 </li>
             @endif
             <li class="py-3 lg:py-0">
@@ -113,7 +113,7 @@
 
                                 <span class="space-x-1.5 block hover:text-gray-400">
                                     <i class="fa-solid fa-message text-indigo-400"></i>
-                                    <a href="{{ route('user.chat') }}">Messages</a>
+                                    <a href="{{ route('user.chat') }}">AI Chat & Messages</a>
                                 </span>
 
                                 <span class="space-x-1.5 block hover:text-gray-400">

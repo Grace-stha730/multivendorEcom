@@ -23,8 +23,8 @@
                             <td class="px-4 py-2 font-medium text-gray-800">{{ $category->name }}</td>
                             <td class="px-4 py-2 text-gray-600">{{ Str::limit($category->description, 40) }}</td>
                             <td>
-                                @if ($category->vendor_id)
-                                    {{ $category->vendor->shop_name }}
+                                @if ($category->shop_id)
+                                    {{ $category->shop?->name }}
                                 @endif
                                 @if ($category->admin_id)
                                     {{ $category->admin->name }}

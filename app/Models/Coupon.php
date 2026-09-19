@@ -14,11 +14,16 @@ class Coupon extends Model
         'description',
         'type',
         'value',
+        'max_discount_amount',
         'min_order_amount',
         'usage_limit',
         'used_count',
         'min_item_price',
         'shop_id',
+        'category_id',
+        'product_id',
+        'created_by_admin_id',
+        'created_by_shop_user_id',
         'is_active',
         'starts_at',
         'expires_at',
@@ -29,6 +34,7 @@ class Coupon extends Model
         'starts_at' => 'datetime',
         'expires_at' => 'datetime',
         'value' => 'decimal:2',
+        'max_discount_amount' => 'decimal:2',
         'min_order_amount' => 'decimal:2',
         'min_item_price' => 'decimal:2',
     ];
@@ -38,6 +44,12 @@ class Coupon extends Model
         return $this->belongsTo(Shop::class);
     }
 
+    public function category() { return $this->belongsTo(Category::class); }
+    public function product() { return $this->belongsTo(Product::class); }
+    public function createdByAdmin() { return $this->belongsTo(Admin::class, 'created_by_admin_id'); }
+    public function createdByShopUser() { return $this->belongsTo(ShopUser::class, 'created_by_shop_user_id'); }
+    public function redemptions() { return $this->hasMany(CouponRedemption::class); }
+
     public function collectors()
     {
         return $this->hasMany(CouponUser::class);
@@ -46,7 +58,7 @@ class Coupon extends Model
     public function collectedByUsers()
     {
         return $this->belongsToMany(User::class, 'coupon_user')
-            ->withPivot(['order_id', 'collected_at', 'used_at'])
+            ->withPivot(['collected_at'])
             ->withTimestamps();
     }
 
@@ -113,7 +125,8 @@ class Coupon extends Model
         }
 
         if ($this->type === 'percent') {
-            return ($subtotal * $this->value) / 100;
+            $discount = ($subtotal * $this->value) / 100;
+            return min($discount, $this->max_discount_amount ?? $discount, $subtotal);
         }
 
         return min($this->value, $subtotal);

@@ -38,7 +38,7 @@
 
     <section class="w-[90%] md:w-[80%] mx-auto my-8">
         <h2 class="text-2xl md:text-3xl font-semibold text-gray-800 mb-6 text-center">
-            Our Products
+            Top Rated Products
         </h2>
 
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
@@ -112,4 +112,19 @@
             @endforeach
         </div>
     </section>
+
+    @if ($topRatedShops->isNotEmpty())
+        <section class="w-[90%] md:w-[80%] mx-auto my-10">
+            <h2 class="text-2xl md:text-3xl font-semibold text-gray-800 mb-6 text-center">Top Rated Shops</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                @foreach ($topRatedShops as $shop)
+                    <div class="rounded-xl border border-gray-100 bg-white p-4 text-center shadow-sm">
+                        <img src="{{ $shop->image ? asset('storage/' . $shop->image) : asset('storage/default/product.webp') }}" alt="{{ $shop->name }}" class="mx-auto mb-3 h-16 w-16 rounded-full object-cover">
+                        <p class="truncate font-semibold text-gray-800">{{ $shop->name }}</p>
+                        <p class="mt-1 text-xs text-yellow-600"><i class="fa-solid fa-star"></i> {{ number_format($shop->weighted_rating, 1) }}</p>
+                    </div>
+                @endforeach
+            </div>
+        </section>
+    @endif
 </div>

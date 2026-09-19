@@ -77,7 +77,7 @@ class User extends Authenticatable
     public function collectedCoupons()
     {
         return $this->belongsToMany(Coupon::class, 'coupon_user')
-            ->withPivot(['order_id', 'collected_at', 'used_at'])
+            ->withPivot(['collected_at'])
             ->withTimestamps();
     }
 }

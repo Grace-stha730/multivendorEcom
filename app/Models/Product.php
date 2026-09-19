@@ -64,6 +64,11 @@ class Product extends Model
     {
         return $this->hasMany(productRating::class);
     }
+
+    public function ratings()
+    {
+        return $this->reviews();
+    }
     public function wishlists()
     {
         return $this->hasMany(Wishlist::class);
@@ -72,6 +77,11 @@ class Product extends Model
     public function variants()
     {
         return $this->hasMany(ProductVariant::class);
+    }
+
+    public function coupons()
+    {
+        return $this->hasMany(Coupon::class);
     }
 
     public function getImageUrlAttribute()

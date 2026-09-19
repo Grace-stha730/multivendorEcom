@@ -3,6 +3,8 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Coupon;
+use App\Models\Category;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -11,7 +13,7 @@ use Livewire\Component;
 #[Layout('components.layouts.admin')]
 class Coupons extends Component
 {
-    public $code, $description, $type = 'fixed', $value, $min_order_amount = 0, $usage_limit = 1, $min_item_price = 0, $starts_at, $expires_at;
+    public $code, $description, $type = 'fixed', $value, $min_order_amount = 0, $usage_limit = 1, $min_item_price = 0, $starts_at, $expires_at, $category_id;
     public $is_active = true;
     public $editingId = null;
 
@@ -30,6 +32,7 @@ class Coupons extends Component
     public function saveCoupon()
     {
         $this->validate();
+        $this->validate(['category_id' => 'required|exists:categories,id']);
 
         $code = strtoupper(trim($this->code));
 
@@ -46,11 +49,13 @@ class Coupons extends Component
                 'is_active' => $this->is_active,
                 'starts_at' => $this->starts_at ?: null,
                 'expires_at' => $this->expires_at ?: null,
+                'category_id' => $this->category_id, 'product_id' => null, 'shop_id' => null,
             ]);
             session()->flash('success', 'Coupon updated successfully');
         } else {
             Coupon::create([
                 'code' => $code,
+                'category_id' => $this->category_id, 'created_by_admin_id' => Auth::guard('admin')->id(),
                 'description' => $this->description,
                 'type' => $this->type,
                 'value' => $this->value,
@@ -81,6 +86,7 @@ class Coupons extends Component
         $this->is_active = $coupon->is_active;
         $this->starts_at = $coupon->starts_at ? $coupon->starts_at->format('Y-m-d') : null;
         $this->expires_at = $coupon->expires_at ? $coupon->expires_at->format('Y-m-d') : null;
+        $this->category_id = $coupon->category_id;
     }
 
     public function toggleStatus($id)
@@ -98,7 +104,7 @@ class Coupons extends Component
 
     public function resetForm()
     {
-        $this->reset(['code', 'description', 'type', 'value', 'min_order_amount', 'usage_limit', 'min_item_price', 'starts_at', 'expires_at', 'is_active', 'editingId']);
+        $this->reset(['code', 'description', 'type', 'value', 'min_order_amount', 'usage_limit', 'min_item_price', 'starts_at', 'expires_at', 'is_active', 'editingId', 'category_id']);
         $this->type = 'fixed';
         $this->min_order_amount = 0;
         $this->usage_limit = 1;
@@ -109,7 +115,7 @@ class Coupons extends Component
     public function render()
     {
         return view('livewire.admin.coupons', [
-            'coupons' => Coupon::latest()->get(),
+            'coupons' => Coupon::whereNull('shop_id')->latest()->get(), 'categories' => Category::orderBy('name')->get(),
         ]);
     }
 }

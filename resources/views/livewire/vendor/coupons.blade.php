@@ -44,6 +44,18 @@
                     </div>
 
                     <div>
+                        <label class="block text-sm font-medium text-gray-700">Coupon scope</label>
+                        <select wire:model.live="scopeType" class="border border-gray-300 rounded-lg p-2.5 w-full text-sm bg-white">
+                            <option value="product">One of my products</option><option value="category">Product category</option>
+                        </select>
+                    </div>
+                    @if($scopeType === 'product')
+                        <div><label class="block text-sm font-medium text-gray-700">Product</label><select wire:model="product_id" class="border border-gray-300 rounded-lg p-2.5 w-full"><option value="">Choose product</option>@foreach($products as $product)<option value="{{ $product->id }}">{{ $product->name }}</option>@endforeach</select>@error('product_id')<small class="text-red-500">{{ $message }}</small>@enderror</div>
+                    @else
+                        <div><label class="block text-sm font-medium text-gray-700">Category</label><select wire:model="category_id" class="border border-gray-300 rounded-lg p-2.5 w-full"><option value="">Choose category</option>@foreach($categories as $category)<option value="{{ $category->id }}">{{ $category->name }}</option>@endforeach</select>@error('category_id')<small class="text-red-500">{{ $message }}</small>@enderror</div>
+                    @endif
+
+                    <div>
                         <label class="block text-sm font-medium text-gray-700">Min. Order Amount (Rs.)</label>
                         <input type="number" step="0.01" placeholder="0" wire:model="min_order_amount"
                             class="border border-gray-300 rounded-lg p-2.5 w-full text-sm">

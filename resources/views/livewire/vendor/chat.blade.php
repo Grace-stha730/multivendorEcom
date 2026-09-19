@@ -44,7 +44,7 @@
 
                                 <p class="text-xs text-gray-500 truncate">
                                     @if($conv->latestMessage)
-                                        {{ $conv->latestMessage->sender_type === 'vendor' ? 'You: ' : '' }}{{ $conv->latestMessage->message }}
+                                        {{ $conv->latestMessage->sender_type === 'shop_user' ? 'You: ' : '' }}{{ $conv->latestMessage->message }}
                                     @else
                                         No messages yet.
                                     @endif
@@ -99,22 +99,24 @@
                         @forelse ($messages as $msg)
                             <div @class([
                                 'flex flex-col max-w-[70%]',
-                                'self-end' => $msg->sender_type === 'vendor',
+                                'self-end' => $msg->sender_type === 'shop_user',
                                 'self-start' => $msg->sender_type === 'user',
                             ])>
                                 <div @class([
                                     'p-3.5 rounded-2xl text-sm shadow-sm',
-                                    'bg-emerald-600 text-white rounded-br-none' => $msg->sender_type === 'vendor',
+                                    'bg-emerald-600 text-white rounded-br-none' => $msg->sender_type === 'shop_user',
                                     'bg-white text-gray-800 border border-gray-100 rounded-bl-none' => $msg->sender_type === 'user',
+                                    'bg-violet-100 text-violet-950 border border-violet-200 rounded-bl-none' => $msg->sender_type === 'ai_bot',
                                 ])>
                                     {{ $msg->message }}
                                 </div>
                                 <span @class([
                                     'text-[10px] text-gray-400 mt-1',
-                                    'text-right' => $msg->sender_type === 'vendor',
+                                    'text-right' => $msg->sender_type === 'shop_user',
                                     'text-left' => $msg->sender_type === 'user',
                                 ])>
                                     {{ $msg->created_at->format('g:i A') }}
+                                    @if ($msg->sender_type === 'ai_bot') <span class="ml-1 rounded bg-violet-200 px-1 py-0.5 font-semibold text-violet-800">AI Assistant</span> @endif
                                     @if ($msg->sender_type === 'vendor')
                                         <span class="ml-1 text-emerald-400">
                                             @if($msg->is_read)

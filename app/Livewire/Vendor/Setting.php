@@ -18,6 +18,7 @@ class Setting extends Component
 {
     use WithFileUploads;
     public $setting, $shop_name, $owner_name, $shop_province, $shop_city, $shop_tole, $shop_email, $oldImage, $shop_image, $shop_phone, $password, $newPassword;
+    public bool $aiAutoReplyEnabled = false;
 
     public function mount()
     {
@@ -31,7 +32,16 @@ class Setting extends Component
         $this->shop_tole = $setting->shop_tole;
         $this->shop_phone = $setting->shop_phone;
         $this->oldImage = $setting->shop_image;
+        $this->aiAutoReplyEnabled = (bool) $setting->shop?->ai_auto_reply_enabled;
 
+    }
+
+    public function updateAiAutoReply(): void
+    {
+        $shop = Auth::guard('shop_user')->user()?->shop;
+        if (! $shop) return;
+        $shop->update(['ai_auto_reply_enabled' => $this->aiAutoReplyEnabled]);
+        session()->flash('success', 'AI auto-reply setting updated.');
     }
 
     public function updateProfile()

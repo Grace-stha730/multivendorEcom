@@ -87,7 +87,7 @@ class Category extends Component
     public function render()
     {
         return view('livewire.admin.category', [
-            'categories' => modelCategory::with('vendor', 'admin')->get(),
+            'categories' => modelCategory::with('shop', 'admin')->get(),
         ]);
     }
 }

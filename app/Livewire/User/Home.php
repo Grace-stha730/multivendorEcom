@@ -7,6 +7,7 @@ use App\Models\Cart_items;
 use App\Models\Product;
 use App\Services\Catalog\WeightedRatingService;
 use App\Services\Recommendation\PurchaseRecommendationService;
+use App\Models\Shop;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
@@ -63,9 +64,8 @@ class Home extends Component
     }
     public function render()
     {
-        $products = app(WeightedRatingService::class)
-            ->rankedProducts(Product::with(['shop', 'firstImage'])->withCount('reviews')->withAvg('reviews', 'rating')->latest()->get())
-            ->take(10);
+        $products = Product::with(['shop', 'firstImage'])->withCount('reviews')->orderByDesc('weighted_rating')->latest()->take(10)->get();
+        $topRatedShops = Shop::orderByDesc('weighted_rating')->take(6)->get();
         $recommendations = Auth::guard('web')->check()
             ? app(PurchaseRecommendationService::class)->forUser(Auth::guard('web')->user())
             : collect();
@@ -73,6 +73,7 @@ class Home extends Component
         return view('livewire.user.home', [
             'products' => $products,
             'recommendations' => $recommendations,
+            'topRatedShops' => $topRatedShops,
         ]);
     }
 }

@@ -11,7 +11,7 @@
                     <tr>
                         <th class="px-4 py-3 text-left">#</th>
                         <th class="px-4 py-3 text-left">Image</th>
-                        <th class="px-4 py-3 text-left">vendor name</th>
+                        <th class="px-4 py-3 text-left">Shop name</th>
                         <th class="px-4 py-3 text-left">Created By</th>
                         <th class="px-4 py-3 text-left">product Name</th>
                         <th class="px-4 py-3 text-left">Price</th>
@@ -30,8 +30,8 @@
                                     src="{{ asset('storage/' . $product->firstImage->url) }}" alt="">
                                     @endif
                             </td>
-                            <td class="px-4 py-3 font-medium text-gray-700">{{ $product->vendor->shop_name }}</td>
-                            <td class="px-4 py-3 font-medium text-gray-700">{{ $product->vendor->owner_name }}</td>
+                            <td class="px-4 py-3 font-medium text-gray-700">{{ $product->shop?->name ?? 'Platform' }}</td>
+                            <td class="px-4 py-3 font-medium text-gray-700">{{ $product->shop?->owner ?? '—' }}</td>
                             <td class="px-4 py-3 font-medium text-gray-700">{{ $product->name }}</td>
                             <td class="px-4 py-3 ">{{ $product->price }}</td>
                             <td class="px-4 py-3 ">{{ $product->stock > 1 ?  $product->stock : 'Out of stock' }}</td>
