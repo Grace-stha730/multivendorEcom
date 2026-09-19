@@ -20,7 +20,8 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->integer('discount')->nullable();
             $table->integer('discount_amount')->nullable();
-            $table->foreignId('vendor_id')->constrained('vendors')->cascadeOnDelete();
+            $table->foreignId('shop_id')->constrained('shops')->cascadeOnDelete();
+            $table->foreignId('shop_user_id')->constrained('shop_users')->cascadeOnDelete();
             $table->foreignId('category_id')->constrained('categories')->cascadeOnDelete();
             $table->timestamps();
         });

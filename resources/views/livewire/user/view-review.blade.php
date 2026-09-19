@@ -11,7 +11,7 @@
                          <img src="{{ asset('storage/' . $review->user->photo) }}"
                              class="w-10 h-10 rounded-full object-cover border" alt="user">
                      @else
-                         <img src="{{ asset('storage/default/vendor.jpg') }}"
+                         <img src="{{ asset('default/vendor.svg') }}"
                              class="w-10 h-10 rounded-full object-cover border" alt="user">
                      @endif
                      <div class="flex-1">

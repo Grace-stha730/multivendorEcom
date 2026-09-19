@@ -34,7 +34,7 @@
                         <div class="flex justify-between items-center mb-1">
                             <div class="flex gap-3 items-center">
                                 <img class="w-15 h-15 object-cover rounded-full"
-                                    src="{{ $review->user->photo ? asset('storage/' . $review->user->photo) : asset('storage/default/vendor.jpg') }}" alt="">
+                                    src="{{ $review->user->photo ? asset('storage/' . $review->user->photo) : asset('default/vendor.svg') }}" alt="">
                                 <div>
                                     <h4 class="font-semibold text-gray-800">{{ $review->user->name }}</h4>
                                     <p class="text-gray-600 text-sm">{{ $review->message }}</p>

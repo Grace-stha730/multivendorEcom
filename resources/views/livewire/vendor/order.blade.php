@@ -51,7 +51,7 @@
                             <td class="px-4 py-3 text-gray-600">{{ $order->created_at->format('H:i') }}</td>
                             <td class="px-4 py-3 text-center">
                                 <div class="flex justify-center gap-2">
-                                    <a href="{{ route('vendor.orderDetail', $order->id) }}"
+                                    <a href="{{ route('shop-user.orderDetail', $order->id) }}"
                                         class="bg-blue-500 hover:bg-blue-600 text-white text-xs px-3 py-1 rounded-lg transition">View</a>
                                     
                                 </div>

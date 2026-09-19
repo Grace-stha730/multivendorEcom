@@ -26,7 +26,7 @@
                 @endfor
                 <span class="ms-2">({{ $averateRate }})</span>
             <p class="text-sm text-yellow-600"><i class="fa-solid fa-ranking-star"></i> Weighted rating: {{ number_format($weightedRating, 1) }}</p>
-            <p class="text-green-500">{{ $product->vendor->shop_name }}</p>
+            <p class="text-green-500">{{ $product->shop->name }}</p>
             <p class="text-gray-600">{{ $product->summary }}</p>
 
             <!-- Price (Dynamic based on selected variants) -->

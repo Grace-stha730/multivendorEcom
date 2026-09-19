@@ -1,78 +1,13 @@
-<header class="my-13 flex justify-center text-white ">
-    <div class="w-full px-3">
-        {{-- <h1 class="text-2xl mt-5 border-b font-bold flex justify-center pb-4">
-            {{ Auth::guard('vendor')->user()->shop_name }}</h1> --}}
-        <div class="flex justify-center items-center space-y-1 flex-col">
-            @if (Auth::guard('vendor')->user()->shop_image)
-                <img class="w-20 h-20 rounded-full object-cover"
-                    src="{{ asset('storage/' . Auth::guard('vendor')->user()->shop_image) }}" alt="">
-            @else
-                <img class="w-20 h-20 rounded-full object-cover" src="{{ asset('default/vendor.jpg') }}" alt="">
-            @endif
-            <h1 class="text-base">{{ Auth::guard('vendor')->user()->shop_name }}</h1>
-        </div>
-
-        <nav class="mt-10">
-            <ul class="space-y-4 text-sm ">
-                <li>
-                    <a class=" py-2 px-4 hover:duration-200 flex items-center gap-2 {{ request()->is('vendor/dashboard') ? 'bg-white text-black rounded-lg' : 'text-white hover:bg-white hover:text-black transition rounded-lg' }}"
-                        wire:navigate href="{{ route('vendor.dashboard') }}">
-                        <span :class="open ? 'block' : 'hidden duration-0'"><i class="fas fa-tachometer-alt"></i>
-                            Dashboard</span>
-                    </a>
-                </li>
-                <li>
-                    <a class=" py-2 px-4 hover:duration-200 flex items-center gap-2 {{ request()->is('vendor/product') ? 'bg-white text-black rounded-lg' : 'text-white hover:bg-white hover:text-black transition rounded-lg' }}"
-                        wire:navigate href=" {{ route('vendor.product') }}">
-                        <span :class="open ? 'block' : 'hidden duration-0'"><i class="fas fa-box"></i> Products</span>
-                    </a>
-                </li>
-                <li>
-                    <a class=" py-2 px-4 hover:duration-200 flex items-center gap-2 {{ request()->is('vendor/category') ? 'bg-white text-black rounded-lg' : 'text-white hover:bg-white hover:text-black transition rounded-lg' }}"
-                        wire:navigate href="{{ route('vendor.category') }}">
-                        <span :class="open ? 'block' : 'hidden duration-0'"><i class="fas fa-tags"></i> Category</span>
-                    </a>
-                </li>
-                <li>
-                    <a class="py-2 px-4 hover:duration-200 flex items-center gap-2 {{ request()->is('vendor/order') || request()->is('vendor/order-detail*') ? 'bg-white text-black rounded-lg' : 'text-white hover:bg-white hover:text-black transition rounded-lg' }}"
-                        wire:navigate href="{{ route('vendor.order') }}">
-                        <span :class="open ? 'block' : 'hidden duration-0'"><i class="fas fa-shopping-cart"></i>
-                            Orders</span>
-                    </a>
-                </li>
-                <li>
-                    <a class="py-2 px-4 hover:duration-200 flex items-center gap-2 {{request()->is('vendor/product-review') ? 'bg-white text-black rounded-lg' : 'text-white hover:bg-white hover:text-black transition rounded-lg' }}"
-                        wire:navigate href="{{ route('vendor.product-review') }}">
-                        <span :class="open ? 'block' : 'hidden duration-0'"><i class="fas fa-shopping-cart"></i>
-                            Product Review</span>
-                    </a>
-                </li>
-                <li>
-                    <a class="py-2 px-4 hover:duration-200 flex items-center gap-2 {{ request()->is('vendor/earnings') ? 'bg-white text-black rounded-lg' : 'text-white hover:bg-white hover:text-black transition rounded-lg' }}"
-                        wire:navigate href="{{ route('vendor.earnings') }}">
-                        <span :class="open ? 'block' : 'hidden duration-0'"><i class="fa-solid fa-wallet"></i> Earnings</span>
-                    </a>
-                </li>
-                <li>
-                    <a class="py-2 px-4 hover:duration-200 flex items-center gap-2 {{ request()->is('vendor/chat') ? 'bg-white text-black rounded-lg' : 'text-white hover:bg-white hover:text-black transition rounded-lg' }}"
-                        wire:navigate href="{{ route('vendor.chat') }}">
-                        <span :class="open ? 'block' : 'hidden duration-0'"><i class="fa-solid fa-comments"></i> Chats</span>
-                    </a>
-                </li>
-                <li>
-                    <a class="py-2 px-4 hover:duration-200 flex items-center gap-2 {{ request()->is('vendor/setting') ? 'bg-white text-black rounded-lg' : 'text-white hover:bg-white hover:text-black transition rounded-lg' }}"
-                        wire:navigate href="{{ route('vendor.setting') }}">
-                        <span :class="open ? 'block' : 'hidden duration-0'"><i class="fas fa-cog"></i> Setting</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
-
-    </div>
-    <form action="{{ route('vendor.logout') }}" method="POST">
-        @csrf
-        <button class="absolute bottom-18 hover:text-gray-400 cursor-pointer left-10">
-            <i class="fa-solid fa-right-from-bracket"></i> Logout
-        </button>
-    </form>
-</header>
+@php
+    $shopUser = Auth::guard('shop_user')->user(); $shop = $shopUser?->shop;
+    $items = [
+        ['Dashboard', 'fa-chart-line', route('shop-user.dashboard'), ['shop-user/dashboard']], ['Products', 'fa-box', route('shop-user.product'), ['shop-user/product*']], ['Categories', 'fa-tags', route('shop-user.category'), ['shop-user/category']], ['Orders', 'fa-bag-shopping', route('shop-user.order'), ['shop-user/order', 'shop-user/order-detail*']], ['Reviews', 'fa-star', route('shop-user.product-review'), ['shop-user/product-review']], ['Coupons', 'fa-ticket', route('shop-user.coupons'), ['shop-user/coupons']], ['Earnings', 'fa-wallet', route('shop-user.earnings'), ['shop-user/earnings']], ['Messages', 'fa-comments', route('shop-user.chat'), ['shop-user/chat']],
+    ];
+@endphp
+<div class="flex h-full min-h-0 w-full flex-col">
+    <a wire:navigate href="{{ route('shop-user.dashboard') }}" class="flex items-center gap-3 px-2 text-white"><span class="grid h-10 w-10 place-items-center rounded-xl bg-emerald-400 text-lg text-emerald-950"><i class="fa-solid fa-bag-shopping"></i></span><span><span class="block text-base font-bold tracking-tight">MarketFlow</span><span class="block text-[10px] font-semibold uppercase tracking-[.18em] text-emerald-300">Shop workspace</span></span></a>
+    <div class="mt-7 flex items-center gap-3 rounded-2xl border border-emerald-300/15 bg-emerald-400/10 p-3">@if ($shop?->image)<img src="{{ asset('storage/' . $shop->image) }}" class="h-10 w-10 rounded-xl object-cover" alt="{{ $shop->name }}">@else<div class="grid h-10 w-10 place-items-center rounded-xl bg-emerald-400/15 text-emerald-300"><i class="fa-solid fa-store"></i></div>@endif<div class="min-w-0"><p class="truncate text-sm font-semibold text-white">{{ $shop?->name }}</p><p class="truncate text-xs text-emerald-100/60">{{ $shopUser?->name }}</p></div></div>
+    <p class="mt-7 px-3 text-[10px] font-bold uppercase tracking-[.18em] text-emerald-200/45">Manage shop</p>
+    <nav class="mt-3 space-y-1">@foreach ($items as [$label, $icon, $route, $patterns])<a wire:navigate href="{{ $route }}" @class(['flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition', 'bg-emerald-400 text-emerald-950 shadow-lg shadow-emerald-950/20' => request()->is(...$patterns), 'text-emerald-50/80 hover:bg-white/8 hover:text-white' => !request()->is(...$patterns)])><i class="fa-solid {{ $icon }} w-5 text-center"></i>{{ $label }}</a>@endforeach</nav>
+    <div class="mt-auto border-t border-white/10 pt-4"><a wire:navigate href="{{ route('shop-user.setting') }}" @class(['flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition', 'bg-white/10 text-white' => request()->is('shop-user/setting'), 'text-emerald-50/80 hover:bg-white/8 hover:text-white' => !request()->is('shop-user/setting')])><i class="fa-solid fa-gear w-5 text-center"></i>Settings</a><form action="{{ route('shop-user.logout') }}" method="POST" class="mt-1">@csrf<button class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-rose-200 transition hover:bg-rose-400/10"><i class="fa-solid fa-arrow-right-from-bracket w-5 text-center"></i>Sign out</button></form></div>
+</div>

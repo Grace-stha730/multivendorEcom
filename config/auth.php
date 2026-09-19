@@ -41,9 +41,9 @@ return [
             'provider' => 'users',
         ],
 
-         'vendor' => [
+         'shop_user' => [
             'driver' => 'session',
-            'provider' => 'vendors',
+            'provider' => 'shop_users',
         ],
 
         'admin' =>[
@@ -75,9 +75,9 @@ return [
             'model' => App\Models\User::class,
         ],
 
-        'vendors' => [
+        'shop_users' => [
             'driver' => 'eloquent',
-            'model' => App\Models\Vendor::class,
+            'model' => App\Models\ShopUser::class,
         ],
 
         'admins' => [

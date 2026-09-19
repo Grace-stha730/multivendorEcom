@@ -6,12 +6,20 @@ use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
+use Mary\Traits\Toast;
 
 #[Layout('components.layouts.user')]
 #[Title('Login')]
 class Login extends Component
 {
+    use Toast;
+
     public $email, $password;
+
+    public function mount(): void
+    {
+        $this->email = request('email', '');
+    }
 
     public function login()
     {
@@ -21,9 +29,9 @@ class Login extends Component
         ]);
 
         if (Auth::guard('web')->attempt($validation)) {
-            return redirect()->route('home')->with('success', 'Login Successfully');
+            return $this->success('Login successful', position: 'toast-bottom toast-end', redirectTo: route('home'));
         } else {
-            return redirect()->route('user.login')->with('error', 'Invalid Credential');
+            $this->error('Invalid credentials', 'Please check your email and password.', 'toast-bottom toast-end');
         }
     }
     public function render()

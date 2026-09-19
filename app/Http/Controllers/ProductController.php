@@ -13,7 +13,7 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Product::with(['images', 'category', 'vendor']);
+        $query = Product::with(['images', 'category', 'shop']);
 
         // Search functionality
         if ($request->has('search') && $request->search) {
@@ -47,7 +47,7 @@ class ProductController extends Controller
      */
     public function show(Product $product)
     {
-        $product->load(['images', 'category', 'vendor']);
+        $product->load(['images', 'category', 'shop']);
 
         // Get related products from the same category
         $relatedProducts = Product::where('category_id', $product->category_id)
@@ -62,9 +62,9 @@ class ProductController extends Controller
     /**
      * Get products by vendor
      */
-    public function vendorProducts($vendorId)
+    public function shopProducts($shopId)
     {
-        $products = Product::where('vendor_id', $vendorId)
+        $products = Product::where('shop_id', $shopId)
             ->with(['images', 'category'])
             ->paginate(12);
 
@@ -78,10 +78,9 @@ class ProductController extends Controller
     {
         $category = Category::findOrFail($categoryId);
         $products = Product::where('category_id', $categoryId)
-            ->with(['images', 'vendor'])
+            ->with(['images', 'shop'])
             ->paginate(12);
 
         return view('examples.product-listing', compact('products', 'category'));
     }
 }
-

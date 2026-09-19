@@ -18,7 +18,7 @@ class Coupon extends Model
         'usage_limit',
         'used_count',
         'min_item_price',
-        'vendor_id',
+        'shop_id',
         'is_active',
         'starts_at',
         'expires_at',
@@ -33,9 +33,9 @@ class Coupon extends Model
         'min_item_price' => 'decimal:2',
     ];
 
-    public function vendor()
+    public function shop()
     {
-        return $this->belongsTo(Vendor::class);
+        return $this->belongsTo(Shop::class);
     }
 
     public function collectors()

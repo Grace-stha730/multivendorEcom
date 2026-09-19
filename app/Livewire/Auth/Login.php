@@ -6,30 +6,33 @@ use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
+use Mary\Traits\Toast;
 
 #[Layout('components.layouts.auth')]
 #[Title('Login')]
 class Login extends Component
 {
-    public $shop_email, $password;
+    use Toast;
+
+    public $username, $password;
 
     public function login()
     {
         $validation = $this->validate([
-            'shop_email' => 'required|email',
+            'username' => 'required|string',
             'password' => 'required|min:2|max:20',
         ]);
 
         if (
-            Auth::guard('vendor')->attempt([
-                'shop_email' => $validation['shop_email'],
+            Auth::guard('shop_user')->attempt([
+                'username' => $validation['username'],
                 'password' => $validation['password'],
             ])
         ) {
 
-            return redirect()->route('vendor.dashboard')->with('success', 'Login Successfull');
+            return $this->success('Login successful', position: 'toast-bottom toast-end', redirectTo: route('shop-user.dashboard'));
         } else {
-            return redirect()->route('vendor.login')->with('error', 'Invalid Credential');
+            $this->error('Invalid credentials', 'Please check your username and password.', 'toast-bottom toast-end');
         }
     }
 

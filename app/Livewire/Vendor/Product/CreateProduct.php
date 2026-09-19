@@ -67,7 +67,8 @@ class CreateProduct extends Component
                 'description' => $this->description,
                 'category_id' => $this->category_id,
                 'price' => $this->price,
-                'vendor_id' => Auth('vendor')->user()->id,
+                'shop_id' => Auth::guard('shop_user')->user()->shop_id,
+                'shop_user_id' => Auth::guard('shop_user')->id(),
             ];
 
             if (!empty($this->discount) && $this->discount > 0) {
@@ -102,7 +103,7 @@ class CreateProduct extends Component
             }
             DB::commit();
             $this->reset();
-            return redirect()->route('vendor.product')->with('success', "product Create Successfully");
+            return redirect()->route('shop-user.product')->with('success', "Product created successfully");
         } catch (\Exception $e) {
             DB::rollBack();
             return session()->flash('error', 'Error: ' . $e->getMessage());

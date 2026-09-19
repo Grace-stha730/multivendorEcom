@@ -79,7 +79,7 @@ class Order extends Component
         }
     }
 
-    public function startChatWithVendor($vendorId, $productId = null)
+    public function startChatWithShopUser($shopUserId, $productId = null)
     {
         if (!Auth::guard('web')->check()) {
             return redirect()->route('user.login')->with('error', 'Login first');
@@ -89,7 +89,7 @@ class Order extends Component
 
         $conversation = \App\Models\Conversation::firstOrCreate([
             'user_id' => $userId,
-            'vendor_id' => $vendorId,
+            'shop_user_id' => $shopUserId,
             'product_id' => $productId,
         ], [
             'last_message_at' => now(),

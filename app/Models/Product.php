@@ -16,7 +16,8 @@ class Product extends Model
         'description',
         'discount',
         'discount_amount',
-        'vendor_id',
+        'shop_id',
+        'shop_user_id',
         'category_id',
     ];
 
@@ -35,9 +36,14 @@ class Product extends Model
         return $this->hasOne(Image::class)->oldestOfMany();
     }
 
-    public function vendor()
+    public function shop()
     {
-        return $this->belongsTo(Vendor::class);
+        return $this->belongsTo(Shop::class);
+    }
+
+    public function shopUser()
+    {
+        return $this->belongsTo(ShopUser::class);
     }
 
     public function cartItem()

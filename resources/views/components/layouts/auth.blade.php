@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @livewireStyles
 
     <title>{{ $title ?? 'Page Title' }}</title>
     @vite([ 
@@ -12,9 +13,10 @@
     ])
 </head>
 
-<body>
-    @include('common.message')
+<body class="min-h-screen bg-[#f6f8f7] antialiased">
     {{ $slot }}
+    @livewireScripts
+    <x-toast position="toast-bottom toast-end" />
 </body>
 
 </html>

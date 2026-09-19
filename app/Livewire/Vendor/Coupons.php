@@ -5,8 +5,10 @@ namespace App\Livewire\Vendor;
 use App\Models\Coupon;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
+#[Layout('components.layouts.app')]
 #[Title('Vendor Coupons')]
 class Coupons extends Component
 {
@@ -26,11 +28,11 @@ class Coupons extends Component
     public function saveCoupon()
     {
         $this->validate();
-        $vendorId = Auth::guard('vendor')->id();
+        $shopId = Auth::guard('shop_user')->user()->shop_id;
         $code = strtoupper(trim($this->code));
 
         if ($this->editingId) {
-            $coupon = Coupon::where('vendor_id', $vendorId)->findOrFail($this->editingId);
+            $coupon = Coupon::where('shop_id', $shopId)->findOrFail($this->editingId);
             $coupon->update([
                 'code' => $code,
                 'type' => $this->type,
@@ -43,7 +45,7 @@ class Coupons extends Component
             session()->flash('success', 'Coupon updated successfully');
         } else {
             Coupon::create([
-                'vendor_id' => $vendorId,
+                'shop_id' => $shopId,
                 'code' => $code,
                 'type' => $this->type,
                 'value' => $this->value,
@@ -60,8 +62,8 @@ class Coupons extends Component
 
     public function editCoupon($id)
     {
-        $vendorId = Auth::guard('vendor')->id();
-        $coupon = Coupon::where('vendor_id', $vendorId)->findOrFail($id);
+        $shopId = Auth::guard('shop_user')->user()->shop_id;
+        $coupon = Coupon::where('shop_id', $shopId)->findOrFail($id);
         $this->editingId = $coupon->id;
         $this->code = $coupon->code;
         $this->type = $coupon->type;
@@ -74,16 +76,16 @@ class Coupons extends Component
 
     public function toggleStatus($id)
     {
-        $vendorId = Auth::guard('vendor')->id();
-        $coupon = Coupon::where('vendor_id', $vendorId)->findOrFail($id);
+        $shopId = Auth::guard('shop_user')->user()->shop_id;
+        $coupon = Coupon::where('shop_id', $shopId)->findOrFail($id);
         $coupon->update(['is_active' => !$coupon->is_active]);
         session()->flash('success', 'Coupon status updated');
     }
 
     public function deleteCoupon($id)
     {
-        $vendorId = Auth::guard('vendor')->id();
-        Coupon::where('vendor_id', $vendorId)->findOrFail($id)->delete();
+        $shopId = Auth::guard('shop_user')->user()->shop_id;
+        Coupon::where('shop_id', $shopId)->findOrFail($id)->delete();
         session()->flash('success', 'Coupon deleted');
     }
 
@@ -94,9 +96,9 @@ class Coupons extends Component
 
     public function render()
     {
-        $vendorId = Auth::guard('vendor')->id();
+        $shopId = Auth::guard('shop_user')->user()->shop_id;
         return view('livewire.vendor.coupons', [
-            'coupons' => Coupon::where('vendor_id', $vendorId)->latest()->get(),
+            'coupons' => Coupon::where('shop_id', $shopId)->latest()->get(),
         ]);
     }
 }

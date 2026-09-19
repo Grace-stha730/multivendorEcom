@@ -342,19 +342,19 @@ class Cart extends Component
                 'quantity' => $cart_items->sum('quantity'),
             ]);
 
-            // Group items by vendor
-            $groupedByVendor = $cart_items->groupBy(function ($item) {
-                return $item->product->vendor_id;
+            // Group items by shop
+            $groupedByShop = $cart_items->groupBy(function ($item) {
+                return $item->product->shop_id;
             });
 
-            // Create vendor orders and order items
-            foreach ($groupedByVendor as $vendorId => $items) {
+            // Create shop orders and order items
+            foreach ($groupedByShop as $shopId => $items) {
                 $vendorSubtotal = $items->sum(fn($i) => $i->price * $i->quantity);
                 $quantity = $items->sum('quantity');
 
                 $vendorOrder = VendorOrder::create([
                     'order_id' => $order->id,
-                    'vendor_id' => $vendorId,
+                    'shop_id' => $shopId,
                     'subtotal' => $vendorSubtotal,
                     'status' => 'Pending',
                     'quantity' => $quantity,

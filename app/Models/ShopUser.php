@@ -8,24 +8,27 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class Vendor extends Authenticatable
+class ShopUser extends Authenticatable
 {
     use HasFactory, Notifiable;
     protected $fillable = [
-        'shop_name',
-        'shop_province',
-        'owner_name',
-        'shop_city',
-        'shop_tole',
-        'shop_image',
-        'shop_phone',
-        'shop_email',
+        'name',
+        'username',
+        'personal_email',
+        'address',
         'password',
-        'token',
-        'status',
+        'contact',
+        'image',
+        'pan_number',
+        'shop_id',
     ];
 
     public function products(){
-        return $this->hasMany(Product::class);
+        return $this->hasMany(Product::class, 'shop_user_id');
+    }
+
+    public function shop()
+    {
+        return $this->belongsTo(Shop::class);
     }
 }

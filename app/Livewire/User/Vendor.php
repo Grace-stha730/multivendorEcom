@@ -16,10 +16,8 @@ class Vendor extends Component
     public function mount($productId)
     {
         $this->productId = $productId;
-        $this->product = Product::with('images', 'vendor')->findOrFail($productId);
-        // If you also want vendor's average rating across all products:
-        $vendorId = $this->product->vendor->id;
-        $this->averageRate = app(WeightedRatingService::class)->vendorRating($this->product->vendor);
+        $this->product = Product::with('images', 'shop')->findOrFail($productId);
+        $this->averageRate = app(WeightedRatingService::class)->shopRating($this->product->shop);
     }
     public function render()
     {

@@ -10,7 +10,7 @@ class VendorPayout extends Model
     use HasFactory;
 
     protected $fillable = [
-        'vendor_id',
+        'shop_id',
         'amount',
         'status',
         'payment_method',
@@ -22,8 +22,8 @@ class VendorPayout extends Model
         'amount' => 'decimal:2',
     ];
 
-    public function vendor()
+    public function shop()
     {
-        return $this->belongsTo(Vendor::class);
+        return $this->belongsTo(Shop::class);
     }
 }

@@ -31,7 +31,7 @@ class ProductDetail extends Component
     public function mount($id)
     {
         $this->productId = $id;
-        $this->product = Product::with(['images', 'vendor', 'variants'])->withCount('reviews')->withAvg('reviews', 'rating')->findOrFail($id);
+        $this->product = Product::with(['images', 'shop', 'variants'])->withCount('reviews')->withAvg('reviews', 'rating')->findOrFail($id);
         $this->averateRate = round(productRating::where('product_id', $id)->avg('rating'), 1);
         $this->weightedRating = app(WeightedRatingService::class)->rankedProducts(collect([$this->product]))->first()->weighted_rating;
 
@@ -150,7 +150,7 @@ class ProductDetail extends Component
 
         $conversation = \App\Models\Conversation::firstOrCreate([
             'user_id' => $userId,
-            'vendor_id' => $this->product->vendor_id,
+            'shop_user_id' => $this->product->shop_user_id,
             'product_id' => $this->product->id,
         ], [
             'last_message_at' => now(),

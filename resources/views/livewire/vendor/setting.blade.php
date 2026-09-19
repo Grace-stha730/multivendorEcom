@@ -20,7 +20,7 @@
                             src="{{ $shop_image->temporaryUrl() }}" alt="Admin Image">
                     @elseif(!$oldImage)
                         <img class="w-24 h-24 rounded-full object-cover border shadow-sm"
-                            src="{{ asset('storage/default/vendor.jpg') }}" alt="">
+                            src="{{ asset('default/vendor.svg') }}" alt="">
                     @else
                         <img class="w-24 h-24 rounded-full object-cover border shadow-sm"
                             src="{{ asset('storage/' . $oldImage) }}" alt="">

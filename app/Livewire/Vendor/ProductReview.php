@@ -7,14 +7,16 @@ use App\Models\Product;
 use App\Models\productRating;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
+use Livewire\Attributes\Layout;
 
+#[Layout('components.layouts.app')]
 class ProductReview extends Component
 {
 
     public function render()
     {
-        $vendorId = Auth::guard('vendor')->user()->id;
-        $productIds = Product::where('vendor_id', $vendorId)->pluck('id');
+        $shopId = Auth::guard('shop_user')->user()->shop_id;
+        $productIds = Product::where('shop_id', $shopId)->pluck('id');
 
         // Get all reviews for those products
         $productRatings = ProductRating::with(['product', 'user', 'ratingImages'])

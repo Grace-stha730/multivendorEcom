@@ -6,8 +6,10 @@ use App\Models\VendorOrder;
 use App\Models\VendorPayout;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
+#[Layout('components.layouts.app')]
 #[Title('Vendor Earnings & Payouts')]
 class Earnings extends Component
 {
@@ -23,7 +25,7 @@ class Earnings extends Component
     public function requestPayout($availableBalance)
     {
         $this->validate();
-        $vendorId = Auth::guard('vendor')->id();
+        $shopId = Auth::guard('shop_user')->user()->shop_id;
 
         if ($this->amount > $availableBalance) {
             $this->addError('amount', 'Payout amount cannot exceed available balance of Rs. ' . number_format($availableBalance));
@@ -31,7 +33,7 @@ class Earnings extends Component
         }
 
         VendorPayout::create([
-            'vendor_id' => $vendorId,
+            'shop_id' => $shopId,
             'amount' => $this->amount,
             'status' => 'Pending',
             'payment_method' => $this->payment_method,
@@ -45,10 +47,10 @@ class Earnings extends Component
 
     public function render()
     {
-        $vendorId = Auth::guard('vendor')->id();
+        $shopId = Auth::guard('shop_user')->user()->shop_id;
 
         // 1. Gross Sales from Delivered/Completed vendor orders
-        $deliveredOrders = VendorOrder::where('vendor_id', $vendorId)
+        $deliveredOrders = VendorOrder::where('shop_id', $shopId)
             ->where('status', 'Delivered')
             ->get();
 
@@ -57,7 +59,7 @@ class Earnings extends Component
         $netEarnings = $grossSales - $commissionFee;
 
         // 2. Payouts
-        $payouts = VendorPayout::where('vendor_id', $vendorId)->latest()->get();
+        $payouts = VendorPayout::where('shop_id', $shopId)->latest()->get();
         $totalPaidOut = $payouts->whereIn('status', ['Approved', 'Paid'])->sum('amount');
         $pendingPayouts = $payouts->where('status', 'Pending')->sum('amount');
         $availableBalance = max(0, $netEarnings - $totalPaidOut - $pendingPayouts);
