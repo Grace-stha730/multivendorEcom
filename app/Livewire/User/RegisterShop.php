@@ -44,7 +44,8 @@ class RegisterShop extends Component
                 ),
             ],
             'pan_number' => ['required', 'digits:9'],
-            'contact_number' => ['required', new PhoneNumber()],
+            'contact_number' => ['required', 'digits:10'],
+            // 'contact_number' => ['required', new PhoneNumber()],
             'province_id' => 'required|exists:provinces,id',
             'district_id' => [
                 'required',
