@@ -16,6 +16,7 @@ use Livewire\WithFileUploads;
 
 class UpdateProduct extends Component
 {
+    use \App\Livewire\Concerns\AuthorizesPermissions;
     use WithFileUploads;
     public $productId;
     public $name, $stock, $summary, $description, $discount, $category_id, $price;
@@ -27,6 +28,7 @@ class UpdateProduct extends Component
 
     public function generateDescription(AiContentService $ai)
     {
+        $this->authorizeShop('product-edit');
         $shopUserId = Auth::guard('shop_user')->id(); $key = "ai:product-description:$shopUserId";
         if (RateLimiter::tooManyAttempts($key, 10)) { $this->addError('description', 'AI generation limit reached. Try again later.'); return; }
         try {
@@ -57,6 +59,7 @@ class UpdateProduct extends Component
     #[On('getProductId')]
     public function getProductId($productId)
     {
+        $this->authorizeShop('product-edit');
         $product = Product::where('shop_id', Auth::guard('shop_user')->user()->shop_id)->findOrFail($productId);
         // dd($product);
         $this->productId = $productId;
@@ -87,6 +90,7 @@ class UpdateProduct extends Component
 
     public function updateProduct()
     {
+        $this->authorizeShop('product-edit');
         $this->validate([
             'name' => 'required|string|max:255',
             'stock' => 'required',

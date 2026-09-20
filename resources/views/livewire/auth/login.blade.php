@@ -5,6 +5,7 @@
         <form wire:submit.prevent="login" class="space-y-5">
             <x-input label="Username" wire:model="username" icon="o-user" placeholder="Enter your username" class="login-input" />
             <x-password label="Password" wire:model="password" right placeholder="Enter password" class="login-password" />
+            <div class="text-right -mt-3"><a href="{{ route('shop-user.password.forgot') }}" wire:navigate class="text-xs text-blue-500 hover:underline">Forgot password?</a></div>
 
             <x-button label="Login" icon="o-arrow-right-on-rectangle" type="submit" class="btn-primary w-full" spinner="login" />
 

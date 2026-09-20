@@ -11,7 +11,9 @@ use Livewire\Component;
 #[Title('Product')]
 class Products extends Component
 {
+    use \App\Livewire\Concerns\AuthorizesPermissions;
     public function viewDetail($id){
+        $this->authorizeAdmin('product-view');
         
     }
     public function render()

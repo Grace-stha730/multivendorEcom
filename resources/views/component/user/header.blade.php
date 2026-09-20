@@ -63,6 +63,10 @@
                 <a href="{{ route('user.contact-us') }}" class="hover:border-b-3 {{ request()->is('contact-us') ? 'border-b-3' : '' }}"
                     wire:navigate>Contact Us</a>
             </li>
+            <li class="py-3 lg:py-0">
+                <a href="{{ route('user.register-shop') }}" class="hover:border-b-3 {{ request()->is('register-shop') ? 'border-b-3' : '' }}"
+                    wire:navigate>Register Shop</a>
+            </li>
 
             
         </ul>

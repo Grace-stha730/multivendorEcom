@@ -1,0 +1,285 @@
+<?php
+
+namespace App\Livewire\Admin;
+
+use App\Models\Shop;
+use App\Models\ShopRegistration;
+use App\Models\ShopUser;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
+use Livewire\Component;
+use Livewire\WithPagination;
+use Mary\Traits\Toast;
+
+#[Layout('components.layouts.admin')]
+#[Title('Shop Registrations')]
+class ShopRegistrations extends Component
+{
+    use WithPagination;
+    use Toast;
+
+    public string $statusFilter = '';
+    public string $sortDirection = 'desc';
+
+    public ?int $registrationId = null;
+    public bool $detailModal = false;
+    public bool $approveModal = false;
+    public bool $rejectModal = false;
+    public bool $deleteModal = false;
+
+    public $password;
+    public $password_confirmation;
+
+    public function updatedStatusFilter(): void
+    {
+        $this->resetPage();
+    }
+
+    public function toggleSort(): void
+    {
+        $this->sortDirection = $this->sortDirection === 'desc' ? 'asc' : 'desc';
+    }
+
+    public function view(int $id): void
+    {
+        $this->registrationId = $this->findVerified($id)->id;
+        $this->detailModal = true;
+    }
+
+    public function confirmApprove(int $id): void
+    {
+        $this->authorizeAction('shop-approve');
+        $registration = $this->findVerified($id);
+
+        if ($registration->status !== ShopRegistration::PENDING) {
+            $this->error('Not pending', 'Only pending registrations can be approved.', 'toast-bottom');
+
+            return;
+        }
+
+        $this->reset(['password', 'password_confirmation']);
+        $this->resetValidation();
+        $this->registrationId = $registration->id;
+        $this->detailModal = false;
+        $this->approveModal = true;
+    }
+
+    /** Creates the shop and its login account (mirrors Admin\Shop::save) and marks the request approved. */
+    public function approve(): void
+    {
+        $this->authorizeAction('shop-approve');
+        $this->validate([
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $registration = $this->findVerified($this->registrationId);
+
+        if ($registration->status !== ShopRegistration::PENDING) {
+            $this->error('Not pending', 'Only pending registrations can be approved.', 'toast-bottom');
+
+            return;
+        }
+
+        if (Shop::where('email', $registration->email)->exists()) {
+            $this->addError('password', 'A shop with this email already exists, so this registration cannot be approved.');
+
+            return;
+        }
+
+        $username = '';
+
+        DB::transaction(function () use ($registration, &$username): void {
+            $shop = Shop::create([
+                'name' => $registration->shop_name,
+                'owner' => $registration->owner,
+                'contact_number' => $registration->contact_number,
+                'pan_number' => $registration->pan_number,
+                'province_id' => $registration->province_id,
+                'district_id' => $registration->district_id,
+                'city' => $registration->city,
+                'tole' => $registration->tole,
+                'email' => $registration->email,
+                'status' => 'active',
+            ]);
+
+            $username = $this->uniqueUsername($shop->owner, $shop->name);
+
+            ShopUser::create([
+                'name' => $shop->owner,
+                'username' => $username,
+                'password' => Hash::make($this->password),
+                'shop_id' => $shop->id,
+            ]);
+
+            $registration->update(['status' => ShopRegistration::APPROVED]);
+        });
+
+        $this->notifyApproved($registration, $username);
+
+        $this->closeModals();
+        $this->success('Registration approved', "Shop and user account created. Username: {$username}", 'toast-bottom');
+    }
+
+    public function confirmReject(int $id): void
+    {
+        $this->authorizeAction('shop-approve');
+        $registration = $this->findVerified($id);
+
+        if ($registration->status !== ShopRegistration::PENDING) {
+            $this->error('Not pending', 'Only pending registrations can be rejected.', 'toast-bottom');
+
+            return;
+        }
+
+        $this->registrationId = $registration->id;
+        $this->detailModal = false;
+        $this->rejectModal = true;
+    }
+
+    public function reject(): void
+    {
+        $this->authorizeAction('shop-approve');
+        $registration = $this->findVerified($this->registrationId);
+
+        if ($registration->status === ShopRegistration::PENDING) {
+            $registration->update(['status' => ShopRegistration::REJECTED]);
+        }
+
+        $this->closeModals();
+        $this->success('Registration rejected', 'The registration was marked as rejected.', 'toast-bottom');
+    }
+
+    public function confirmDelete(int $id): void
+    {
+        $this->authorizeAction('shop-delete');
+        $this->registrationId = $this->findVerified($id)->id;
+        $this->detailModal = false;
+        $this->deleteModal = true;
+    }
+
+    public function delete(): void
+    {
+        $this->authorizeAction('shop-delete');
+        $this->findVerified($this->registrationId)->delete();
+
+        $this->closeModals();
+        $this->success('Registration deleted', 'The registration request was deleted.', 'toast-bottom');
+    }
+
+    public function closeModals(): void
+    {
+        $this->detailModal = $this->approveModal = $this->rejectModal = $this->deleteModal = false;
+        $this->reset(['registrationId', 'password', 'password_confirmation']);
+        $this->resetValidation();
+    }
+
+    // Livewire actions are separate requests, so re-check the permission on every action.
+    private function authorizeAction(string $permission): void
+    {
+        abort_unless(authorizeUserCheck($permission, 'admin'), 403);
+    }
+
+    /** Only email-verified requests are visible to (and actionable by) admins. */
+    private function findVerified(?int $id): ShopRegistration
+    {
+        return ShopRegistration::with(['province', 'district'])
+            ->where('is_email_verified', true)
+            ->findOrFail($id);
+    }
+
+    private function notifyApproved(ShopRegistration $registration, string $username): void
+    {
+        // Username only; the password is set by the admin and shared separately.
+        try {
+            Mail::mailer('smtp')->raw(
+                "Your shop \"{$registration->shop_name}\" has been approved.\n\nYour username is: {$username}\n\nThe admin will share your password with you separately.",
+                fn ($message) => $message->to($registration->email)->subject('Your shop registration was approved')
+            );
+        } catch (\Throwable $exception) {
+            report($exception);
+            Log::warning('Shop approval email failed.', ['registration_id' => $registration->id]);
+        }
+    }
+
+    public function getGeneratedUsernamePreviewProperty(): string
+    {
+        if (!$this->approveModal || !$this->registrationId) {
+            return '';
+        }
+
+        $registration = ShopRegistration::find($this->registrationId);
+
+        return $registration ? $this->uniqueUsername($registration->owner, $registration->shop_name) : '';
+    }
+
+    // Copied from Admin\Shop::uniqueUsername so the existing component stays untouched.
+    private function uniqueUsername(string $owner, string $shopName): string
+    {
+        $ownerWords = preg_split('/\s+/', trim(mb_strtolower($owner)), -1, PREG_SPLIT_NO_EMPTY);
+        $ownerPart = count($ownerWords) <= 2
+            ? implode('.', $ownerWords)
+            : $ownerWords[0] . '.' . $ownerWords[array_key_last($ownerWords)];
+
+        $ownerPart = preg_replace('/[^\pL\pN.]/u', '', $ownerPart);
+        $shopTokens = preg_split('/[\s.]+/u', trim(mb_strtolower($shopName)), -1, PREG_SPLIT_NO_EMPTY);
+        $filteredShopTokens = [];
+        $brandNameStarted = false;
+
+        foreach ($shopTokens as $token) {
+            $isLegalToken = in_array($token, ['pvt', 'ltd'], true);
+
+            if ($isLegalToken && $brandNameStarted) {
+                continue;
+            }
+
+            $filteredShopTokens[] = $token;
+            $brandNameStarted = !$isLegalToken;
+        }
+
+        $shopPart = implode('', array_map(
+            fn (string $token) => preg_replace('/[^\pL\pN]/u', '', $token),
+            $filteredShopTokens,
+        ));
+        $shopPart = $shopPart ?: 'shop';
+        $ownerPart = $ownerPart ?: 'owner';
+        $domain = $shopPart . '.com';
+
+        $suffix = 0;
+        do {
+            $username = $ownerPart . ($suffix ?: '') . '@' . $domain;
+            $suffix++;
+        } while (ShopUser::where('username', $username)->exists());
+
+        return $username;
+    }
+
+    public function render()
+    {
+        $registrations = ShopRegistration::with(['province', 'district'])
+            ->where('is_email_verified', true)
+            ->when($this->statusFilter, fn ($q) => $q->where('status', $this->statusFilter))
+            ->orderBy('created_at', $this->sortDirection)
+            ->paginate(10);
+
+        $registrations->getCollection()->each(function (ShopRegistration $r): void {
+            $r->location = collect([$r->district?->name, $r->province?->name])->filter()->join(', ');
+        });
+
+        return view('livewire.admin.shop-registrations', [
+            'registrations' => $registrations,
+            'selected' => $this->registrationId ? ShopRegistration::with(['province', 'district'])->find($this->registrationId) : null,
+            'headers' => [
+                ['key' => 'shop_name', 'label' => 'Shop', 'sortable' => false],
+                ['key' => 'owner', 'label' => 'Owner', 'sortable' => false],
+                ['key' => 'location', 'label' => 'Location', 'sortable' => false],
+                ['key' => 'status', 'label' => 'Status', 'sortable' => false],
+                ['key' => 'created_at', 'label' => 'Submitted', 'sortable' => false],
+                ['key' => 'actions', 'label' => 'Actions', 'class' => 'w-40 text-right', 'sortable' => false],
+            ],
+        ]);
+    }
+}

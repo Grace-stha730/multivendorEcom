@@ -16,6 +16,7 @@ use Livewire\Attributes\Layout;
 #[Title(content: 'Setting')]
 class Setting extends Component
 {
+    use \App\Livewire\Concerns\AuthorizesPermissions;
     use WithFileUploads;
     public $setting, $shop_name, $owner_name, $shop_province, $shop_city, $shop_tole, $shop_email, $oldImage, $shop_image, $shop_phone, $password, $newPassword;
     public bool $aiAutoReplyEnabled = false;
@@ -38,6 +39,7 @@ class Setting extends Component
 
     public function updateAiAutoReply(): void
     {
+        $this->authorizeShop('shop-edit-settings');
         $shop = Auth::guard('shop_user')->user()?->shop;
         if (! $shop) return;
         $shop->update(['ai_auto_reply_enabled' => $this->aiAutoReplyEnabled]);

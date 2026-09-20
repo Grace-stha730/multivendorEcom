@@ -15,6 +15,7 @@ use Livewire\WithFileUploads;
 
 class CreateProduct extends Component
 {
+    use \App\Livewire\Concerns\AuthorizesPermissions;
     use WithFileUploads;
     public $name, $stock, $summary, $description, $discount, $category_id, $price;
     public $images = [];
@@ -25,6 +26,7 @@ class CreateProduct extends Component
 
     public function generateDescription(AiContentService $ai)
     {
+        $this->authorizeShop('product-create');
         $shopUserId = Auth::guard('shop_user')->id();
         $key = "ai:product-description:$shopUserId";
         if (RateLimiter::tooManyAttempts($key, 10)) {
@@ -66,6 +68,7 @@ class CreateProduct extends Component
 
     public function saveProduct()
     {
+        $this->authorizeShop('product-create');
         $this->validate([
             'name' => 'required|string|max:255',
             'stock' => 'required',

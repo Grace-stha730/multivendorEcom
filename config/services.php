@@ -41,4 +41,14 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI'),
     ],
 
+    // eSewa ePay v2. Defaults are eSewa's public SANDBOX (test merchant), so nothing real is charged.
+    // Test login (see https://developer.esewa.com.np/pages/Epay): eSewa ID 9711111111 (or ...2, ...3, ...4),
+    // password Nepal@123, MPIN 1122, OTP 123456.
+    'esewa' => [
+        'product_code' => env('ESEWA_PRODUCT_CODE', 'EPAYTEST'),
+        'secret' => env('ESEWA_SECRET_KEY', '8gBm/:&EnhH.1/q'),
+        'form_url' => env('ESEWA_FORM_URL', 'https://rc-epay.esewa.com.np/api/epay/main/v2/form'),
+        'status_url' => env('ESEWA_STATUS_URL', 'https://rc.esewa.com.np/api/epay/transaction/status/'),
+    ],
+
 ];

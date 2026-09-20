@@ -14,6 +14,7 @@ use Livewire\Component;
 #[Title('Vendor Coupons')]
 class Coupons extends Component
 {
+    use \App\Livewire\Concerns\AuthorizesPermissions;
     public $code, $type = 'fixed', $value, $min_order_amount = 0, $starts_at, $expires_at, $scopeType = 'product', $product_id, $category_id;
     public $is_active = true;
     public $editingId = null;
@@ -29,6 +30,7 @@ class Coupons extends Component
 
     public function saveCoupon()
     {
+        $this->authorizeShop('coupon-manage');
         $this->validate();
         $shopId = Auth::guard('shop_user')->user()->shop_id;
         $this->validate(['scopeType' => 'required|in:product,category', 'product_id' => 'required_if:scopeType,product|nullable|integer', 'category_id' => 'required_if:scopeType,category|nullable|exists:categories,id']);
@@ -71,6 +73,7 @@ class Coupons extends Component
 
     public function editCoupon($id)
     {
+        $this->authorizeShop('coupon-manage');
         $shopId = Auth::guard('shop_user')->user()->shop_id;
         $coupon = Coupon::where('shop_id', $shopId)->findOrFail($id);
         $this->editingId = $coupon->id;
@@ -86,6 +89,7 @@ class Coupons extends Component
 
     public function toggleStatus($id)
     {
+        $this->authorizeShop('coupon-manage');
         $shopId = Auth::guard('shop_user')->user()->shop_id;
         $coupon = Coupon::where('shop_id', $shopId)->findOrFail($id);
         $coupon->update(['is_active' => !$coupon->is_active]);
@@ -94,6 +98,7 @@ class Coupons extends Component
 
     public function deleteCoupon($id)
     {
+        $this->authorizeShop('coupon-manage');
         $shopId = Auth::guard('shop_user')->user()->shop_id;
         Coupon::where('shop_id', $shopId)->findOrFail($id)->delete();
         session()->flash('success', 'Coupon deleted');

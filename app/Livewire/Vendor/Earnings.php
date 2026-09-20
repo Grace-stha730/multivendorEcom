@@ -13,6 +13,7 @@ use Livewire\Component;
 #[Title('Vendor Earnings & Payouts')]
 class Earnings extends Component
 {
+    use \App\Livewire\Concerns\AuthorizesPermissions;
     public $amount, $payment_method = 'Bank Transfer', $account_details, $notes;
 
     protected $rules = [
@@ -24,6 +25,7 @@ class Earnings extends Component
 
     public function requestPayout($availableBalance)
     {
+        $this->authorizeShop('earnings-view');
         $this->validate();
         $shopId = Auth::guard('shop_user')->user()->shop_id;
 

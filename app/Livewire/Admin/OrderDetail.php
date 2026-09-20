@@ -12,8 +12,10 @@ use Livewire\Component;
 #[Title('Order Detail')]
 class OrderDetail extends Component
 {
+    use \App\Livewire\Concerns\AuthorizesPermissions;
 
     public function recievedOrder($id){
+        $this->authorizeAdmin('order-process');
        $vendorOrder = VendorOrder::findOrFail($id);
         $vendorOrder->update(['is_received' => 1]);
         return redirect()->route('admin.order-detail',['id'=>$vendorOrder->order_id])->with('success','Order Received from vendor');
@@ -21,18 +23,21 @@ class OrderDetail extends Component
     }
 
     public function shipOrder($id){
+        $this->authorizeAdmin('order-process');
         $order = Order::find($id);
         $order->update(['order_status' => "Shipped"]);
         return redirect()->route('admin.order-detail',['id'=>$order->id])->with('success','Order Shipped Successfully');
     }
 
     public function DelivereOrder($id){
+        $this->authorizeAdmin('delivery-update-status');
         $order = Order::find($id);
         $order->update(['order_status' => 'Delivered']);
         return redirect()->route('admin.order-detail',['id' => $order->id])->with('success','Order delivered to customer');
     }
 
     public function outForDelivery($id){
+        $this->authorizeAdmin('delivery-update-status');
         $order = Order::find($id);
         $order->update(['order_status' => 'Out for Delivery']);
         return redirect()->route('admin.order-detail',['id' => $order->id])->with('success','Order marked as Out for Delivery');

@@ -13,8 +13,10 @@ use Livewire\Attributes\Layout;
 #[Title(content: 'Category')]
 class Category extends Component
 {
+    use \App\Livewire\Concerns\AuthorizesPermissions;
     public $name, $description,$new_description,$new_name, $id;
     public function store(){
+        $this->authorizeShop('category-manage');
         DB::beginTransaction();
         try{
             $validation  = $this->validate([
@@ -35,14 +37,16 @@ class Category extends Component
     }
 
     public function edit($id){
+        $this->authorizeShop('category-manage');
         $this->reset();
-        $category = ModelsCategory::find($id);
+        $category = ModelsCategory::forCurrentShop()->findOrFail($id);
         $this->id = $category->id;
         $this->new_name = $category->name;
         $this->new_description = $category->description;
     }
 
     public function update(){
+        $this->authorizeShop('category-manage');
         DB::beginTransaction();
         try{
             $validation  = $this->validate([
@@ -50,7 +54,7 @@ class Category extends Component
                 'new_description'=>'nullable|string',
             ]);
 
-            $category = ModelsCategory::find($this->id);
+            $category = ModelsCategory::forCurrentShop()->findOrFail($this->id);
             $category->name = ucwords(strtolower($validation['new_name']));
             $category->description = $validation['new_description'];
             $category->save();
@@ -64,9 +68,10 @@ class Category extends Component
     }
 
     public function delete($id){
+        $this->authorizeShop('category-manage');
         DB::beginTransaction();
         try{
-            $category = ModelsCategory::find($id);
+            $category = ModelsCategory::forCurrentShop()->findOrFail($id);
             $category->delete();
             DB::commit();
             return redirect()->route('shop-user.category')->with('success','Category deleted successfully');

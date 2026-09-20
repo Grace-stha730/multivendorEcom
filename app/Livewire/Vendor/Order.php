@@ -17,9 +17,7 @@ class Order extends Component
 
     public function mount()
     {
-        $shopId = auth('shop_user')->user()->shop_id;
-
-       $this->orders = VendorOrder::where('shop_id', $shopId)->with('order','items')->latest()->get();
+       $this->orders = VendorOrder::forCurrentShop()->with('order','items')->latest()->get();
     }
     public function render()
     {

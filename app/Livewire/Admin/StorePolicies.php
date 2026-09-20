@@ -11,6 +11,7 @@ use Livewire\Component;
 #[Title('Store Policies')]
 class StorePolicies extends Component
 {
+    use \App\Livewire\Concerns\AuthorizesPermissions;
     public string $shipping = '';
     public string $returns = '';
     public string $general = '';
@@ -25,6 +26,7 @@ class StorePolicies extends Component
 
     public function save(): void
     {
+        $this->authorizeAdmin('policy-manage');
         $this->validate(['shipping' => 'nullable|string|max:5000', 'returns' => 'nullable|string|max:5000', 'general' => 'nullable|string|max:5000']);
         foreach (['shipping', 'returns', 'general'] as $key) StorePolicy::updateOrCreate(['key' => $key], ['value' => $this->{$key}, 'updated_at' => now()]);
         session()->flash('success', 'AI support policies updated.');

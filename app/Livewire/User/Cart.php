@@ -573,6 +573,10 @@ class Cart extends Component
 
             $this->checkoutStep = 1;
 
+            if ($order->payment_method === 'E-Sewa') {
+                return redirect()->route('user.payment.esewa', $order->id);
+            }
+
             return redirect()->route('user.cart')->with('success', 'Order Successfully Placed!');
 
         } catch (\Throwable $th) {

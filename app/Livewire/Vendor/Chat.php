@@ -14,6 +14,7 @@ use Livewire\Component;
 #[Title('Customer Chats')]
 class Chat extends Component
 {
+    use \App\Livewire\Concerns\AuthorizesPermissions;
     public $activeConversationId = null;
     public $messageText = '';
 
@@ -36,6 +37,7 @@ class Chat extends Component
 
     public function selectConversation($id)
     {
+        $this->authorizeShop('chat-reply');
         $this->activeConversationId = $id;
         $this->markAsRead();
         $this->resetErrorBag();
@@ -44,6 +46,7 @@ class Chat extends Component
 
     public function sendMessage()
     {
+        $this->authorizeShop('chat-reply');
         $this->validate([
             'messageText' => 'required|string|max:1000',
         ]);
@@ -80,6 +83,7 @@ class Chat extends Component
 
     public function markAsRead()
     {
+        $this->authorizeShop('chat-reply');
         if ($this->activeConversationId) {
             ChatMessage::where('conversation_id', $this->activeConversationId)
                 ->where('sender_type', 'user')

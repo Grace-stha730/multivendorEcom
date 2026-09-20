@@ -6,6 +6,7 @@
         ['Categories', 'fa-tags', route('admin.category'), ['admin/category']],
         ['Orders', 'fa-bag-shopping', route('admin.order'), ['admin/order', 'admin/order-detail*']],
         ['Shops', 'fa-store', route('admin.shops'), ['admin/shops']],
+        ['Shop Registrations', 'fa-clipboard-check', route('admin.shop-registrations'), ['admin/shop-registrations']],
         ['Messages', 'fa-envelope', route('admin.message'), ['admin/message', 'admin/message-datail*']],
         ['Coupons', 'fa-ticket', route('admin.coupons'), ['admin/coupons']],
         ['Payouts', 'fa-hand-holding-dollar', route('admin.payouts'), ['admin/payouts']],

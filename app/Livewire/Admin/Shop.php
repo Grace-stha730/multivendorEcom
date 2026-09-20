@@ -19,6 +19,7 @@ use Mary\Traits\Toast;
 #[Title('Shops')]
 class Shop extends Component
 {
+    use \App\Livewire\Concerns\AuthorizesPermissions;
     use WithFileUploads;
     use Toast;
 
@@ -51,6 +52,7 @@ class Shop extends Component
 
     public function save(): void
     {
+        $this->authorizeAdmin($this->shopId ? 'shop-edit' : 'shop-create');
         $validated = $this->validate();
         $isEditing = (bool) $this->shopId;
         $shopData = Arr::only($validated, [
@@ -92,6 +94,7 @@ class Shop extends Component
 
     public function edit(int $id): void
     {
+        $this->authorizeAdmin('shop-edit');
         $shop = ShopModel::with(['province', 'district'])->findOrFail($id);
         $this->resetValidation();
         $this->fill(Arr::except($shop->only(array_keys($this->rules())), ['image']));
@@ -107,6 +110,7 @@ class Shop extends Component
 
     public function create(): void
     {
+        $this->authorizeAdmin('shop-create');
         $this->resetForm();
         $this->shopModal = true;
         $this->dispatch('shop-form-loaded', province: null, district: null);
@@ -114,12 +118,14 @@ class Shop extends Component
 
     public function confirmDelete(int $id): void
     {
+        $this->authorizeAdmin('shop-delete');
         $this->shopToDelete = $id;
         $this->deleteModal = true;
     }
 
     public function deleteShop(): void
     {
+        $this->authorizeAdmin('shop-delete');
         ShopModel::findOrFail($this->shopToDelete)->delete();
 
         $this->deleteModal = false;

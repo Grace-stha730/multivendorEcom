@@ -53,10 +53,12 @@ Route::get('/contact-us', ContactUs::class)->name('user.contact-us');
 Route::get('/about-us', AboutUs::class)->name('user.about-us');
 Route::get('/shop/{id}', VendorInfo::class)->name('user.shop');
 Route::get('/coupons', UserCoupons::class)->name('user.coupons');
+Route::get('/register-shop', \App\Livewire\User\RegisterShop::class)->name('user.register-shop');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', UserLogin::class)->name('user.login');
     Route::get('/register', UserRegister::class)->name('user.register');
+    Route::get('/forgot-password', \App\Livewire\Auth\ForgotPassword::class)->defaults('guard', 'web')->name('user.password.forgot');
     Route::get('/register/verify-otp', \App\Livewire\Auth\User\VerifyOtp::class)->name('user.verify-otp');
     Route::get('/register/create-password', \App\Livewire\Auth\User\CreatePassword::class)->name('user.create-password');
     Route::get('/auth/google/redirect', [AuthController::class, 'redirectToGoogle'])->name('user.google.redirect');
@@ -64,6 +66,9 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('web')->group(function () {
+    Route::get('/payment/esewa/success', [\App\Http\Controllers\EsewaPaymentController::class, 'success'])->name('user.payment.esewa.success');
+    Route::get('/payment/esewa/failure', [\App\Http\Controllers\EsewaPaymentController::class, 'failure'])->name('user.payment.esewa.failure');
+    Route::get('/payment/esewa/{order}', [\App\Http\Controllers\EsewaPaymentController::class, 'pay'])->whereNumber('order')->name('user.payment.esewa');
     Route::post('/logout', [AuthController::class, 'userlogout'])->name('user.logout');
     Route::get('/cart', Cart::class)->name('user.cart');
     Route::get('/checkout', Checkout::class)->name('user.checkout');
@@ -78,21 +83,33 @@ Route::middleware('web')->group(function () {
 Route::prefix('shop-user')->name('shop-user.')->group(function () {
     Route::middleware('guest')->group(function () {
         Route::get('/login', \App\Livewire\Auth\Login::class)->name('login');
+        Route::get('/forgot-password', \App\Livewire\Auth\ForgotPassword::class)->defaults('guard', 'shop_user')->name('password.forgot');
     });
 
-    Route::middleware('shop_user')->group(function () {
+    Route::middleware(['shop_user', 'shop.context'])->group(function () {
         Route::post('/logout', [AuthController::class, 'shopUserLogout'])->name('logout');
         Route::get('/dashboard', Dashboard::class)->name('dashboard');
-        Route::get('category', Category::class)->name('category');
-        Route::get('/product', Product::class)->name('product');
-        Route::get('/order', VendorOrder::class)->name('order');
-        Route::get('/order-detail/{id}', OrderDetail::class)->name('orderDetail');
+        Route::get('category', Category::class)
+            ->middleware('authorize:category-manage,shop_user')->name('category');
+        Route::get('/product', Product::class)
+            ->middleware('authorize:product-view,shop_user')->name('product');
+        Route::get('/order', VendorOrder::class)
+            ->middleware('authorize:order-view,shop_user')->name('order');
+        Route::get('/order-detail/{id}', OrderDetail::class)
+            ->middleware('authorize:order-view,shop_user')->name('orderDetail');
         Route::get('/setting', VendorSetting::class)->name('setting');
-        Route::get('product-review', ProductReview::class)->name('product-review');
-        Route::get('/invoice/{id}', [\App\Http\Controllers\InvoiceController::class, 'vendorInvoice'])->name('invoice');
-        Route::get('/earnings', VendorEarnings::class)->name('earnings');
-        Route::get('/chat', VendorChat::class)->name('chat');
-        Route::get('/coupons', VendorCoupons::class)->name('coupons');
+        Route::get('product-review', ProductReview::class)
+            ->middleware('authorize:product-view,shop_user')->name('product-review');
+        Route::get('/invoice/{id}', [\App\Http\Controllers\InvoiceController::class, 'vendorInvoice'])
+            ->middleware('authorize:order-view,shop_user')->name('invoice');
+        Route::get('/earnings', VendorEarnings::class)
+            ->middleware('authorize:earnings-view,shop_user')->name('earnings');
+        Route::get('/chat', VendorChat::class)
+            ->middleware('authorize:chat-reply,shop_user')->name('chat');
+        Route::get('/coupons', VendorCoupons::class)
+            ->middleware('authorize:coupon-manage,shop_user')->name('coupons');
+        Route::patch('/staff/{id}/role', [\App\Http\Controllers\ShopStaffController::class, 'updateRole'])
+            ->middleware('authorize:staff-assign-role,shop_user')->name('staff.role');
     });
 });
 
@@ -100,23 +117,38 @@ Route::prefix('admin')->group(function () {
     Route::middleware('guest')->group(function () {
 //        Route::get('/register', AdminRegister::class)->name('admin.register');
         Route::get('/login', AdminLogin::class)->name('admin.login');
+        Route::get('/forgot-password', \App\Livewire\Auth\ForgotPassword::class)->defaults('guard', 'admin')->name('admin.password.forgot');
     });
 
     Route::middleware('admin')->group(function () {
         Route::post('/logout', [AuthController::class, 'adminLogout'])->name('admin.logout');
         Route::get('/dashboard', AdminDashboard::class)->name('admin.dashboard');
-        Route::get('/products', Products::class)->name('admin.product');
-        Route::get('/product-detail/{id}', AdminProductDetail::class)->name('admin.product-detail');
-        Route::get('/category', AdminCategory::class)->name('admin.category');
-        Route::get('/order', AdminOrder::class)->name('admin.order');
-        Route::get('/order-detail/{id}', AdminOrderDetail::class)->name('admin.order-detail');
-        Route::get('/invoice/{id}', [\App\Http\Controllers\InvoiceController::class, 'adminInvoice'])->name('admin.invoice');
+        Route::get('/products', Products::class)
+            ->middleware('authorize:product-view,admin')->name('admin.product');
+        Route::get('/product-detail/{id}', AdminProductDetail::class)
+            ->middleware('authorize:product-view,admin')->name('admin.product-detail');
+        Route::get('/category', AdminCategory::class)
+            ->middleware('authorize:category-manage,admin')->name('admin.category');
+        Route::get('/order', AdminOrder::class)
+            ->middleware('authorize:order-view|delivery-view,admin')->name('admin.order');
+        Route::get('/order-detail/{id}', AdminOrderDetail::class)
+            ->middleware('authorize:order-view|delivery-view,admin')->name('admin.order-detail');
+        Route::get('/invoice/{id}', [\App\Http\Controllers\InvoiceController::class, 'adminInvoice'])
+            ->middleware('authorize:order-view,admin')->name('admin.invoice');
         Route::get('/setting', AdminSetting::class)->name('admin.setting');
-        Route::get('/store-policies', \App\Livewire\Admin\StorePolicies::class)->name('admin.store-policies');
-        Route::get('/message', Message::class)->name('admin.message');
-        Route::get('message-datail/{id}', ViewMessage::class)->name('admin.message-datail');
-        Route::get('/coupons', AdminCoupons::class)->name('admin.coupons');
-        Route::get('/payouts', AdminPayouts::class)->name('admin.payouts');
-        Route::get('/shops', AdminShop::class)->name('admin.shops');
+        Route::get('/store-policies', \App\Livewire\Admin\StorePolicies::class)
+            ->middleware('authorize:policy-manage,admin')->name('admin.store-policies');
+        Route::get('/message', Message::class)
+            ->middleware('authorize:message-view,admin')->name('admin.message');
+        Route::get('message-datail/{id}', ViewMessage::class)
+            ->middleware('authorize:message-view,admin')->name('admin.message-datail');
+        Route::get('/coupons', AdminCoupons::class)
+            ->middleware('authorize:coupon-manage,admin')->name('admin.coupons');
+        Route::get('/payouts', AdminPayouts::class)
+            ->middleware('authorize:payout-view,admin')->name('admin.payouts');
+        Route::get('/shops', AdminShop::class)
+            ->middleware('authorize:shop-view,admin')->name('admin.shops');
+        Route::get('/shop-registrations', \App\Livewire\Admin\ShopRegistrations::class)
+            ->middleware('authorize:shop-view,admin')->name('admin.shop-registrations');
     });
 });
