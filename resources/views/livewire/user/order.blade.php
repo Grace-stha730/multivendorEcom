@@ -141,7 +141,11 @@
 
                             <div class="flex flex-wrap justify-between text-sm text-gray-700">
                                 <div>
-                                    <p><strong>Payment:</strong> {{ $order->payment_method }}</p>
+                                    <p><strong>Payment:</strong> {{ $order->payment_method }}
+                                        <span class="ml-1 rounded px-2 py-0.5 text-xs font-medium {{ $order->payment_status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }}">{{ $order->payment_status }}</span></p>
+                                    @if ($order->payment_method === 'E-Sewa' && $order->payment_status !== 'Paid' && $order->order_status !== 'Cancelled')
+                                        <a href="{{ route('user.payment.esewa', $order->id) }}" class="mt-2 inline-block rounded bg-[#60bb46] px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90">Pay with eSewa</a>
+                                    @endif
                                 </div>
                                 <div>
                                     <p><strong>Total:</strong> <span class="text-green-700 font-semibold">Rs.

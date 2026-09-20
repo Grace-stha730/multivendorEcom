@@ -16,12 +16,15 @@ class AdminSeeder extends Seeder
      */
     public function run(): void
     {
-        Admin::updateOrCreate(['email' => 'admin@gmail.com'], [
+        $admin = Admin::updateOrCreate(['email' => 'admin@gmail.com'], [
             'name' => 'Super Admin',
             'email' => 'admin@gmail.com',
             'password' => Hash::make('password'),
             'role' => RoleTypeState::SUPER_ADMIN,
             'department' => DepartmentTypeState::ADMIN,
         ]);
+
+        // Requires RolesAndPermissionsSeeder to have run first (see DatabaseSeeder).
+        $admin->syncRoles('super-admin');
     }
 }

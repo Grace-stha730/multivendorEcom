@@ -13,6 +13,7 @@ use Livewire\Component;
 #[Layout('components.layouts.admin')]
 class Coupons extends Component
 {
+    use \App\Livewire\Concerns\AuthorizesPermissions;
     public $code, $description, $type = 'fixed', $value, $min_order_amount = 0, $usage_limit = 1, $min_item_price = 0, $starts_at, $expires_at, $category_id;
     public $is_active = true;
     public $editingId = null;
@@ -31,6 +32,7 @@ class Coupons extends Component
 
     public function saveCoupon()
     {
+        $this->authorizeAdmin('coupon-manage');
         $this->validate();
         $this->validate(['category_id' => 'required|exists:categories,id']);
 
@@ -74,6 +76,7 @@ class Coupons extends Component
 
     public function editCoupon($id)
     {
+        $this->authorizeAdmin('coupon-manage');
         $coupon = Coupon::findOrFail($id);
         $this->editingId = $coupon->id;
         $this->code = $coupon->code;
@@ -91,6 +94,7 @@ class Coupons extends Component
 
     public function toggleStatus($id)
     {
+        $this->authorizeAdmin('coupon-manage');
         $coupon = Coupon::findOrFail($id);
         $coupon->update(['is_active' => !$coupon->is_active]);
         session()->flash('success', 'Coupon status updated');
@@ -98,6 +102,7 @@ class Coupons extends Component
 
     public function deleteCoupon($id)
     {
+        $this->authorizeAdmin('coupon-manage');
         Coupon::findOrFail($id)->delete();
         session()->flash('success', 'Coupon deleted');
     }

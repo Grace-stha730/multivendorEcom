@@ -11,8 +11,10 @@ use Livewire\Component;
 #[Layout('components.layouts.admin')]
 class Payouts extends Component
 {
+    use \App\Livewire\Concerns\AuthorizesPermissions;
     public function approvePayout($id)
     {
+        $this->authorizeAdmin('payment-process');
         $payout = VendorPayout::findOrFail($id);
         $payout->update(['status' => 'Paid']);
         session()->flash('success', 'Payout approved and marked as Paid');
@@ -20,6 +22,7 @@ class Payouts extends Component
 
     public function rejectPayout($id)
     {
+        $this->authorizeAdmin('payment-process');
         $payout = VendorPayout::findOrFail($id);
         $payout->update(['status' => 'Rejected']);
         session()->flash('success', 'Payout request rejected');

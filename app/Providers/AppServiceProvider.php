@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Cart_items;
 use App\Models\Wishlist;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -23,6 +24,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // @authorizeUser('shop-view', 'admin') ... @endauthorizeUser  (guard optional)
+        Blade::if('authorizeUser', fn (string $permission, ?string $guard = null) => authorizeUserCheck($permission, $guard));
+
         View::composer('*', function ($view) {
             $cartCount = 0;
             $wishlistCount = 0;

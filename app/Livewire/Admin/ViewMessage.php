@@ -12,6 +12,7 @@ use Livewire\Component;
 #[Title('Message Detail')]
 class ViewMessage extends Component
 {
+    use \App\Livewire\Concerns\AuthorizesPermissions;
     public $message;
     public function mount($id)
     {
@@ -20,6 +21,7 @@ class ViewMessage extends Component
 
     public function markAsUnread()
     {
+        $this->authorizeAdmin('message-view');
         DB::beginTransaction();
         try {
             $message = ContactMessage::find($this->message->id);
@@ -36,6 +38,7 @@ class ViewMessage extends Component
 
     public function markAsRead()
     {
+        $this->authorizeAdmin('message-view');
         DB::beginTransaction();
         try {
             $message = ContactMessage::find($this->message->id);

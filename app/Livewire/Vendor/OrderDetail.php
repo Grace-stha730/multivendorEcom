@@ -13,16 +13,18 @@ use Livewire\Attributes\Layout;
 #[Title(content: 'Order Detail')]
 class OrderDetail extends Component
 {
+    use \App\Livewire\Concerns\AuthorizesPermissions;
     public $vendorOrder, $vendorId;
     public function mount($id)
     {
         $this->vendorId = $id;
-        $this->vendorOrder = VendorOrder::with('order', 'items')->findOrFail($id);
+        $this->vendorOrder = VendorOrder::forCurrentShop()->with('order', 'items')->findOrFail($id);
         // dd($this->vendorOrder);
     }
 
     public function receivedOrder()
     {
+        $this->authorizeShop('order-update-status');
         DB::beginTransaction();
         try {
             // update the current vendor order record
@@ -55,6 +57,7 @@ class OrderDetail extends Component
 
     public function cancelOrder()
     {
+        $this->authorizeShop('order-update-status');
         // $order = Order::find($this->vendorOrder->order_id);
         DB::beginTransaction();
         try {
@@ -78,6 +81,7 @@ class OrderDetail extends Component
 
     public function pendingOrder()
     {
+        $this->authorizeShop('order-update-status');
         // $order = Order::find($this->vendorOrder->order_id);
         DB::beginTransaction();
         try {

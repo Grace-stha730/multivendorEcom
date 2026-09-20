@@ -13,10 +13,12 @@ use App\Models\Category as modelCategory;
 #[Title('Category')]
 class Category extends Component
 {
+    use \App\Livewire\Concerns\AuthorizesPermissions;
     public $name, $description;
     public $categoryId, $new_name, $new_description;
     public function store()
     {
+        $this->authorizeAdmin('category-manage');
         $validation = $this->validate([
             'name' => 'required|min:2|max:20|unique:categories,name',
             'description' => 'nullable|string',
@@ -39,6 +41,7 @@ class Category extends Component
 
     public function edit($id)
     {
+        $this->authorizeAdmin('category-manage');
         $category = modelCategory::find($id);
         $this->categoryId = $category->id;
         $this->new_name = $category->name;
@@ -47,6 +50,7 @@ class Category extends Component
 
     public function update()
     {
+        $this->authorizeAdmin('category-manage');
         $validation = $this->validate([
             'new_name' => 'required|min:2|max:20|unique:categories,name,' . $this->categoryId,
             'new_description' => 'nullable|string',
@@ -69,6 +73,7 @@ class Category extends Component
     }
 
     public function delete($id){
+        $this->authorizeAdmin('category-manage');
         DB::beginTransaction();
         try{
             $category = modelCategory::find($id);

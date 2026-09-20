@@ -16,6 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'user'=>App\Http\Middleware\User::class,
             'shop_user' => App\Http\Middleware\ShopUser::class,
             'admin' => App\Http\Middleware\Admin::class,
+            'authorize' => App\Http\Middleware\AuthorizePermission::class,
+            'shop.context' => App\Http\Middleware\SetShopContext::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

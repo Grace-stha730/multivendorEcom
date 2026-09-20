@@ -6,6 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Order extends Model
 {
+    protected function casts(): array
+    {
+        return ['paid_at' => 'datetime'];
+    }
+
     protected $fillable = [
         'user_id',
         'order_number',
@@ -23,6 +28,9 @@ class Order extends Model
         'coupon_discount',
         'is_shipped',
         'payment_method',
+        'payment_uuid',
+        'payment_reference',
+        'paid_at',
         'admin_id',
         'quantity'
     ];
