@@ -15,6 +15,7 @@ class ReplyToPendingAiSupport extends Command
     {
         $cutoff = now()->subMinutes(config('ai.auto_reply_delay_minutes'));
         Conversation::with('shopUser.shop')->where('is_ai_handled', true)->where('last_message_at', '<=', $cutoff)->eachById(function (Conversation $conversation) use ($ai) {
+            if ($conversation->isAiSupport()) return; // answered instantly in the chat, not by the schedule
             if (! $conversation->shopUser?->shop?->ai_auto_reply_enabled) return;
             $last = ChatMessage::where('conversation_id', $conversation->id)->latest()->first();
             if ($last?->sender_type === 'user') $ai->sendReply($conversation);

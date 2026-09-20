@@ -29,8 +29,8 @@ class AiClientService
             $message = match ($status) {
                 401, 403 => 'AI authentication failed. Check AI_API_KEY.',
                 429 => $providerCode === 'insufficient_quota'
-                    ? 'OpenAI API quota is unavailable. Add API billing credits or raise the project budget.'
-                    : 'OpenAI rate limit reached. Please try again shortly.',
+                    ? 'AI API quota is unavailable. Check the provider plan, billing or budget.'
+                    : 'AI rate limit reached. Please try again shortly.',
                 default => 'AI service request failed. Please try again later.',
             };
             // Contains HTTP/provider diagnostics only; the request and API key are never logged.

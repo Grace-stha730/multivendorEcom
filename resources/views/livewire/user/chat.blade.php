@@ -1,4 +1,4 @@
-<div class="max-w-6xl mx-auto px-4 py-8" wire:poll.5s="markAsRead">
+<div class="max-w-6xl mx-auto px-4 py-8" wire:poll.5s="markAsRead" x-data x-on:request-ai-reply.window="$wire.generateAiReply()">
     <div class="mb-6 flex items-center justify-between"><h1 class="text-3xl font-bold text-gray-800 flex items-center gap-2">
         <i class="fa-solid fa-comments text-indigo-600"></i> Chat Messages
     </h1><button wire:click="startAiSupport" class="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700">✨ Chat with AI Assistant</button></div>
@@ -78,7 +78,7 @@
                             <h3 class="text-sm font-semibold text-gray-900">
                                 {{ $activeConversation->shopUser?->shop?->name ?? 'AI Support' }}
                             </h3>
-                            <p class="text-xs text-gray-400">Direct Vendor Inquiry</p>
+                            <p class="text-xs text-gray-400">{{ $activeConversation->isAiSupport() ? 'Automated assistant. Ask about orders, shipping and returns.' : 'Direct Vendor Inquiry' }}</p>
                         </div>
                     </div>
 
@@ -93,7 +93,11 @@
                         </a>
                     @endif
                     @if ($activeConversation->is_ai_handled)
-                        <button wire:click="requestHuman" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">Talk to a human instead</button>
+                        @if ($activeConversation->isAiSupport() && $activeConversation->human_requested_at?->gt(now()->subDay()))
+                            <span class="text-xs font-semibold text-emerald-600"><i class="fa-solid fa-check"></i> Support team notified</span>
+                        @else
+                            <button wire:click="requestHuman" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">Talk to a human instead</button>
+                        @endif
                     @endif
                 </div>
 
@@ -136,6 +140,12 @@
                             <p class="text-sm">Start your conversation. Type a message below!</p>
                         </div>
                     @endforelse
+
+                    @if ($awaitingAi)
+                        <div class="self-start rounded-2xl rounded-bl-none border border-violet-200 bg-violet-100 px-4 py-2 text-sm text-violet-900" wire:key="ai-typing">
+                            <span class="font-semibold">AI Assistant</span> is typing<span class="animate-pulse">...</span>
+                        </div>
+                    @endif
                 </div>
 
                 <!-- Chat Footer / Input Form -->
