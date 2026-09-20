@@ -17,6 +17,7 @@
                 <a class="hover:text-gray-400" href="{{ route('user.register') }}">Register</a>
                 <a class="hover:text-gray-400" href="{{ route('user.cart') }}">Cart</a>
                 <a class="hover:text-gray-400" href="{{ route('user.order') }}">Orders</a>
+                <a class="hover:text-gray-400" href="{{ route('user.register-shop') }}">Register Shop</a>
             </div>
         </div>
 
