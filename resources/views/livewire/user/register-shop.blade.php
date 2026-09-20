@@ -39,7 +39,7 @@
                 <span class="badge badge-lg {{ ['APPROVED' => 'badge-success', 'REJECTED' => 'badge-error', 'PENDING' => 'badge-warning'][$verifiedStatus] ?? '' }}">{{ ucfirst(strtolower($verifiedStatus)) }}</span>
                 <p class="text-sm text-gray-500">
                     @if ($verifiedStatus === 'PENDING') An admin is reviewing your request.
-                    @elseif ($verifiedStatus === 'APPROVED') Your shop was approved. Your login details will be shared with you by the admin.
+                    @elseif ($verifiedStatus === 'APPROVED') Your shop was approved. Your login details were emailed to you; please check your inbox.
                     @else Your request was not approved. You may contact us for details.
                     @endif
                 </p>
