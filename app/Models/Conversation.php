@@ -15,12 +15,20 @@ class Conversation extends Model
         'product_id',
         'last_message_at',
         'is_ai_handled',
+        'human_requested_at',
     ];
 
     protected $casts = [
         'last_message_at' => 'datetime',
         'is_ai_handled' => 'boolean',
+        'human_requested_at' => 'datetime',
     ];
+
+    /** The AI Assistant chat: belongs to the customer only, no vendor and no product. */
+    public function isAiSupport(): bool
+    {
+        return $this->shop_user_id === null && $this->product_id === null;
+    }
 
     public function user()
     {
