@@ -123,3 +123,8 @@ x-cloak { display: none !important; }
 .mary-table-pagination button {
     @apply cursor-pointer
 }
+
+/* No spinner arrows on any number input (Chrome/Edge/Safari + Firefox). */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { -moz-appearance: textfield; appearance: textfield; }

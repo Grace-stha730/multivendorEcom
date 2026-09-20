@@ -314,7 +314,7 @@
                                 {{-- phone --}}
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700">Shipping Phone</label>
-                                    <input type="text" placeholder="98 xxxxxxxx" wire:model='userPhone'
+                                    <input type="number" inputmode="numeric" min="0" step="1" x-data @keydown="['e','E','+','-','.',','].includes($event.key) && $event.preventDefault()" @wheel="$el.blur()" placeholder="98xxxxxxxx (10+ digits)" wire:model='userPhone'
                                         class="w-full border border-gray-300 rounded-md p-2 focus:ring focus:ring-blue-300">
                                 </div>
 

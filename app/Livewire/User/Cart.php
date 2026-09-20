@@ -2,6 +2,7 @@
 
 namespace App\Livewire\User;
 
+use App\Rules\PhoneNumber;
 use App\Models\Coupon;
 use App\Models\CouponUser;
 use App\Models\Order;
@@ -590,7 +591,7 @@ class Cart extends Component
         $rules = [
             'userName' => 'required|string|max:120',
             'userEmail' => 'required|email|max:255',
-            'userPhone' => 'required|string|max:30',
+            'userPhone' => ['required', new PhoneNumber()],
             'userProvince' => 'required|string|max:120',
             'userCity' => 'required|string|max:120',
             'userTole' => 'required|string|max:120',

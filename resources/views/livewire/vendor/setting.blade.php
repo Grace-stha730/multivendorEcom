@@ -102,8 +102,9 @@
             {{-- tole --}}
             <div>
                 <label class="block mb-2 text-sm font-medium text-gray-600">phone</label>
-                <input type="number" wire:model.defer="shop_phone"
-                    class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" placeholder="phone">
+                <input type="number" inputmode="numeric" min="0" step="1" wire:model.defer="shop_phone"
+                    x-data @keydown="['e','E','+','-','.',','].includes($event.key) && $event.preventDefault()" @wheel="$el.blur()"
+                    class="number-input w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" placeholder="phone">
                 @error('shop_phone')
                     <span class="text-red-500 text-sm">{{ $message }}</span>
                 @enderror
@@ -155,3 +156,5 @@
         <button wire:click="updateAiAutoReply" class="mt-4 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">Save AI setting</button>
     </div>
 </div>
+
+<style>.number-input::-webkit-outer-spin-button,.number-input::-webkit-inner-spin-button{margin:0;-webkit-appearance:none}.number-input[type=number]{-moz-appearance:textfield;appearance:textfield}</style>

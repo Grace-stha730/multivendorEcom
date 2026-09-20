@@ -33,6 +33,7 @@ class ShopRegistrations extends Component
 
     public $password;
     public $password_confirmation;
+    public $rejection_reason = '';
 
     public function updatedStatusFilter(): void
     {
@@ -55,8 +56,8 @@ class ShopRegistrations extends Component
         $this->authorizeAction('shop-approve');
         $registration = $this->findVerified($id);
 
-        if ($registration->status !== ShopRegistration::PENDING) {
-            $this->error('Not pending', 'Only pending registrations can be approved.', 'toast-bottom');
+        if (!in_array($registration->status, [ShopRegistration::PENDING, ShopRegistration::REJECTED], true)) {
+            $this->error('Already approved', 'Only pending or rejected registrations can be approved.', 'toast-bottom');
 
             return;
         }
@@ -78,8 +79,8 @@ class ShopRegistrations extends Component
 
         $registration = $this->findVerified($this->registrationId);
 
-        if ($registration->status !== ShopRegistration::PENDING) {
-            $this->error('Not pending', 'Only pending registrations can be approved.', 'toast-bottom');
+        if (!in_array($registration->status, [ShopRegistration::PENDING, ShopRegistration::REJECTED], true)) {
+            $this->error('Already approved', 'Only pending or rejected registrations can be approved.', 'toast-bottom');
 
             return;
         }
@@ -115,7 +116,7 @@ class ShopRegistrations extends Component
                 'shop_id' => $shop->id,
             ]);
 
-            $registration->update(['status' => ShopRegistration::APPROVED]);
+            $registration->update(['status' => ShopRegistration::APPROVED, 'rejection_reason' => null]);
         });
 
         // Capture before closeModals() clears the form.
@@ -143,6 +144,8 @@ class ShopRegistrations extends Component
         }
 
         $this->registrationId = $registration->id;
+        $this->rejection_reason = '';
+        $this->resetValidation();
         $this->detailModal = false;
         $this->rejectModal = true;
     }
@@ -150,14 +153,32 @@ class ShopRegistrations extends Component
     public function reject(): void
     {
         $this->authorizeAction('shop-approve');
+        $this->validate([
+            'rejection_reason' => ['required', 'string', 'min:5', 'max:500'],
+        ], [
+            'rejection_reason.required' => 'Please tell the vendor why the registration was rejected.',
+            'rejection_reason.min' => 'The reason must be at least 5 characters.',
+        ]);
+
         $registration = $this->findVerified($this->registrationId);
 
-        if ($registration->status === ShopRegistration::PENDING) {
-            $registration->update(['status' => ShopRegistration::REJECTED]);
+        if ($registration->status !== ShopRegistration::PENDING) {
+            $this->error('Not pending', 'Only pending registrations can be rejected.', 'toast-bottom');
+
+            return;
         }
 
+        $registration->update(['status' => ShopRegistration::REJECTED, 'rejection_reason' => trim($this->rejection_reason)]);
+
+        $emailed = $this->notifyRejected($registration);
+
         $this->closeModals();
-        $this->success('Registration rejected', 'The registration was marked as rejected.', 'toast-bottom');
+
+        if ($emailed) {
+            $this->success('Registration rejected', "The vendor was emailed the reason at {$registration->email}.", 'toast-bottom');
+        } else {
+            $this->warning('Rejected, but the email failed', "The vendor was not notified. Email: {$registration->email}", 'toast-bottom', timeout: 12000);
+        }
     }
 
     public function confirmDelete(int $id): void
@@ -180,7 +201,7 @@ class ShopRegistrations extends Component
     public function closeModals(): void
     {
         $this->detailModal = $this->approveModal = $this->rejectModal = $this->deleteModal = false;
-        $this->reset(['registrationId', 'password', 'password_confirmation']);
+        $this->reset(['registrationId', 'password', 'password_confirmation', 'rejection_reason']);
         $this->resetValidation();
     }
 
@@ -228,6 +249,47 @@ TEXT;
         } catch (\Throwable $exception) {
             report($exception);
             Log::warning('Shop approval email failed.', ['registration_id' => $registration->id]);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /** Tells the vendor why they were rejected and how to apply again. Returns false if the mail could not be sent. */
+    private function notifyRejected(ShopRegistration $registration): bool
+    {
+        $registerUrl = route('user.register-shop');
+        $contactUrl = route('user.contact-us');
+        $reason = $registration->rejection_reason;
+
+        $body = <<<TEXT
+Hello {$registration->owner},
+
+Thank you for applying to sell on our marketplace.
+
+Unfortunately, your shop "{$registration->shop_name}" could not be registered at this time.
+
+Reason:
+{$reason}
+
+What you can do next:
+  1. Fix the issue mentioned above.
+  2. Submit a new registration using the same email address: {$registerUrl}
+     (You do not need to log in. You will be asked to confirm your email with a 6-digit code.)
+  3. If you think this was a mistake or need help, contact us: {$contactUrl}
+
+You can also check the status of your request at any time on the same registration page.
+TEXT;
+
+        try {
+            Mail::mailer('smtp')->raw(
+                $body,
+                fn ($message) => $message->to($registration->email)->subject('Your shop registration was not approved')
+            );
+        } catch (\Throwable $exception) {
+            report($exception);
+            Log::warning('Shop rejection email failed.', ['registration_id' => $registration->id]);
 
             return false;
         }

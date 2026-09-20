@@ -8,8 +8,8 @@
                 <label class="block"><span class="form-label">Shop name <span class="text-rose-600">*</span></span><input wire:model="shop_name" class="form-input" placeholder="e.g. Himalayan Mart">@error('shop_name')<small class="form-error">{{ $message }}</small>@enderror</label>
                 <label class="block"><span class="form-label">Owner name <span class="text-rose-600">*</span></span><input wire:model="owner" class="form-input" placeholder="Owner's full name">@error('owner')<small class="form-error">{{ $message }}</small>@enderror</label>
                 <label class="block"><span class="form-label">Email <span class="text-rose-600">*</span></span><input wire:model="email" type="email" class="form-input" placeholder="Shop email or your personal email">@error('email')<small class="form-error">{{ $message }}</small>@enderror</label>
-                <label class="block"><span class="form-label">PAN number <span class="text-rose-600">*</span></span><input wire:model="pan_number" inputmode="numeric" maxlength="9" class="form-input" placeholder="9-digit PAN">@error('pan_number')<small class="form-error">{{ $message }}</small>@enderror</label>
-                <label class="block"><span class="form-label">Contact number <span class="text-rose-600">*</span></span><input wire:model="contact_number" class="form-input" placeholder="98XXXXXXXX">@error('contact_number')<small class="form-error">{{ $message }}</small>@enderror</label>
+                <label class="block"><span class="form-label">PAN number <span class="text-rose-600">*</span></span><input wire:model="pan_number" type="number" inputmode="numeric" min="0" step="1" x-data @keydown="['e','E','+','-','.',','].includes($event.key) && $event.preventDefault()" @wheel="$el.blur()" class="form-input number-input" placeholder="9-digit PAN">@error('pan_number')<small class="form-error">{{ $message }}</small>@enderror</label>
+                <label class="block"><span class="form-label">Contact number <span class="text-rose-600">*</span></span><input wire:model="contact_number" type="number" inputmode="numeric" min="0" step="1" x-data @keydown="['e','E','+','-','.',','].includes($event.key) && $event.preventDefault()" @wheel="$el.blur()" class="form-input number-input" placeholder="98XXXXXXXX (at least 10 digits)">@error('contact_number')<small class="form-error">{{ $message }}</small>@enderror</label>
                 <label class="block"><span class="form-label">Province <span class="text-rose-600">*</span></span>
                     <select wire:model.live="province_id" class="form-input"><option value="">Select province</option>@foreach ($provinces as $province)<option value="{{ $province->id }}">{{ $province->name }}</option>@endforeach</select>
                     @error('province_id')<small class="form-error">{{ $message }}</small>@enderror</label>
@@ -40,9 +40,15 @@
                 <p class="text-sm text-gray-500">
                     @if ($verifiedStatus === 'PENDING') An admin is reviewing your request.
                     @elseif ($verifiedStatus === 'APPROVED') Your shop was approved. Your login details were emailed to you; please check your inbox.
-                    @else Your request was not approved. You may contact us for details.
+                    @else Your request was not approved.
                     @endif
                 </p>
+                @if ($verifiedStatus === 'REJECTED')
+                    @if ($verifiedReason)
+                        <div class="rounded-lg border border-rose-200 bg-rose-50 p-3 text-left text-sm text-rose-800"><strong>Reason:</strong> {{ $verifiedReason }}</div>
+                    @endif
+                    <p class="text-sm text-gray-600">You can fix the issue and submit a new registration with the same email using the form on this page, or <a href="{{ route('user.contact-us') }}" class="text-blue-500 hover:underline" wire:navigate>contact us</a> if you need help.</p>
+                @endif
             </div>
             <x-slot:actions><x-button label="Close" wire:click="closeVerifyModal" class="btn-primary" /></x-slot:actions>
         @else
@@ -59,4 +65,4 @@
     </x-modal>
 </section>
 
-<style>.form-label{display:block;margin-bottom:.375rem;font-size:.875rem;font-weight:500;color:#334155}.form-input{width:100%;border:1px solid #cbd5e1;border-radius:.5rem;background:#fff;padding:.625rem .75rem;color:#0f172a;outline:none}.form-input:focus{border-color:#059669;box-shadow:0 0 0 3px rgb(16 185 129 / .12)}.form-error{display:block;margin-top:.35rem;color:#e11d48}</style>
+<style>.form-label{display:block;margin-bottom:.375rem;font-size:.875rem;font-weight:500;color:#334155}.form-input{width:100%;border:1px solid #cbd5e1;border-radius:.5rem;background:#fff;padding:.625rem .75rem;color:#0f172a;outline:none}.form-input:focus{border-color:#059669;box-shadow:0 0 0 3px rgb(16 185 129 / .12)}.form-error{display:block;margin-top:.35rem;color:#e11d48}.number-input::-webkit-outer-spin-button,.number-input::-webkit-inner-spin-button{margin:0;-webkit-appearance:none}.number-input[type=number]{-moz-appearance:textfield;appearance:textfield}</style>

@@ -72,7 +72,7 @@
 
             <div>
                 <label class="block mb-2 text-sm font-medium text-gray-600">phone</label>
-                <input type="text" wire:model.defer="phone"
+                <input type="number" inputmode="numeric" min="0" step="1" x-data @keydown="['e','E','+','-','.',','].includes($event.key) && $event.preventDefault()" @wheel="$el.blur()" wire:model.defer="phone"
                     class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" placeholder="phone">
                 @error('phone')
                     <span class="text-red-500 text-sm">{{ $message }}</span>

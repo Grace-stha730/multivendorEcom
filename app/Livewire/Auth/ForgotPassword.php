@@ -31,8 +31,10 @@ class ForgotPassword extends Component
 
     public function sendCode(PasswordResetService $service): void
     {
-        $rules = $this->guard === 'shop_user' ? ['required', 'string', 'max:255'] : ['required', 'email', 'max:255'];
-        $this->validate(['identifier' => $rules]);
+        $this->validate(['identifier' => ['required', 'email', 'max:255']], [
+            'identifier.required' => 'Please enter your email address.',
+            'identifier.email' => 'Please enter a valid email address.',
+        ]);
 
         $key = "password-reset:{$this->guard}:" . strtolower($this->identifier) . '|' . request()->ip();
         if (RateLimiter::tooManyAttempts($key, 5)) {
@@ -81,7 +83,6 @@ class ForgotPassword extends Component
         $layout = $this->guard === 'web' ? 'components.layouts.user' : 'components.layouts.auth';
 
         return view('livewire.auth.forgot-password', [
-            'identifierLabel' => PasswordResetService::label($this->guard),
             'loginUrl' => route(self::LOGIN_ROUTES[$this->guard]),
         ])->layout($layout);
     }

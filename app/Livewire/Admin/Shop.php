@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\Shop as ShopModel;
 use App\Models\ShopUser;
+use App\Rules\PhoneNumber;
 use App\Models\Province;
 use App\Models\District;
 use Illuminate\Support\Arr;
@@ -35,7 +36,7 @@ class Shop extends Component
         $rules = [
             'name' => 'required|string|max:255', 'owner' => 'required|string|max:255',
             'image' => 'nullable|image|max:2048',
-            'contact_number' => 'required|string|max:30', 'pan_number' => 'nullable|string|max:50',
+            'contact_number' => ['required', new PhoneNumber()], 'pan_number' => 'nullable|string|max:50',
             'province_id' => 'required|exists:provinces,id', 'district_id' => 'required|exists:districts,id',
             'city' => 'required|string|max:255', 'tole' => 'required|string|max:255',
             'email' => 'required|email|max:255', 'status' => 'required|string|max:30',

@@ -3,11 +3,13 @@
 namespace App\Services;
 
 use App\Models\Admin;
+use App\Models\Shop;
 use App\Models\ShopUser;
 use App\Models\User;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 /**
@@ -20,17 +22,12 @@ class PasswordResetService
     public const RESEND_COOLDOWN_SECONDS = 60;
     public const MAX_ATTEMPTS = 5;
 
-    /** guard => [model, identifier column, label] */
+    /** guard => model. Every account type is reset by EMAIL only. */
     public const GUARDS = [
-        'web' => [User::class, 'email', 'Email'],
-        'admin' => [Admin::class, 'email', 'Email'],
-        'shop_user' => [ShopUser::class, 'username', 'Username'],
+        'web' => User::class,
+        'admin' => Admin::class,
+        'shop_user' => ShopUser::class,
     ];
-
-    public static function label(string $guard): string
-    {
-        return self::GUARDS[$guard][2];
-    }
 
     /**
      * Returns false only when the code could not be sent (or the cooldown applies).
@@ -42,6 +39,9 @@ class PasswordResetService
         $account = $this->find($guard, $identifier);
 
         if (!$account) {
+            // Same response to the caller (no account enumeration), but leave a trace for whoever debugs "no code arrived".
+            Log::info('Password reset requested for an email with no matching account.', ['guard' => $guard]);
+
             return true;
         }
 
@@ -50,18 +50,13 @@ class PasswordResetService
             return true; // silently ignore rapid re-requests; the previous code is still valid
         }
 
-        $email = $this->emailFor($guard, $account);
-        if (!$email) {
-            return true;
-        }
-
         $code = (string) random_int(100000, 999999);
 
         try {
             // Send first so a mail failure never leaves an unusable code behind.
             Mail::mailer('smtp')->raw(
                 "Your password reset code is: {$code}\n\nIt expires in " . self::TTL_MINUTES . " minutes. If you didn't request this, ignore this email.",
-                fn ($m) => $m->to($email)->subject('Reset your password')
+                fn ($m) => $m->to($identifier)->subject('Reset your password')
             );
         } catch (\Throwable $e) {
             report($e);
@@ -109,25 +104,26 @@ class PasswordResetService
         return true;
     }
 
-    private function normalize(string $guard, string $identifier): string
+    private function normalize(string $guard, string $email): string
     {
-        $identifier = trim($identifier);
-
-        return $guard === 'shop_user' ? $identifier : strtolower($identifier);
+        return strtolower(trim($email));
     }
 
-    private function find(string $guard, string $identifier): ?Authenticatable
+    private function find(string $guard, string $email): ?Authenticatable
     {
-        [$model, $column] = self::GUARDS[$guard];
+        if ($guard !== 'shop_user') {
+            return self::GUARDS[$guard]::where('email', $email)->first();
+        }
 
-        return $model::where($column, $identifier)->first();
-    }
+        // A vendor is found by the email of their own account (personal email) ...
+        $user = ShopUser::whereRaw('lower(personal_email) = ?', [$email])->orderBy('id')->first();
+        if ($user) {
+            return $user;
+        }
 
-    /** Shop users have no guaranteed personal email, so fall back to their shop's email. */
-    private function emailFor(string $guard, Authenticatable $account): ?string
-    {
-        return $guard === 'shop_user'
-            ? ($account->personal_email ?: $account->shop?->email)
-            : $account->email;
+        // ... or by their shop's email, which resets the shop's owner login (its first user).
+        $shop = Shop::whereRaw('lower(email) = ?', [$email])->first();
+
+        return $shop ? ShopUser::where('shop_id', $shop->id)->orderBy('id')->first() : null;
     }
 }

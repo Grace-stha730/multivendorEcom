@@ -89,7 +89,7 @@
         <form wire:submit="placeOrder" class="bg-white rounded-xl shadow-sm p-5 grid md:grid-cols-2 gap-4">
             <input wire:model="userName" placeholder="Name" class="border rounded p-2">
             <input wire:model="userEmail" placeholder="Email" class="border rounded p-2">
-            <input wire:model="userPhone" placeholder="Phone" class="border rounded p-2">
+            <input wire:model="userPhone" type="number" inputmode="numeric" min="0" step="1" x-data @keydown="['e','E','+','-','.',','].includes($event.key) && $event.preventDefault()" @wheel="$el.blur()" placeholder="Phone (10+ digits)" class="border rounded p-2">
             <input wire:model="userProvince" placeholder="Province" class="border rounded p-2">
             <input wire:model="userCity" placeholder="City" class="border rounded p-2">
             <input wire:model="userTole" placeholder="Tole" class="border rounded p-2">
