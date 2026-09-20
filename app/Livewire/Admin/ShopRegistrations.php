@@ -118,10 +118,17 @@ class ShopRegistrations extends Component
             $registration->update(['status' => ShopRegistration::APPROVED]);
         });
 
-        $this->notifyApproved($registration, $username);
+        // Capture before closeModals() clears the form.
+        $emailed = $this->notifyApproved($registration, $username, (string) $this->password);
 
         $this->closeModals();
-        $this->success('Registration approved', "Shop and user account created. Username: {$username}", 'toast-bottom');
+
+        if ($emailed) {
+            $this->success('Registration approved', "Shop and user account created. Login details were emailed to {$registration->email}.", 'toast-bottom');
+        } else {
+            // The account exists either way; don't let the credentials get lost.
+            $this->warning('Approved, but the email failed', "Share these manually. Username: {$username}, and the password you just set. Email: {$registration->email}", 'toast-bottom', timeout: 15000);
+        }
     }
 
     public function confirmReject(int $id): void
@@ -191,18 +198,41 @@ class ShopRegistrations extends Component
             ->findOrFail($id);
     }
 
-    private function notifyApproved(ShopRegistration $registration, string $username): void
+    /** Emails the vendor their login details. Returns false if the mail could not be sent. */
+    private function notifyApproved(ShopRegistration $registration, string $username, string $password): bool
     {
-        // Username only; the password is set by the admin and shared separately.
+        $loginUrl = route('shop-user.login');
+
+        $body = <<<TEXT
+Hello {$registration->owner},
+
+Good news! Your shop "{$registration->shop_name}" has been registered and approved.
+
+You can now log in to your shop dashboard:
+
+  Login page: {$loginUrl}
+  Username:   {$username}
+  Password:   {$password}
+
+For your security, please change your password after you log in (Settings > Password).
+Do not share these details with anyone.
+
+Thank you for joining us.
+TEXT;
+
         try {
             Mail::mailer('smtp')->raw(
-                "Your shop \"{$registration->shop_name}\" has been approved.\n\nYour username is: {$username}\n\nThe admin will share your password with you separately.",
-                fn ($message) => $message->to($registration->email)->subject('Your shop registration was approved')
+                $body,
+                fn ($message) => $message->to($registration->email)->subject('Your shop is registered - login details')
             );
         } catch (\Throwable $exception) {
             report($exception);
             Log::warning('Shop approval email failed.', ['registration_id' => $registration->id]);
+
+            return false;
         }
+
+        return true;
     }
 
     public function getGeneratedUsernamePreviewProperty(): string
