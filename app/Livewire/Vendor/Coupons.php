@@ -3,6 +3,8 @@
 namespace App\Livewire\Vendor;
 
 use App\Models\Coupon;
+use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Layout;
@@ -12,7 +14,7 @@ use Livewire\Component;
 #[Title('Vendor Coupons')]
 class Coupons extends Component
 {
-    public $code, $type = 'fixed', $value, $min_order_amount = 0, $starts_at, $expires_at;
+    public $code, $type = 'fixed', $value, $min_order_amount = 0, $starts_at, $expires_at, $scopeType = 'product', $product_id, $category_id;
     public $is_active = true;
     public $editingId = null;
 
@@ -29,6 +31,8 @@ class Coupons extends Component
     {
         $this->validate();
         $shopId = Auth::guard('shop_user')->user()->shop_id;
+        $this->validate(['scopeType' => 'required|in:product,category', 'product_id' => 'required_if:scopeType,product|nullable|integer', 'category_id' => 'required_if:scopeType,category|nullable|exists:categories,id']);
+        if ($this->scopeType === 'product' && !Product::where('shop_id', $shopId)->whereKey($this->product_id)->exists()) { $this->addError('product_id', 'Choose one of your products.'); return; }
         $code = strtoupper(trim($this->code));
 
         if ($this->editingId) {
@@ -41,11 +45,16 @@ class Coupons extends Component
                 'is_active' => $this->is_active,
                 'starts_at' => $this->starts_at ?: null,
                 'expires_at' => $this->expires_at ?: null,
+                'product_id' => $this->scopeType === 'product' ? $this->product_id : null,
+                'category_id' => $this->scopeType === 'category' ? $this->category_id : null,
             ]);
             session()->flash('success', 'Coupon updated successfully');
         } else {
             Coupon::create([
                 'shop_id' => $shopId,
+                'created_by_shop_user_id' => Auth::guard('shop_user')->id(),
+                'product_id' => $this->scopeType === 'product' ? $this->product_id : null,
+                'category_id' => $this->scopeType === 'category' ? $this->category_id : null,
                 'code' => $code,
                 'type' => $this->type,
                 'value' => $this->value,
@@ -72,6 +81,7 @@ class Coupons extends Component
         $this->is_active = $coupon->is_active;
         $this->starts_at = $coupon->starts_at ? $coupon->starts_at->format('Y-m-d') : null;
         $this->expires_at = $coupon->expires_at ? $coupon->expires_at->format('Y-m-d') : null;
+        $this->scopeType = $coupon->product_id ? 'product' : 'category'; $this->product_id = $coupon->product_id; $this->category_id = $coupon->category_id;
     }
 
     public function toggleStatus($id)
@@ -91,7 +101,7 @@ class Coupons extends Component
 
     public function resetForm()
     {
-        $this->reset(['code', 'type', 'value', 'min_order_amount', 'starts_at', 'expires_at', 'is_active', 'editingId']);
+        $this->reset(['code', 'type', 'value', 'min_order_amount', 'starts_at', 'expires_at', 'is_active', 'editingId', 'product_id', 'category_id']); $this->scopeType = 'product';
     }
 
     public function render()
@@ -99,6 +109,8 @@ class Coupons extends Component
         $shopId = Auth::guard('shop_user')->user()->shop_id;
         return view('livewire.vendor.coupons', [
             'coupons' => Coupon::where('shop_id', $shopId)->latest()->get(),
+            'products' => Product::where('shop_id', $shopId)->orderBy('name')->get(),
+            'categories' => Category::orderBy('name')->get(),
         ]);
     }
 }

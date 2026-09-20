@@ -11,14 +11,11 @@ class CouponUser extends Model
     protected $fillable = [
         'coupon_id',
         'user_id',
-        'order_id',
         'collected_at',
-        'used_at',
     ];
 
     protected $casts = [
         'collected_at' => 'datetime',
-        'used_at' => 'datetime',
     ];
 
     public function coupon()
@@ -31,8 +28,4 @@ class CouponUser extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function order()
-    {
-        return $this->belongsTo(Order::class);
-    }
 }

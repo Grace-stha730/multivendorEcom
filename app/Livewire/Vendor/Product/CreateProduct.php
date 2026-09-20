@@ -5,8 +5,11 @@ namespace App\Livewire\Vendor\Product;
 use App\Models\Category;
 use App\Models\Image;
 use App\Models\Product as ProductModal;
+use App\Models\ProductVariant;
 use Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
+use App\Services\AiContentService;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -19,6 +22,23 @@ class CreateProduct extends Component
     
     // Product Variants property
     public $variants = [];
+
+    public function generateDescription(AiContentService $ai)
+    {
+        $shopUserId = Auth::guard('shop_user')->id();
+        $key = "ai:product-description:$shopUserId";
+        if (RateLimiter::tooManyAttempts($key, 10)) {
+            $this->addError('description', 'AI generation limit reached. Try again in '.RateLimiter::availableIn($key).' seconds.'); return;
+        }
+        try {
+            $category = Category::find($this->category_id);
+            $this->description = $ai->generateProductDescription([
+                'name' => $this->name, 'category' => $category?->name, 'summary' => $this->summary,
+                'price' => $this->price, 'variants' => $this->variants,
+            ], $shopUserId);
+            RateLimiter::hit($key, 3600);
+        } catch (\Throwable $e) { report($e); $this->addError('description', 'Could not generate a description. Please try again.'); }
+    }
 
     public function addVariant()
     {
@@ -55,6 +75,11 @@ class CreateProduct extends Component
             'category_id' => 'required|exists:categories,id',
             'price' => 'required|numeric|min:0',
             'images.*' => 'nullable|image', // each image must be an image file and max 1MB
+            'variants' => 'array',
+            'variants.*.attribute_name' => 'nullable|string|max:100',
+            'variants.*.attribute_value' => 'nullable|string|max:100',
+            'variants.*.price_extra' => 'nullable|numeric',
+            'variants.*.stock' => 'nullable|integer|min:0',
         ]);
 
         DB::beginTransaction();
@@ -79,18 +104,7 @@ class CreateProduct extends Component
 
             $product = ProductModal::create($productData);
 
-            // Create product variants
-            foreach ($this->variants as $variant) {
-                if (!empty($variant['attribute_name']) && !empty($variant['attribute_value'])) {
-                    \App\Models\ProductVariant::create([
-                        'product_id' => $product->id,
-                        'attribute_name' => trim($variant['attribute_name']),
-                        'attribute_value' => trim($variant['attribute_value']),
-                        'price_extra' => $variant['price_extra'] ?: 0,
-                        'stock' => $variant['stock'] ?: 0,
-                    ]);
-                }
-            }
+            $product->variants()->createMany($this->variantPayload());
 
             if (!empty($this->images)) {
                 foreach ($this->images as $image) {
@@ -108,6 +122,18 @@ class CreateProduct extends Component
             DB::rollBack();
             return session()->flash('error', 'Error: ' . $e->getMessage());
         }
+    }
+
+    private function variantPayload(): array
+    {
+        return collect($this->variants)
+            ->filter(fn ($variant) => filled($variant['attribute_name'] ?? null))
+            ->map(fn ($variant) => [
+                'attribute_name' => trim($variant['attribute_name']),
+                'attribute_value' => trim($variant['attribute_value'] ?? ''),
+                'price_extra' => $variant['price_extra'] ?? 0,
+                'stock' => $variant['stock'] ?? 0,
+            ])->values()->all();
     }
     public function render()
     {

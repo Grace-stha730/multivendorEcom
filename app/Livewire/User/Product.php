@@ -101,14 +101,8 @@ class Product extends Component
 
         $products = trim($this->search) !== ''
             ? app(TfidfProductSearch::class)->search($this->search, $this->category ?: null)
-            : app(WeightedRatingService::class)->rankedProducts(
-                modalProduct::when($this->category, fn ($query) => $query->where('category_id', $this->category))
-                    ->with(['shop', 'firstImage'])
-                    ->withCount('reviews')
-                    ->withAvg('reviews', 'rating')
-                    ->latest()
-                    ->get(),
-            );
+            : modalProduct::when($this->category, fn ($query) => $query->where('category_id', $this->category))
+                ->with(['shop', 'firstImage'])->withCount('reviews')->orderByDesc('weighted_rating')->latest()->get();
 
         $categories = Category::all();
 

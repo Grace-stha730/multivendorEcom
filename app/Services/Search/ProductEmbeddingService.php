@@ -15,7 +15,7 @@ class ProductEmbeddingService
             $product->summary,
             $product->description,
             $product->category?->name,
-            $product->vendor?->shop_name,
+            $product->shop?->name,
         ])));
     }
 

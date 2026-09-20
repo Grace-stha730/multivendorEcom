@@ -14,10 +14,12 @@ class Conversation extends Model
         'shop_user_id',
         'product_id',
         'last_message_at',
+        'is_ai_handled',
     ];
 
     protected $casts = [
         'last_message_at' => 'datetime',
+        'is_ai_handled' => 'boolean',
     ];
 
     public function user()

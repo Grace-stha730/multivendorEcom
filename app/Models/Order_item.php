@@ -15,6 +15,8 @@ class Order_item extends Model
         'total',
         'is_rate',
         'selected_variants',
+        'coupon_id',
+        'coupon_discount',
     ];
 
     protected $casts = [
@@ -35,4 +37,5 @@ class Order_item extends Model
     {
         return $this->belongsTo(Product::class);
     }
+    public function coupon() { return $this->belongsTo(Coupon::class); }
 }

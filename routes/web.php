@@ -9,6 +9,7 @@ use App\Livewire\Auth\User\Login as UserLogin;
 use App\Livewire\Auth\User\Register as UserRegister;
 use App\Livewire\User\AboutUs;
 use App\Livewire\User\Cart;
+use App\Livewire\User\Checkout;
 use App\Livewire\User\ContactUs;
 use App\Livewire\User\Coupons as UserCoupons;
 use App\Livewire\User\Collections;
@@ -65,6 +66,7 @@ Route::middleware('guest')->group(function () {
 Route::middleware('web')->group(function () {
     Route::post('/logout', [AuthController::class, 'userlogout'])->name('user.logout');
     Route::get('/cart', Cart::class)->name('user.cart');
+    Route::get('/checkout', Checkout::class)->name('user.checkout');
     Route::get('/wishlist', Wishlist::class)->name('user.wishlist');
     Route::get('/order', Order::class)->name('user.order');
     Route::get('/review/{id}', Review::class)->name('user.review');
@@ -110,6 +112,7 @@ Route::prefix('admin')->group(function () {
         Route::get('/order-detail/{id}', AdminOrderDetail::class)->name('admin.order-detail');
         Route::get('/invoice/{id}', [\App\Http\Controllers\InvoiceController::class, 'adminInvoice'])->name('admin.invoice');
         Route::get('/setting', AdminSetting::class)->name('admin.setting');
+        Route::get('/store-policies', \App\Livewire\Admin\StorePolicies::class)->name('admin.store-policies');
         Route::get('/message', Message::class)->name('admin.message');
         Route::get('message-datail/{id}', ViewMessage::class)->name('admin.message-datail');
         Route::get('/coupons', AdminCoupons::class)->name('admin.coupons');

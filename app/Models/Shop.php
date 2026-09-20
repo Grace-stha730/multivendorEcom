@@ -9,6 +9,7 @@ class Shop extends Model
     protected $fillable = [
         'name', 'owner', 'image', 'contact_number', 'pan_number', 'province_id',
         'district_id', 'city', 'tole', 'email', 'phone', 'status',
+        'ai_auto_reply_enabled',
     ];
 
     public function province()
@@ -29,5 +30,10 @@ class Shop extends Model
     public function products()
     {
         return $this->hasMany(Product::class);
+    }
+
+    public function ratings()
+    {
+        return $this->hasManyThrough(productRating::class, Product::class, 'shop_id', 'product_id');
     }
 }

@@ -31,6 +31,7 @@
                         class="border border-gray-300 rounded-lg p-2.5 w-full text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
                     @error('description') <small class="text-red-500">{{ $message }}</small> @enderror
                 </div>
+                <div><label class="block text-sm font-medium text-gray-700">Category</label><select wire:model="category_id" class="border border-gray-300 rounded-lg p-2.5 w-full"><option value="">Choose category</option>@foreach($categories as $category)<option value="{{ $category->id }}">{{ $category->name }}</option>@endforeach</select>@error('category_id')<small class="text-red-500">{{ $message }}</small>@enderror</div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>

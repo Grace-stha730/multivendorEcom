@@ -17,7 +17,7 @@ class Products extends Component
     public function render()
     {
         return view('livewire.admin.products',[
-            'products' => Product::with('vendor','firstImage','category')->paginate(30),
+            'products' => Product::with('shop', 'firstImage', 'category')->paginate(30),
         ]);
     }
 }

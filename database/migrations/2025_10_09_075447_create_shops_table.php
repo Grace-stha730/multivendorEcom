@@ -20,6 +20,7 @@ return new class extends Migration {
             $table->string('tole');
             $table->string('email')->unique();
             $table->string('status')->default('active');
+            $table->decimal('weighted_rating', 4, 2)->nullable()->index();
             $table->timestamps();
         });
     }

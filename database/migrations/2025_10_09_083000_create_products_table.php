@@ -20,6 +20,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->integer('discount')->nullable();
             $table->integer('discount_amount')->nullable();
+            $table->decimal('weighted_rating', 4, 2)->nullable()->index();
             $table->foreignId('shop_id')->constrained('shops')->cascadeOnDelete();
             $table->foreignId('shop_user_id')->constrained('shop_users')->cascadeOnDelete();
             $table->foreignId('category_id')->constrained('categories')->cascadeOnDelete();

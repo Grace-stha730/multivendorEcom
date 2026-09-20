@@ -14,12 +14,12 @@ return new class extends Migration {
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
-            $table->string('province');
-            $table->string('city');
-            $table->string('tole');
+            $table->string('province')->nullable();
+            $table->string('city')->nullable();
+            $table->string('tole')->nullable();
             $table->string('photo')->nullable();
             $table->string('password');
-            $table->string('phone');
+            $table->string('phone')->nullable();
             $table->string('token')->nullable();
             $table->string('status')->default(0)->comment('0=inactive, 1=active, 2=suspended');
             $table->timestamps();

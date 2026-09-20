@@ -13,10 +13,13 @@ class Cart_items extends Model
         'price',
         'sub_total',
         'selected_variants',
+        'coupon_id',
+        'coupon_discount',
     ];
 
     protected $casts = [
         'selected_variants' => 'array',
+        'coupon_discount' => 'decimal:2',
     ];
 
     public function cart(){
@@ -25,5 +28,9 @@ class Cart_items extends Model
 
     public function product(){
         return $this->belongsTo(Product::class);
+    }
+
+    public function coupon(){
+        return $this->belongsTo(Coupon::class);
     }
 }

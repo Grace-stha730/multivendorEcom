@@ -13,7 +13,7 @@ class ProductDetail extends Component
 {
     public $productId;
     public function mount($id){
-        $this->productId = Product::with('vendor','images','category','firstImage')->findOrFail($id);
+        $this->productId = Product::with('shop', 'images', 'category', 'firstImage')->findOrFail($id);
     }
     public function render()
     {

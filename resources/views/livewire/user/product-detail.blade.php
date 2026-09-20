@@ -107,6 +107,7 @@
                     wire:click.prevent='addToCart'>
                     <i class="fa-solid fa-cart-plus"></i> Add to Cart
                 </button>
+                <button class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 duration-150 cursor-pointer" wire:click.prevent="orderNow">Order Now</button>
                 <button wire:click.prevent="toggleWishlist"
                     class="{{ $inWishlist ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300' }} px-4 py-2 rounded duration-150 cursor-pointer flex items-center gap-2">
                     <i class="{{ $inWishlist ? 'fa-solid fa-heart' : 'fa-regular fa-heart' }}"></i>
@@ -134,10 +135,29 @@
 
     </div>
 
-    <!-- Related Products -->
+    <!-- TF-IDF/cosine recommendations are available to every visitor; no purchase history is required. -->
+    @if ($similarProducts->isNotEmpty())
+        <div class="w-[90%] md:w-[80%] mx-auto my-10">
+            <h3 class="text-2xl font-semibold text-gray-800 mb-5">You Might Also Like</h3>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                @foreach ($similarProducts as $recommended)
+                    <a href="{{ route('product.detail', ['id' => $recommended->id]) }}" class="rounded-lg border border-gray-100 bg-white overflow-hidden shadow-sm hover:shadow-md transition">
+                        <img src="{{ $recommended->firstImage ? asset('storage/' . $recommended->firstImage->url) : asset('storage/default/product.webp') }}" alt="{{ $recommended->name }}" class="w-full h-36 object-cover">
+                        <div class="p-3">
+                            <p class="font-medium text-sm text-gray-800 truncate">{{ $recommended->name }}</p>
+                            <p class="text-xs text-yellow-600"><i class="fa-solid fa-star"></i> {{ number_format($recommended->weighted_rating, 1) }}</p>
+                            <p class="mt-1 text-xs text-gray-500">{{ $recommended->recommendation_blurb }}</p>
+                        </div>
+                    </a>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     @if ($recommendations->isNotEmpty())
         <div class="w-[90%] md:w-[80%] mx-auto my-10">
-            <h3 class="text-2xl font-semibold text-gray-800 mb-5">Customers with Similar Purchases Also Like</h3>
+            <h3 class="text-2xl font-semibold text-gray-800 mb-2">Recommended for You</h3>
+            <p class="text-sm text-gray-500 mb-5">Balanced by similarity, trusted ratings, and popularity.</p>
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 @foreach ($recommendations as $recommended)
                     <a href="{{ route('product.detail', ['id' => $recommended->id]) }}" class="rounded-lg border border-gray-100 bg-white overflow-hidden shadow-sm hover:shadow-md transition">

@@ -64,6 +64,8 @@ class Chat extends Component
 
         $conversation->update([
             'last_message_at' => now(),
+            // A human reply permanently takes this thread out of AI auto-reply mode.
+            'is_ai_handled' => false,
         ]);
 
         try {

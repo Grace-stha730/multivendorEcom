@@ -13,10 +13,11 @@
         </div>
         <!-- Description -->
         <div>
-            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <div class="mb-1 flex items-center justify-between"><label for="description" class="block text-sm font-medium text-gray-700">Description</label><button type="button" wire:click="generateDescription" wire:loading.attr="disabled" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">✨ Generate with AI</button></div>
             <textarea id="description" wire:model="description" rows="4"
                 class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                placeholder="Enter product description"></textarea>
+                placeholder="Enter or generate a product description"></textarea>
+            <p class="mt-1 text-xs text-gray-400">AI text is editable; review it before saving.</p>
             @error('description')
                 <small class="text-red-500">{{ $message }}</small>
             @enderror
@@ -126,11 +127,13 @@
                                 <label class="block text-[11px] font-semibold text-gray-500 mb-1">Attribute (e.g., Size, Color)</label>
                                 <input type="text" wire:model="variants.{{ $index }}.attribute_name" placeholder="e.g. Size"
                                     class="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none">
+                                @error("variants.$index.attribute_name")<small class="text-red-500">{{ $message }}</small>@enderror
                             </div>
                             <div class="flex-1">
                                 <label class="block text-[11px] font-semibold text-gray-500 mb-1">Value (e.g., XL, Blue)</label>
                                 <input type="text" wire:model="variants.{{ $index }}.attribute_value" placeholder="e.g. XL"
                                     class="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none">
+                                @error("variants.$index.attribute_value")<small class="text-red-500">{{ $message }}</small>@enderror
                             </div>
                             <div class="w-32">
                                 <label class="block text-[11px] font-semibold text-gray-500 mb-1">Price Extra (Rs.)</label>
@@ -141,6 +144,7 @@
                                 <label class="block text-[11px] font-semibold text-gray-500 mb-1">Stock</label>
                                 <input type="number" wire:model="variants.{{ $index }}.stock" placeholder="0"
                                     class="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 text-xs focus:ring-1 focus:ring-blue-500 focus:outline-none">
+                                @error("variants.$index.stock")<small class="text-red-500">{{ $message }}</small>@enderror
                             </div>
                             <button type="button" wire:click="removeVariant({{ $index }})"
                                 class="bg-red-50 hover:bg-red-100 text-red-500 border border-red-200 text-xs px-2.5 py-1.5 rounded-lg font-medium transition cursor-pointer">

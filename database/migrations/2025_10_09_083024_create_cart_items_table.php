@@ -17,6 +17,13 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
             $table->string('quantity');
             $table->string('price');
+            $table->string('sub_total');
+            $table->text('selected_variants')->nullable();
+            // Coupons are created by a later migration, so this cannot be a
+            // foreign key in the initial cart-items-table migration.
+            $table->unsignedBigInteger('coupon_id')->nullable();
+            $table->decimal('coupon_discount', 10, 2)->default(0);
+            $table->unique(['cart_id', 'product_id']);
             $table->timestamps();
         });
     }

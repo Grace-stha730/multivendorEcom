@@ -160,6 +160,10 @@
                                                 <div>
                                                     <p class="font-medium text-gray-900">{{ $item->product->name }}</p>
                                                     <p class="text-sm text-gray-500">x{{ $item->quantity }}</p>
+                                                    @if($item->selected_variants)
+                                                        <p class="text-xs text-indigo-700">{{ collect($item->selected_variants)->map(fn($value, $name) => $name . ': ' . $value)->join(', ') }}</p>
+                                                    @endif
+                                                    @if((float) $item->coupon_discount > 0)<p class="text-xs text-green-600">Coupon discount: Rs. {{ number_format($item->coupon_discount, 2) }}</p>@endif
                                                     @if ($item->vendorOrder && $item->vendorOrder->status == 'Cancelled')
                                                         <span class="text-xs text-red-600 bg-red-50 px-2 py-1 rounded mt-1 inline-block">
                                                             Cancelled by {{ $item->vendorOrder->vendor->shop_name }}

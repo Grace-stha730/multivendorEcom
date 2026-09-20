@@ -78,7 +78,7 @@ class Coupons extends Component
     public function render()
     {
         return view('livewire.user.coupons', [
-            'coupons' => Coupon::with('vendor')
+            'coupons' => Coupon::query()
                 ->where('is_active', true)
                 ->whereColumn('used_count', '<', 'usage_limit')
                 ->where(function ($query) {

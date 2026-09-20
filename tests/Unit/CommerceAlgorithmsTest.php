@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Services\Catalog\WeightedRatingService;
 use App\Services\Recommendation\PurchaseRecommendationService;
+use App\Services\Recommendation\RecommendationService;
 use App\Services\Search\TfidfProductSearch;
 use PHPUnit\Framework\TestCase;
 
@@ -26,6 +27,18 @@ class CommerceAlgorithmsTest extends TestCase
             [1 => 1, 4 => 1],
         ), 0.00001);
         $this->assertSame(0.0, $service->cosineSimilarity([], [1 => 1]));
+    }
+
+    public function test_tfidf_cosine_similarity_uses_shared_weighted_terms(): void
+    {
+        $service = new RecommendationService();
+
+        // A·B = 1; ||A|| = ||B|| = sqrt(2), therefore cosine(A, B) = 0.5.
+        $this->assertEqualsWithDelta(0.5, $service->cosineSimilarity(
+            ['wireless' => 1.0, 'headphones' => 1.0],
+            ['wireless' => 1.0, 'chair' => 1.0],
+        ), 0.00001);
+        $this->assertSame(0.0, $service->cosineSimilarity([], ['wireless' => 1.0]));
     }
 
     public function test_tfidf_ranks_documents_by_term_frequency_and_rarity(): void

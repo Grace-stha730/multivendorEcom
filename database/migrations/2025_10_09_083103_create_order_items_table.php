@@ -14,10 +14,15 @@ return new class extends Migration
         Schema::create('order_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained('orders')->cascadeOnDelete();
+            $table->foreignId('vendor_order_id')->constrained('vendor_orders')->cascadeOnDelete();
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+            $table->foreignId('coupon_id')->nullable()->constrained('coupons')->nullOnDelete();
             $table->string('quantity');
             $table->string('price');
             $table->string('total');
+            $table->decimal('coupon_discount', 10, 2)->default(0);
+            $table->boolean('is_rate')->default(false);
+            $table->text('selected_variants')->nullable();
             $table->timestamps();
         });
     }

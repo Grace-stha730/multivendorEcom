@@ -6,8 +6,8 @@ use App\Models\Cart;
 use App\Models\Cart_items;
 use App\Models\Product;
 use App\Models\productRating;
-use App\Services\Catalog\WeightedRatingService;
-use App\Services\Recommendation\PurchaseRecommendationService;
+use App\Services\Recommendation\RecommendationService;
+use App\Models\ProductRecommendationBlurb;
 use App\Models\Wishlist;
 use DB;
 use Illuminate\Support\Facades\Auth;
@@ -33,7 +33,8 @@ class ProductDetail extends Component
         $this->productId = $id;
         $this->product = Product::with(['images', 'shop', 'variants'])->withCount('reviews')->withAvg('reviews', 'rating')->findOrFail($id);
         $this->averateRate = round(productRating::where('product_id', $id)->avg('rating'), 1);
-        $this->weightedRating = app(WeightedRatingService::class)->rankedProducts(collect([$this->product]))->first()->weighted_rating;
+        // Stored by ratings:recalculate, so detail views do not rescan reviews.
+        $this->weightedRating = $this->product->weighted_rating;
 
         // Set the first image as main image
         $this->mainImage = $this->product->images->first()->url ?? 'default/product.jpg';
@@ -50,7 +51,7 @@ class ProductDetail extends Component
     public function addToCart()
     {
         $this->validate([
-            'quantity' => "required|integer|min:1|max:" . $this->product->stock,
+            'quantity' => "required|integer|min:1|max:" . $this->selectedVariantStock(),
         ]);
 
         if (!Auth::guard('web')->check()) {
@@ -117,6 +118,21 @@ class ProductDetail extends Component
         }
     }
 
+    public function orderNow()
+    {
+        if (!Auth::guard('web')->check()) return redirect()->route('user.login')->with('error', 'Please login first to order.');
+        $stock = $this->selectedVariantStock();
+        $this->validate(['quantity' => "required|integer|min:1|max:$stock"]);
+        return redirect()->route('user.checkout', ['product' => $this->productId, 'quantity' => $this->quantity, 'variants' => base64_encode(json_encode($this->selectedVariants))]);
+    }
+
+    private function selectedVariantStock(): int
+    {
+        if (!$this->selectedVariants) return (int) $this->product->stock;
+        $variant = $this->product->variants->first(fn ($v) => ($this->selectedVariants[$v->attribute_name] ?? null) === $v->attribute_value);
+        return $variant ? (int) $variant->stock : (int) $this->product->stock;
+    }
+
     public function toggleWishlist()
     {
         if (!Auth::guard('web')->check()) {
@@ -154,6 +170,7 @@ class ProductDetail extends Component
             'product_id' => $this->product->id,
         ], [
             'last_message_at' => now(),
+            'is_ai_handled' => (bool) $this->product->shop?->ai_auto_reply_enabled,
         ]);
 
         return redirect()->route('user.chat', ['c' => $conversation->id]);
@@ -169,12 +186,15 @@ class ProductDetail extends Component
                 ->exists();
         }
 
+        $similarProducts = app(RecommendationService::class)->getSimilarProducts($this->product);
+        $blurbs = ProductRecommendationBlurb::where('product_id', $this->product->id)
+            ->whereIn('related_product_id', $similarProducts->pluck('id'))->pluck('blurb_text', 'related_product_id');
+        $similarProducts->each(fn (Product $item) => $item->recommendation_blurb = $blurbs[$item->id] ?? 'You might also like this.');
+
         return view('livewire.user.product-detail', [
             'inWishlist' => $inWishlist,
-            'recommendations' => Auth::guard('web')->check()
-                ? app(PurchaseRecommendationService::class)->forUser(Auth::guard('web')->user())
-                    ->reject(fn (Product $product) => $product->id === $this->productId)
-                : collect(),
+            'similarProducts' => $similarProducts,
+            'recommendations' => app(RecommendationService::class)->getHybridRecommendations($this->product),
         ]);
     }
 }
