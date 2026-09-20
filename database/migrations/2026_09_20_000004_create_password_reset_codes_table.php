@@ -12,8 +12,9 @@ return new class extends Migration {
             $table->string('guard');
             $table->string('identifier')->comment('email (web/admin) or username (shop_user)');
             $table->string('code_hash');
-            $table->timestamp('expires_at');
-            $table->timestamp('sent_at');
+            // dateTime (not timestamp): MySQL gives a 2nd NOT NULL timestamp an invalid 0000-00-00 default.
+            $table->dateTime('expires_at');
+            $table->dateTime('sent_at');
             $table->unsignedTinyInteger('attempts')->default(0);
             $table->timestamps();
 
