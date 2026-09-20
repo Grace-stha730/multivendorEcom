@@ -2,6 +2,7 @@
 
 namespace App\Livewire\User;
 
+use App\Rules\PhoneNumber;
 use App\Models\Cart;
 use App\Models\Cart_items;
 use App\Models\Coupon;
@@ -250,7 +251,7 @@ class Checkout extends Component
 
     public function placeOrder()
     {
-        $this->validate(['userName'=>'required|max:120','userEmail'=>'required|email','userProvince'=>'required|max:120','userCity'=>'required|max:120','userTole'=>'required|max:120','userPhone'=>'required|max:30','paymentMethod'=>'required|in:Cash,E-Sewa']);
+        $this->validate(['userName'=>'required|max:120','userEmail'=>'required|email','userProvince'=>'required|max:120','userCity'=>'required|max:120','userTole'=>'required|max:120','userPhone'=>['required', new PhoneNumber()],'paymentMethod'=>'required|in:Cash,E-Sewa']);
         foreach (array_keys($this->items) as $key) if (!$this->validateItemStock($key)) return;
         $order = DB::transaction(function () {
             $lines = []; $totalDiscount = 0; $subtotal = 0;

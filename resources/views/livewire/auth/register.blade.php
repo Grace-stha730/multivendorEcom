@@ -84,7 +84,7 @@
             <!-- Shop Phone -->
             <div>
                 <label for="shop_phone" class="block text-gray-700 font-medium mb-1  text-xs">Shop Phone</label>
-                <input type="text" id="shop_phone" wire:model="shop_phone"
+                <input type="number" inputmode="numeric" min="0" step="1" x-data @keydown="['e','E','+','-','.',','].includes($event.key) && $event.preventDefault()" @wheel="$el.blur()" id="shop_phone" wire:model="shop_phone"
                     class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2  text-xs focus:ring-blue-400"
                     placeholder="Enter your shop contact number">
                 <small class="text-red-500">

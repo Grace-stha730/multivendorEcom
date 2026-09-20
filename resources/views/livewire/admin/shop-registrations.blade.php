@@ -22,12 +22,14 @@
             @scope('cell_created_at', $r)<span class="text-sm text-slate-500">{{ $r->created_at->format('M d, Y') }}</span>@endscope
             @scope('actions', $r)<div class="flex justify-end gap-1">
                 <x-button icon="o-eye" tooltip-left="View details" wire:click="view({{ $r->id }})" class="btn-ghost btn-sm text-slate-600" />
-                @if ($r->status === 'PENDING')
-                    @authorizeUser('shop-approve', 'admin')
-                    <x-button icon="o-check-circle" tooltip-left="Approve" wire:click="confirmApprove({{ $r->id }})" class="btn-ghost btn-sm text-emerald-700" />
-                    <x-button icon="o-x-circle" tooltip-left="Reject" wire:click="confirmReject({{ $r->id }})" class="btn-ghost btn-sm text-warning" />
-                    @endauthorizeUser
-                @endif
+                @authorizeUser('shop-approve', 'admin')
+                    @if (in_array($r->status, ['PENDING', 'REJECTED']))
+                        <x-button icon="o-check-circle" tooltip-left="{{ $r->status === 'REJECTED' ? 'Approve anyway' : 'Approve' }}" wire:click="confirmApprove({{ $r->id }})" class="btn-ghost btn-sm text-emerald-700" />
+                    @endif
+                    @if ($r->status === 'PENDING')
+                        <x-button icon="o-x-circle" tooltip-left="Reject" wire:click="confirmReject({{ $r->id }})" class="btn-ghost btn-sm text-warning" />
+                    @endif
+                @endauthorizeUser
                 @authorizeUser('shop-delete', 'admin')
                 <x-button icon="o-trash" tooltip-left="Delete" wire:click="confirmDelete({{ $r->id }})" class="btn-ghost btn-sm text-error" />
                 @endauthorizeUser
@@ -48,14 +50,19 @@
                 <div><dt class="text-slate-500">City / Tole</dt><dd class="font-medium text-slate-900">{{ $selected->city }}, {{ $selected->tole }}</dd></div>
                 <div><dt class="text-slate-500">Submitted</dt><dd class="font-medium text-slate-900">{{ $selected->created_at->format('M d, Y h:i A') }}</dd></div>
             </dl>
+            @if ($selected->status === 'REJECTED' && $selected->rejection_reason)
+                <div class="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800"><strong>Rejection reason:</strong> {{ $selected->rejection_reason }}</div>
+            @endif
             <x-slot:actions>
                 <x-button label="Close" wire:click="closeModals" />
-                @if ($selected->status === 'PENDING')
-                    @authorizeUser('shop-approve', 'admin')
-                    <x-button label="Reject" icon="o-x-circle" wire:click="confirmReject({{ $selected->id }})" class="btn-warning" />
-                    <x-button label="Approve" icon="o-check-circle" wire:click="confirmApprove({{ $selected->id }})" class="btn-primary" />
-                    @endauthorizeUser
-                @endif
+                @authorizeUser('shop-approve', 'admin')
+                    @if ($selected->status === 'PENDING')
+                        <x-button label="Reject" icon="o-x-circle" wire:click="confirmReject({{ $selected->id }})" class="btn-warning" />
+                    @endif
+                    @if (in_array($selected->status, ['PENDING', 'REJECTED']))
+                        <x-button label="{{ $selected->status === 'REJECTED' ? 'Approve anyway' : 'Approve' }}" icon="o-check-circle" wire:click="confirmApprove({{ $selected->id }})" class="btn-primary" />
+                    @endif
+                @endauthorizeUser
             </x-slot:actions>
         @endif
     </x-modal>
@@ -74,7 +81,12 @@
         <x-slot:actions><x-button label="Cancel" icon="o-x-mark" wire:click="closeModals" /><x-button label="Approve & create shop" icon="o-check" wire:click="approve" class="btn-primary" spinner="approve" /></x-slot:actions>
     </x-modal>
 
-    <x-modal wire:model="rejectModal" title="Reject registration" separator @close="closeModals"><p class="text-slate-600">Mark this registration as rejected?</p><x-slot:actions><x-button label="Cancel" icon="o-x-mark" wire:click="closeModals" /><x-button label="Reject" icon="o-x-circle" wire:click="reject" class="btn-warning" spinner="reject" /></x-slot:actions></x-modal>
+    <x-modal wire:model="rejectModal" title="Reject registration" subtitle="The vendor will be emailed this reason and told how to apply again." separator @close="closeModals">
+        <label class="block"><span class="mb-1 block text-sm font-medium text-slate-700">Reason for rejection <span class="text-rose-600">*</span></span>
+            <textarea wire:model="rejection_reason" rows="4" maxlength="500" class="w-full rounded-lg border border-slate-300 px-3 py-2.5" placeholder="e.g. The PAN number does not match the shop name. Please correct it and apply again."></textarea>
+            @error('rejection_reason')<small class="mt-1 block text-rose-600">{{ $message }}</small>@enderror</label>
+        <x-slot:actions><x-button label="Cancel" icon="o-x-mark" wire:click="closeModals" /><x-button label="Reject and email vendor" icon="o-x-circle" wire:click="reject" class="btn-warning" spinner="reject" /></x-slot:actions>
+    </x-modal>
 
     <x-modal wire:model="deleteModal" title="Delete registration" separator @close="closeModals"><p class="text-slate-600">Are you sure? This action cannot be undone.</p><x-slot:actions><x-button label="Cancel" icon="o-x-mark" wire:click="closeModals" /><x-button label="Delete" icon="o-trash" wire:click="delete" class="btn-error" spinner="delete" /></x-slot:actions></x-modal>
 </section>

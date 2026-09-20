@@ -5,6 +5,7 @@ namespace App\Livewire\User;
 use App\Models\District;
 use App\Models\Province;
 use App\Models\ShopRegistration;
+use App\Rules\PhoneNumber;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
@@ -28,6 +29,7 @@ class RegisterShop extends Component
     public string $otp = '';
     public string $statusEmail = '';
     public ?string $verifiedStatus = null;
+    public ?string $verifiedReason = null;
 
     protected function rules(): array
     {
@@ -42,7 +44,7 @@ class RegisterShop extends Component
                 ),
             ],
             'pan_number' => ['required', 'digits:9'],
-            'contact_number' => ['required', 'string', 'regex:/^[0-9+\-\s]{7,20}$/'],
+            'contact_number' => ['required', new PhoneNumber()],
             'province_id' => 'required|exists:provinces,id',
             'district_id' => [
                 'required',
@@ -57,8 +59,7 @@ class RegisterShop extends Component
     {
         return [
             'email.unique' => 'A shop or registration with this email already exists. Use "Check status" below to verify or track it.',
-            'pan_number.digits' => 'The PAN number must be exactly 9 digits.',
-            'contact_number.regex' => 'Enter a valid contact number.',
+            'pan_number.digits' => 'The PAN number must be exactly 9 digits (numbers only).',
         ];
     }
 
@@ -130,6 +131,7 @@ class RegisterShop extends Component
         ]);
 
         $this->verifiedStatus = $registration->status;
+        $this->verifiedReason = $registration->status === ShopRegistration::REJECTED ? $registration->rejection_reason : null;
         $this->otp = '';
         $this->resetValidation();
     }
@@ -165,7 +167,7 @@ class RegisterShop extends Component
     public function closeVerifyModal(): void
     {
         $this->verifyModal = false;
-        $this->reset(['otp', 'verifiedStatus', 'statusEmail']);
+        $this->reset(['otp', 'verifiedStatus', 'verifiedReason', 'statusEmail']);
         $this->resetValidation();
     }
 
@@ -174,6 +176,7 @@ class RegisterShop extends Component
         $this->verifyEmail = $email;
         $this->otp = '';
         $this->verifiedStatus = null;
+        $this->verifiedReason = null;
         $this->resetValidation();
         $this->verifyModal = true;
     }

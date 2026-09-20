@@ -14,7 +14,7 @@ class ShopRegistration extends Model
         'shop_name', 'owner', 'email', 'pan_number', 'contact_number', 'province_id',
         'district_id', 'city', 'tole', 'status', 'is_email_verified',
         'email_verification_code', 'email_verification_code_expires_at',
-        'email_verification_code_sent_at',
+        'email_verification_code_sent_at', 'rejection_reason',
     ];
 
     protected $hidden = ['email_verification_code'];
