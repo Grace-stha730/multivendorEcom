@@ -136,6 +136,7 @@
                             @endforelse
                         </tbody>
                     </table>
+            <div class="mt-4">{{ $coupons->links() }}</div>
                 </div>
             </div>
         </div>

@@ -256,8 +256,9 @@ Every admin and vendor page is guarded by a route middleware, and every state-ch
 | Coupons | `coupon-manage` | all actions |
 | Messages | `message-view` | mark read / unread |
 | Store policies | `policy-manage` | save |
+| Admin Users | `admin-user-manage` | create admin accounts |
 
-`product-view`, `category-manage`, `coupon-manage`, `message-view` and `policy-manage` are not part of the five named admin roles. Only `super-admin` holds them by default. Attach them to other roles from the database when needed.
+`product-view`, `category-manage`, `coupon-manage`, `message-view`, `policy-manage` and `admin-user-manage` are not part of the five named admin roles. Only `super-admin` holds them by default. Attach them to other roles from the database when needed.
 
 **Shop pool (`shop_user` guard)**
 
@@ -270,9 +271,28 @@ Every admin and vendor page is guarded by a route middleware, and every state-ch
 | Earnings | `earnings-view` | request payout |
 | Coupons | `coupon-manage` | all actions |
 | Chat | `chat-reply` | send / read |
+| Staff | `staff-invite` | create staff: `staff-invite`; change role: `staff-assign-role` |
 | Staff role change | `staff-assign-role` | `PATCH /shop-user/staff/{id}/role` |
 
 Permission checks answer *"may they do this?"*. Every shop-side query is **also** scoped to the user's shop (`forCurrentShop()`), because both questions must be answered. Two cross-shop holes were found and fixed while adding these gates: vendor order detail could open any shop's order, and vendor category edit/delete could touch any category.
+
+## Creating accounts
+
+Two separate pages, one for each pool. Neither can create the other kind of account.
+
+| | Admin panel: **Admin Users** (`/admin/users`) | Shop panel: **Staff** (`/shop-user/staff`) |
+|---|---|---|
+| Creates | Admin accounts only (`admins` table) | Staff of the creator's own shop (`shop_users` table) |
+| Needs | `admin-user-manage` | `staff-invite` (change role: `staff-assign-role`) |
+| Roles offered | Admin roles only | Shop roles only |
+| Which shop | n/a | Always the logged-in user's own shop, never taken from the request |
+| Login details | Emailed: login link, email as username, password | Emailed: shop login link, generated username (`firstname.lastname@shopname.com`), password |
+
+Rules that apply to both: you can only hand out a role whose permissions you hold yourself (no privilege escalation), passwords are at least 8 characters, and the email tells the new person to change their password after logging in. If the email cannot be sent, the account is still created and the creator is warned.
+
+Admins cannot create shop user accounts from the admin panel. A shop's first (owner) account is still created automatically when a shop is created or a registration is approved; every later account is created by that shop's owner (or anyone the owner gave `staff-invite`).
+
+Admin accounts no longer fill the old `admins.role` / `admins.department` columns (they became nullable); the real role is the Spatie role.
 
 ## Existing accounts (backfill)
 
@@ -299,6 +319,7 @@ New permissions added to the seeder later need `php artisan db:seed --class=Role
 | `database/seeders/RolesAndPermissionsSeeder.php` | Seeds both pools; backfills owners for existing shops |
 | `app/Helpers/authorization.php` | `authorizeUserCheck()`, `currentShopId()` |
 | `app/Http/Middleware/AuthorizePermission.php` | `authorize:<perm>[|<perm>],<guard>` route middleware |
+| `app/Services/Accounts/` | `AdminAccountService`, `ShopStaffAccountService`, `ShopUsernameGenerator`, `AccountMailer` |
 | `app/Livewire/Concerns/AuthorizesPermissions.php` | `authorizeAdmin()` / `authorizeShop()` for Livewire actions |
 | `database/migrations/..._seed_roles_and_backfill_existing_accounts.php` | Seeds roles and backfills existing admins / shop owners |
 | `app/Http/Middleware/SetShopContext.php` | `shop.context`: every shop request must have a shop |

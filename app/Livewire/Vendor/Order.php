@@ -12,17 +12,12 @@ use Livewire\Attributes\Layout;
 #[Title(content: 'Order')]
 class Order extends Component
 {
-    public $orders;
-
-
-    public function mount()
-    {
-       $this->orders = VendorOrder::forCurrentShop()->with('order','items')->latest()->get();
-    }
+    use \App\Livewire\Concerns\PaginatesList;
     public function render()
     {
         return view('livewire.vendor.order',[
-            'orders' => $this->orders,
+            'orders' => VendorOrder::forCurrentShop()->with('order','items')->latest()->paginate(15),
+            'ordersTotal' => VendorOrder::forCurrentShop()->sum('subtotal'),
         ]);
     }
 }

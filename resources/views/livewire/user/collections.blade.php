@@ -33,7 +33,7 @@
                 <select wire:model="selectedCollectionId"
                     class="border border-gray-300 rounded-md p-2 md:w-64 focus:ring focus:ring-blue-200">
                     <option value="">Choose collection</option>
-                    @foreach ($myCollections as $collection)
+                    @foreach ($collectionOptions as $collection)
                         <option value="{{ $collection->id }}">{{ $collection->name }}</option>
                     @endforeach
                 </select>
@@ -74,6 +74,7 @@
                     </div>
                 @endforeach
             </div>
+            <div class="mt-5">{{ $myCollections->links() }}</div>
         @else
             <p class="text-gray-500">Create your first collection to save products.</p>
         @endif
@@ -109,6 +110,7 @@
                     </div>
                 @endforeach
             </div>
+            <div class="mt-5">{{ $publicCollections->links() }}</div>
         @else
             <p class="text-gray-500">No public collections from other users yet.</p>
         @endif

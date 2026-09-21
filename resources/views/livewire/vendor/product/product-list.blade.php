@@ -15,7 +15,7 @@
             @foreach ($products as $key => $product)
                 <tr class="hover:bg-gray-50">
                     {{-- {{ $products }} --}}
-                    <td class="px-4 py-2">{{ $key + 1 }}</td>
+                    <td class="px-4 py-2">{{ $products->firstItem() + $key }}</td>
                     <td class="px-4 py-2">{{ $product->name }}</td>
                     <td class="px-4 py-2">{{ $product->stock }}</td>
                     @if ($product->discount || $product->discount > 0)
@@ -37,6 +37,7 @@
             @endforeach
         </tbody>
     </table>
+            <div class="mt-4">{{ $products->links() }}</div>
 
     <!-- Popup Modal -->
     <div x-show="popup" x-transition.opacity x-cloak

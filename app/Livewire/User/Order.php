@@ -13,21 +13,20 @@ use DB;
 #[Layout('components/layouts/user')]
 class Order extends Component
 {
-    public $orders, $orderItem;
+    use \App\Livewire\Concerns\PaginatesList;
+    public $orderItem;
     public $status = 'All'; // Default filter status
 
     public function mount()
     {
-        $this->loadOrders();
-    }
-
-    // Load orders based on selected status
-    public function loadOrders()
-    {
         if (!Auth::guard('web')->check()) {
             return redirect()->route('user.login')->with('error', 'Login first');
         }
+    }
 
+    // Orders for the selected status, one page at a time
+    private function ordersQuery()
+    {
         $userid = Auth::guard('web')->user()->id;
 
         $query = ModalOrder::where('user_id', $userid)->with('orderItems', 'orderItems.product', 'user', 'vendorOrders');
@@ -36,14 +35,14 @@ class Order extends Component
             $query->where('order_status', $this->status);
         } 
 
-        $this->orders = $query->latest()->get();
+        return $query->latest();
     }
 
     // Filter orders by status
     public function setStatus($status)
     {
         $this->status = $status;
-        $this->loadOrders();
+        $this->resetPage();
     }
 
     public function popDeleteOrder($id)
@@ -101,7 +100,7 @@ class Order extends Component
     public function render()
     {
         return view('livewire.user.order', [
-            'orders' => $this->orders,
+            'orders' => $this->ordersQuery()->paginate(8),
         ]);
     }
 }

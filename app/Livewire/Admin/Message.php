@@ -13,6 +13,7 @@ use Livewire\Component;
 class Message extends Component
 {
     use \App\Livewire\Concerns\AuthorizesPermissions;
+    use \App\Livewire\Concerns\PaginatesList;
 
     public function markAsUnread($id)
     {

@@ -2,85 +2,103 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\ChangesPassword;
+use App\Livewire\Concerns\StoresImages;
 use App\Models\Admin;
+use App\Rules\PhoneNumber;
+use App\Support\ImageUrl;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Illuminate\Validation\Rule;
+use Mary\Traits\Toast;
 
 #[Layout('components.layouts.admin')]
-#[Title('Setting')]
+#[Title('Settings')]
 class Setting extends Component
 {
-    use WithFileUploads;
-    public $setting, $name, $email, $oldImage, $image, $department, $phone, $address, $is_active, $password, $newPassword;
-    public function mount()
+    use ChangesPassword, StoresImages, Toast, WithFileUploads;
+
+    private const TABS = [
+        'profile' => ['label' => 'Profile', 'icon' => 'fa-user'],
+        'security' => ['label' => 'Password & security', 'icon' => 'fa-lock'],
+        'access' => ['label' => 'Your access', 'icon' => 'fa-shield-halved'],
+    ];
+
+    #[Url(as: 'tab')]
+    public string $tab = 'profile';
+
+    public string $name = '';
+    public string $email = '';
+    public string $phone = '';
+    public string $address = '';
+    public $image = null;
+    public ?string $currentImage = null;
+
+    public function mount(): void
     {
-        $setting = Admin::find(Auth::guard('admin')->user()->id);
-        $this->setting = $setting;
-        $this->name = $setting->name;
-        $this->email = $setting->email;
-        $this->oldImage = $setting->image;
-        $this->department = $setting->department;
-        $this->phone = $setting->phone;
-        $this->address = $setting->address;
-        $this->is_active = $setting->is_active;
+        $admin = Auth::guard('admin')->user();
+        $this->name = $admin->name;
+        $this->email = $admin->email;
+        $this->phone = (string) $admin->phone;
+        $this->address = (string) $admin->address;
+        $this->currentImage = $admin->image;
     }
 
-    public function updateProfile()
+    public function updateProfile(): void
     {
+        $admin = Admin::findOrFail(Auth::guard('admin')->id());
 
+        $this->validate([
+            'name' => 'required|string|min:2|max:255',
+            'email' => ['required', 'email', 'max:255', Rule::unique('admins', 'email')->ignore($admin->id)],
+            'phone' => ['nullable', new PhoneNumber()],
+            'address' => 'nullable|string|max:255',
+            'image' => 'nullable|image|max:2048',
+        ]);
 
-        $rules = [
-            'name' => 'required|min:2|max:25',
-            'email' => [
-                'required',
-                'email',
-                Rule::unique('admins', 'email')->ignore($this->setting->id),
-            ],
-            'image' => 'nullable|image',
-            'department' => 'nullable',
-            'phone' => 'required|digits:10',
-            'address' => 'required|min:3|max:30',
-        ];
+        // Only these fields. The legacy role/department columns are not editable here.
+        $admin->update([
+            'name' => trim($this->name),
+            'email' => strtolower(trim($this->email)),
+            'phone' => $this->phone ?: null,
+            'address' => trim($this->address) ?: null,
+            'image' => $this->replaceImage($this->image, 'admins', $admin->image),
+        ]);
 
-        // Only validate password if it is filled
-        if ($this->password) {
-            $rules['password'] = 'nullable|min:5|max:20';
-            $rules['newPassword'] = 'required|same:password';
-        } else {
-            // Password not changing, leave newPassword nullable
-            $rules['newPassword'] = 'nullable';
-        }
-        $validation = $this->validate($rules);
-
-        DB::beginTransaction();
-        try {
-            $setting = Admin::find(Auth::guard('admin')->user()->id);
-            // unset($validation[''])
-            if ($validation['image']) {
-                $validation['image'] = $validation['image']->store('admins', 'public');
-            } else {
-                $validation['image'] = $this->oldImage;
-            }
-
-            if ($this->password) {
-                $validation['password'] = Hash::make($validation['password']);
-            }
-            $setting->update($validation);
-            DB::commit();
-            return redirect()->route('admin.setting')->with('success', 'Admin information update successfully');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->route('admin.setting')->with('error', 'Something went wrong' . $e->getMessage());
-        }
+        $this->currentImage = $admin->fresh()->image;
+        $this->reset('image');
+        $this->success('Profile updated', 'Your changes were saved.', 'toast-bottom toast-end');
     }
+
+    protected function passwordOwner(): Model
+    {
+        return Admin::findOrFail(Auth::guard('admin')->id());
+    }
+
     public function render()
     {
-        return view('livewire.admin.setting');
+        if (!isset(self::TABS[$this->tab])) {
+            $this->tab = 'profile';
+        }
+
+        $admin = Auth::guard('admin')->user();
+
+        return view('livewire.admin.setting', [
+            'tabs' => self::TABS,
+            'imageUrl' => ImageUrl::for($this->currentImage),
+            'imagePreview' => $this->previewUrl($this->image),
+            'initials' => strtoupper(mb_substr($this->name ?: 'A', 0, 1)),
+            'roles' => $this->tab === 'profile' || $this->tab === 'access' ? $admin->getRoleNames() : collect(),
+            // "shop-view", "shop-edit" ... grouped by what they are about ("shop", "order" ...).
+            'permissionGroups' => $this->tab === 'access'
+                ? $admin->getAllPermissions()->pluck('name')->sort()->groupBy(fn (string $p) => Str::before($p, '-'))
+                : collect(),
+        ]);
     }
 }

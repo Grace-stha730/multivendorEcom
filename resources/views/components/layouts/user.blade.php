@@ -17,6 +17,7 @@
 </head>
 
 <body class="bg-[#f6f8f7] antialiased">
+    @include('common.message')
     <div class="relative z-50">
         @include('component.user.header')
     </div>

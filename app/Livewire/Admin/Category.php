@@ -14,6 +14,7 @@ use App\Models\Category as modelCategory;
 class Category extends Component
 {
     use \App\Livewire\Concerns\AuthorizesPermissions;
+    use \App\Livewire\Concerns\PaginatesList;
     public $name, $description;
     public $categoryId, $new_name, $new_description;
     public function store()
@@ -92,7 +93,7 @@ class Category extends Component
     public function render()
     {
         return view('livewire.admin.category', [
-            'categories' => modelCategory::with('shop', 'admin')->get(),
+            'categories' => modelCategory::with('shop', 'admin')->latest('id')->paginate(15),
         ]);
     }
 }

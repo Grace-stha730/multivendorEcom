@@ -108,6 +108,8 @@ Route::prefix('shop-user')->name('shop-user.')->group(function () {
             ->middleware('authorize:chat-reply,shop_user')->name('chat');
         Route::get('/coupons', VendorCoupons::class)
             ->middleware('authorize:coupon-manage,shop_user')->name('coupons');
+        Route::get('/staff', \App\Livewire\Vendor\Staff::class)
+            ->middleware('authorize:staff-invite,shop_user')->name('staff');
         Route::patch('/staff/{id}/role', [\App\Http\Controllers\ShopStaffController::class, 'updateRole'])
             ->middleware('authorize:staff-assign-role,shop_user')->name('staff.role');
     });
@@ -148,6 +150,8 @@ Route::prefix('admin')->group(function () {
             ->middleware('authorize:payout-view,admin')->name('admin.payouts');
         Route::get('/shops', AdminShop::class)
             ->middleware('authorize:shop-view,admin')->name('admin.shops');
+        Route::get('/users', \App\Livewire\Admin\Users::class)
+            ->middleware('authorize:admin-user-manage,admin')->name('admin.users');
         Route::get('/shop-registrations', \App\Livewire\Admin\ShopRegistrations::class)
             ->middleware('authorize:shop-view,admin')->name('admin.shop-registrations');
     });

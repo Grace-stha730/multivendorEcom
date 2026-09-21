@@ -18,6 +18,12 @@
             </div>
         </div>
 
+        @if ($vendorOrder->order->awaitingPayment())
+            <div class="mb-4 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+                <strong>Payment pending.</strong> {{ \App\Models\Order::PAYMENT_PENDING_NOTICE }}
+            </div>
+        @endif
+
         <!-- Customer & Order Info -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
@@ -33,7 +39,9 @@
                 <p>Time: {{ $vendorOrder->created_at->format('H:i') }}</p>
                 <p>
                     Status:
-                    @if ($vendorOrder->status == 'Pending')
+                    @if ($vendorOrder->order->awaitingPayment())
+                        <span class="bg-amber-500 px-2 rounded-xl text-white">Awaiting payment</span>
+                    @elseif ($vendorOrder->status == 'Pending')
                         <span class="bg-orange-500 px-2 rounded-xl text-white">{{ $vendorOrder->status }}</span>
                     @elseif($vendorOrder->status == 'Processing')
                         <span class="bg-blue-500 px-2 rounded-xl text-white">{{ $vendorOrder->status }}</span>
@@ -88,7 +96,9 @@
                 class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 cursor-pointer">
                 <i class="fa-solid fa-print"></i> Print Sales Invoice
             </a>
-            @if ($vendorOrder->status == 'Pending')
+            @if ($vendorOrder->order->awaitingPayment())
+                <span class="rounded-lg bg-amber-100 px-4 py-2 text-sm font-medium text-amber-800">Awaiting the customer's eSewa payment. You can receive this order once it is paid.</span>
+            @elseif ($vendorOrder->status == 'Pending')
                 <button
                     class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition cursor-pointer"
                     wire:click='receivedOrder'>

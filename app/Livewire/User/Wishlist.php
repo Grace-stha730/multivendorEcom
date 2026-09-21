@@ -15,6 +15,7 @@ use Livewire\Component;
 #[Layout('components/layouts/user')]
 class Wishlist extends Component
 {
+    use \App\Livewire\Concerns\PaginatesList;
     public function removeFromWishlist($wishlistId)
     {
         if (!Auth::guard('web')->check()) {
@@ -94,13 +95,13 @@ class Wishlist extends Component
 
     public function render()
     {
-        $wishlistItems = collect();
+        $wishlistItems = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 9);
 
         if (Auth::guard('web')->check()) {
             $wishlistItems = WishlistModel::with(['product', 'product.firstImage', 'product.vendor'])
                 ->where('user_id', Auth::guard('web')->id())
                 ->latest()
-                ->get();
+                ->paginate(9);
         }
 
         return view('livewire.user.wishlist', [

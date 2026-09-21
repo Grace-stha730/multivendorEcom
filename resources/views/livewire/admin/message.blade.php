@@ -45,6 +45,7 @@
                     </div>
                 @endforeach
             </div>
+            <div class="mt-4">{{ $messages->links() }}</div>
         @else
             <div class="text-center w-full text-gray-500 text-xl">No Message</div>
         @endif

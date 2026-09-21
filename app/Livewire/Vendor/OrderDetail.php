@@ -25,6 +25,9 @@ class OrderDetail extends Component
     public function receivedOrder()
     {
         $this->authorizeShop('order-update-status');
+        if (Order::find($this->vendorOrder->order_id)?->awaitingPayment()) {
+            return redirect()->route('shop-user.orderDetail', ['id' => $this->vendorId])->with('error', Order::PAYMENT_PENDING_NOTICE);
+        }
         DB::beginTransaction();
         try {
             // update the current vendor order record
@@ -58,6 +61,9 @@ class OrderDetail extends Component
     public function cancelOrder()
     {
         $this->authorizeShop('order-update-status');
+        if (Order::find($this->vendorOrder->order_id)?->awaitingPayment()) {
+            return redirect()->route('shop-user.orderDetail', ['id' => $this->vendorId])->with('error', Order::PAYMENT_PENDING_NOTICE);
+        }
         // $order = Order::find($this->vendorOrder->order_id);
         DB::beginTransaction();
         try {
@@ -82,6 +88,9 @@ class OrderDetail extends Component
     public function pendingOrder()
     {
         $this->authorizeShop('order-update-status');
+        if (Order::find($this->vendorOrder->order_id)?->awaitingPayment()) {
+            return redirect()->route('shop-user.orderDetail', ['id' => $this->vendorId])->with('error', Order::PAYMENT_PENDING_NOTICE);
+        }
         // $order = Order::find($this->vendorOrder->order_id);
         DB::beginTransaction();
         try {

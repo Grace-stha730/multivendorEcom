@@ -11,6 +11,9 @@
         ['Coupons', 'fa-ticket', route('admin.coupons'), ['admin/coupons']],
         ['Payouts', 'fa-hand-holding-dollar', route('admin.payouts'), ['admin/payouts']],
     ];
+    if (authorizeUserCheck('admin-user-manage', 'admin')) {
+        $items[] = ['Admin Users', 'fa-user-shield', route('admin.users'), ['admin/users']];
+    }
 @endphp
 <div class="flex h-full min-h-0 w-full flex-col">
     <a wire:navigate href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-2 text-white">

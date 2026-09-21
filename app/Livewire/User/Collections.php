@@ -13,6 +13,7 @@ use Livewire\Component;
 #[Layout('components/layouts/user')]
 class Collections extends Component
 {
+    use \App\Livewire\Concerns\PaginatesList;
     public $name = '';
     public $description = '';
     public $isPublic = true;
@@ -85,13 +86,14 @@ class Collections extends Component
             'myCollections' => ProductCollection::where('user_id', $userId)
                 ->with(['products.firstImage', 'stars'])
                 ->latest()
-                ->get(),
+                ->paginate(6, ['*'], 'mine'),
+            'collectionOptions' => ProductCollection::where('user_id', $userId)->orderBy('name')->get(['id', 'name']),
             'publicCollections' => ProductCollection::where('is_public', true)
                 ->where('user_id', '!=', $userId)
                 ->with(['user', 'products.firstImage', 'stars'])
                 ->withCount('stars')
                 ->latest()
-                ->get(),
+                ->paginate(6, ['*'], 'public'),
         ]);
     }
 }

@@ -11,10 +11,11 @@ use App\Models\Order as modelOrder;
 #[Title('Order')]
 class Order extends Component
 {
+    use \App\Livewire\Concerns\PaginatesList;
     public function render()
     {
         return view('livewire.admin.order',[
-            'orders' => modelOrder::with(['user', 'deliveryProvince', 'deliveryDistrict'])->latest()->paginate(20),
+            'orders' => modelOrder::with(['user', 'deliveryProvince', 'deliveryDistrict'])->latest()->paginate(15),
         ]);
     }
 }

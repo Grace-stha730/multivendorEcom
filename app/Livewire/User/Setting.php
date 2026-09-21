@@ -2,72 +2,85 @@
 
 namespace App\Livewire\User;
 
+use App\Livewire\Concerns\ChangesPassword;
+use App\Livewire\Concerns\StoresImages;
 use App\Models\User;
-use Hash;
+use App\Support\ImageUrl;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Livewire\Attributes\Title;
+use Mary\Traits\Toast;
 
-#[Title(content: 'Setting')]
-#[Layout('components/layouts/user')]
+#[Title('Settings')]
+#[Layout('components.layouts.user')]
 class Setting extends Component
 {
-    use WithFileUploads;
-    public $setting, $name, $email, $photo, $oldPhoto, $password, $newPassword;
+    use ChangesPassword, StoresImages, Toast, WithFileUploads;
 
-    public function mount()
+    private const TABS = [
+        'profile' => ['label' => 'Profile', 'icon' => 'fa-user'],
+        'addresses' => ['label' => 'Addresses', 'icon' => 'fa-location-dot'],
+        'security' => ['label' => 'Password & security', 'icon' => 'fa-lock'],
+    ];
+
+    #[Url(as: 'tab')]
+    public string $tab = 'profile';
+
+    public string $name = '';
+    public string $email = '';
+    public $photo = null;
+    public ?string $currentPhoto = null;
+
+    public function mount(): void
     {
-        $setting = User::find(Auth::guard('web')->user()->id);
-        $this->setting = $setting;
-        $this->name = $setting->name;
-        $this->email = $setting->email;
-        $this->oldPhoto = $setting->photo;
+        $user = Auth::guard('web')->user();
+        $this->name = $user->name;
+        $this->email = $user->email;
+        $this->currentPhoto = $user->photo;
     }
 
-    public function updateProfile()
+    public function updateProfile(): void
     {
-        $rule = [
-            'name' => 'required|string||min:3|max:255',
-            'email' => [
-                'required',
-                'email',
-                Rule::unique('users', 'email')->ignore($this->setting->id),
-            ],
+        $user = User::findOrFail(Auth::guard('web')->id());
+
+        $this->validate([
+            'name' => 'required|string|min:2|max:255',
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'photo' => 'nullable|image|max:2048',
-        ];
+        ]);
 
-        if ($this->password) {
-            $rule['password'] = 'nullable|min:5|max:20';
-            $rule['newPassword'] = 'required|same:password';
-        } else {
-            $rule['newPassword'] = 'nullable';
-        }
-        $validation = $this->validate($rule);
-        DB::beginTransaction();
-        try {
-            if($validation['photo']){
-                $validation['photo'] = $validation['photo']->store('users','public');
-            } else {
-                $validation['photo'] = $this->oldPhoto;
-            }
+        $user->update([
+            'name' => trim($this->name),
+            'email' => strtolower(trim($this->email)),
+            'photo' => $this->replaceImage($this->photo, 'users', $user->photo),
+        ]);
 
-            if($this->password){
-                $validation['password'] = Hash::make($validation['password']);
-            }
-            $this->setting->update($validation);
-            DB::commit();   
-            return redirect()->route('user.setting')->with('success','profile update successfully');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->route('user.setting')->with('error', 'something went wrong' . $e->getMessage());
-        }
+        $this->currentPhoto = $user->fresh()->photo;
+        $this->reset('photo');
+        $this->success('Profile updated', 'Your changes were saved.', 'toast-bottom toast-end');
     }
+
+    protected function passwordOwner(): Model
+    {
+        return User::findOrFail(Auth::guard('web')->id());
+    }
+
     public function render()
     {
-        return view('livewire.user.setting');
+        if (!isset(self::TABS[$this->tab])) {
+            $this->tab = 'profile';
+        }
+
+        return view('livewire.user.setting', [
+            'tabs' => self::TABS,
+            'photoUrl' => ImageUrl::for($this->currentPhoto),
+            'photoPreview' => $this->previewUrl($this->photo),
+            'initials' => strtoupper(mb_substr($this->name ?: 'U', 0, 1)),
+        ]);
     }
 }

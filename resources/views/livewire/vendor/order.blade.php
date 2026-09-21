@@ -2,7 +2,7 @@
     <div class="max-w-7xl mx-auto bg-white rounded-2xl shadow-md p-6">
         <h2 class="text-3xl font-semibold mb-6 flex items-center justify-between">
             🛍️ Vendor Orders
-            <span class="text-sm text-gray-500">Rs. {{ number_format($orders->sum('subtotal')) }}</span>
+            <span class="text-sm text-gray-500">Rs. {{ number_format($ordersTotal) }}</span>
         </h2>
 
         <!-- Orders Table -->
@@ -25,7 +25,7 @@
                     <!-- Single Order Row -->
                     @foreach ($orders as $idx => $order)
                         <tr class="hover:bg-gray-50 transition">
-                            <td class="px-4 py-3 font-medium text-gray-700">{{ $idx + 1 }}</td>
+                            <td class="px-4 py-3 font-medium text-gray-700">{{ $orders->firstItem() + $idx }}</td>
                             <td class="px-4 py-3 font-semibold text-blue-600">{{ $order->order->order_number }}</td>
                             <td class="px-4 py-3">{{ $order->order->name }}
                                 <span class="block text-xs text-gray-500">Deliver to {{ $order->order->receiver_name ?? $order->order->name }}: {{ $order->order->tole }}, {{ $order->order->city }}</span>
@@ -33,7 +33,9 @@
                             <td class="px-4 py-3">{{ $order->items->count() }}</td>
                             <td class="px-4 py-3 font-semibold">Rs. {{ number_format($order->subtotal) }}</td>
                             <td class="px-4 py-3">
-                                @if ($order->status == 'Pending')
+                                @if ($order->order->awaitingPayment())
+                                    <span class="bg-amber-500 px-2 rounded-xl text-white" title="{{ \App\Models\Order::PAYMENT_PENDING_NOTICE }}">Awaiting payment</span>
+                                @elseif ($order->status == 'Pending')
                                     <span class="bg-orange-500 px-2 rounded-xl text-white">{{ $order->status }}</span>
                                 @elseif($order->status == 'Processing')
                                     <span class="bg-blue-500 px-2 rounded-xl text-white">{{ $order->status }}</span>
@@ -67,15 +69,6 @@
             </table>
         </div>
 
-        <!-- Pagination -->
-        <div class="flex justify-between items-center mt-6">
-            <p class="text-sm text-gray-600">Showing 1–10 of 124 orders</p>
-            <div class="flex space-x-1">
-                <button class="px-3 py-1 border rounded-lg text-sm hover:bg-gray-100">Prev</button>
-                <button class="px-3 py-1 border rounded-lg bg-blue-500 text-white text-sm">1</button>
-                <button class="px-3 py-1 border rounded-lg text-sm hover:bg-gray-100">2</button>
-                <button class="px-3 py-1 border rounded-lg text-sm hover:bg-gray-100">Next</button>
-            </div>
-        </div>
+        <div class="mt-6">{{ $orders->links() }}</div>
     </div>
 </section>

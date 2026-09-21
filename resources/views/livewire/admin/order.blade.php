@@ -27,7 +27,7 @@
                     @if ($orders && count($orders) > 0)
                         @foreach ($orders as $idx => $order)
                             <tr class="hover:bg-gray-50 transition">
-                                <td class="px-4 py-3 font-medium text-gray-700">{{ $idx + 1 }}</td>
+                                <td class="px-4 py-3 font-medium text-gray-700">{{ $orders->firstItem() + $idx }}</td>
                                 <td class="px-4 py-3 font-medium text-gray-700">{{ $order->order_number }}</td>
                                 <td class="px-4 py-3 font-medium text-gray-700">{{ $order->user->name }}</td>
                                 <td class="px-4 py-3 font-medium text-gray-700">{{ $order->payment_method }}</td>
@@ -38,7 +38,9 @@
                                 </td>
                                 <td class="px-4 py-3 font-medium text-gray-700">{{ $order->vendorOrders->count() }}</td>
                                 <td class="px-4 py-3 font-medium text-gray-700">{{ number_format($order->price) }}</td>
-                                <td class="px-4 py-3 font-medium text-gray-700">{{ $order->order_status }}</td>
+                                <td class="px-4 py-3 font-medium text-gray-700">
+                                    @if ($order->awaitingPayment())<span class="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">Awaiting payment</span>@else{{ $order->order_status }}@endif
+                                </td>
                                 <td class="px-4 py-3 font-medium text-gray-700">
                                     {{ $order->created_at->format('j M Y') }}</td>
                                 <td class="text-center">
@@ -55,17 +57,8 @@
 
                 </tbody>
             </table>
+            <div class="mt-4">{{ $orders->links() }}</div>
         </div>
 
-        <!-- Pagination -->
-        <div class="flex justify-between items-center mt-6">
-            <p class="text-sm text-gray-600">Showing 1–10 of 124 orders</p>
-            <div class="flex space-x-1">
-                <button class="px-3 py-1 border rounded-lg text-sm hover:bg-gray-100">Prev</button>
-                <button class="px-3 py-1 border rounded-lg bg-blue-500 text-white text-sm">1</button>
-                <button class="px-3 py-1 border rounded-lg text-sm hover:bg-gray-100">2</button>
-                <button class="px-3 py-1 border rounded-lg text-sm hover:bg-gray-100">Next</button>
-            </div>
-        </div>
     </div>
 </section>

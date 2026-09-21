@@ -30,7 +30,7 @@ class RolesAndPermissionsSeeder extends Seeder
      * by default; attach them to other roles from the database as needed.
      */
     private const ADMIN_EXTRA_PERMISSIONS = [
-        'product-view', 'category-manage', 'coupon-manage', 'message-view', 'policy-manage',
+        'product-view', 'category-manage', 'coupon-manage', 'message-view', 'policy-manage', 'admin-user-manage',
     ];
 
     /** Pool 2: shop staff (guard "shop_user"). Only ever effective inside the user's own shop_id. */

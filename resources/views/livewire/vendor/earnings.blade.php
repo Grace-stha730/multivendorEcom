@@ -61,7 +61,7 @@
                     <tbody class="divide-y divide-gray-100">
                         @forelse ($payouts as $idx => $p)
                             <tr class="hover:bg-gray-50">
-                                <td class="py-3 px-4 font-medium text-gray-500">{{ $idx + 1 }}</td>
+                                <td class="py-3 px-4 font-medium text-gray-500">{{ $payouts->firstItem() + $idx }}</td>
                                 <td class="py-3 px-4 text-xs text-gray-600">{{ $p->created_at->format('j M Y, h:i A') }}</td>
                                 <td class="py-3 px-4 font-bold text-gray-900">Rs. {{ number_format($p->amount) }}</td>
                                 <td class="py-3 px-4 text-gray-600">{{ $p->payment_method }}</td>
@@ -83,6 +83,7 @@
                         @endforelse
                     </tbody>
                 </table>
+            <div class="mt-4">{{ $payouts->links() }}</div>
             </div>
         </div>
 

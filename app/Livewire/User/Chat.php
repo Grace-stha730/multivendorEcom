@@ -13,11 +13,14 @@ use App\Services\AiSupportService;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
+use Mary\Traits\Toast;
 
 #[Title('My Messages')]
 #[Layout('components.layouts.user')]
 class Chat extends Component
 {
+    use Toast;
+
     public $activeConversationId = null;
     public $messageText = '';
     public bool $awaitingAi = false;
@@ -119,7 +122,7 @@ class Chat extends Component
         $key = "ai:chatbot:$userId";
         if (RateLimiter::tooManyAttempts($key, 30)) {
             $this->awaitingAi = false;
-            session()->flash('error', 'You are sending messages too quickly. Please wait a moment.');
+            $this->error('Slow down', 'You are sending messages too quickly. Please wait a moment.', 'toast-bottom toast-end');
 
             return;
         }
@@ -194,7 +197,7 @@ class Chat extends Component
     public function startAiSupport(): void
     {
         $userId = Auth::guard('web')->id();
-        if (! $userId) { session()->flash('error', 'Please log in to use AI support.'); return; }
+        if (! $userId) { $this->error('Please log in', 'Log in to use AI support.', 'toast-bottom toast-end'); return; }
 
         // The AI Assistant chat belongs to the customer only: no vendor (shop_user_id NULL), no product.
         $conversation = Conversation::firstOrCreate(
@@ -211,13 +214,13 @@ class Chat extends Component
 
         if ($conversation->isAiSupport()) {
             $this->escalateToHuman($conversation);
-            session()->flash('success', 'Our support team has been notified and will contact you by email.');
+            $this->success('Support notified', 'Our support team has been notified and will contact you by email.', 'toast-bottom toast-end');
 
             return;
         }
 
         $conversation->update(['is_ai_handled' => false]);
-        session()->flash('success', 'A human support team member will assist you shortly.');
+        $this->success('Request sent', 'A human support team member will assist you shortly.', 'toast-bottom toast-end');
     }
 
     public function markAsRead()

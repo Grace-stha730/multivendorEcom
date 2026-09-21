@@ -1,160 +1,141 @@
-<div class="max-w-5xl mx-auto py-8" x-data>
-    <h2 class="text-2xl font-semibold mb-6 flex items-center gap-2">
-        <i class="fa-solid fa-gear text-gray-700"></i>
-        Vendor Settings
-    </h2>
+<x-settings.shell title="Settings" :subtitle="'Manage your account and ' . ($shop?->name ?? 'your shop') . '.'" :tabs="$tabs" :active="$tab">
 
-    {{-- Profile Settings --}}
-    <div class="bg-white p-6 rounded-2xl shadow">
-        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-            <i class="fa-solid fa-user-cog text-gray-600"></i>
-            Profile Settings
-        </h3>
+    @if ($tab === 'profile')
+        <x-settings.card title="My profile" description="Your own login account in this shop.">
+            <form id="profile-form" wire:submit="updateProfile" class="space-y-6">
+                <x-settings.avatar name="photo" :current="$photoUrl" :preview="$photoPreview" :initials="strtoupper(mb_substr($name ?: 'S', 0, 1))" />
 
-        <form wire:submit.prevent="updateProfile" class="space-y-4">
-            {{-- Profile Image --}}
-            <div class="flex flex-col md:flex-row items-center md:items-start gap-4">
-                <div>
-                    @if ($shop_image)
-                        <img class="w-24 h-24 rounded-full object-cover border shadow-sm"
-                            src="{{ $shop_image->temporaryUrl() }}" alt="Admin Image">
-                    @elseif(!$oldImage)
-                        <img class="w-24 h-24 rounded-full object-cover border shadow-sm"
-                            src="{{ asset('default/vendor.svg') }}" alt="">
-                    @else
-                        <img class="w-24 h-24 rounded-full object-cover border shadow-sm"
-                            src="{{ asset('storage/' . $oldImage) }}" alt="">
-                    @endif
+                <div class="grid gap-5 sm:grid-cols-2">
+                    <x-settings.field label="Full name" name="name" required>
+                        <x-settings.input wire:model="name" autocomplete="name" placeholder="Your full name" />
+                    </x-settings.field>
+                    <x-settings.field label="Username" name="username" hint="Your login. It can only be changed by an admin.">
+                        <x-settings.input :value="$me->username" disabled />
+                    </x-settings.field>
+                    <x-settings.field label="Your email" name="personal_email" hint="Used to reset your password and receive account emails.">
+                        <x-settings.input wire:model="personal_email" type="email" autocomplete="email" placeholder="you@example.com" />
+                    </x-settings.field>
+                    <x-settings.field label="Contact number" name="contact" hint="10 to 15 digits, numbers only.">
+                        <x-settings.input wire:model="contact" numeric autocomplete="tel" placeholder="98XXXXXXXX" />
+                    </x-settings.field>
+                    <x-settings.field label="Address" name="address">
+                        <x-settings.input wire:model="address" autocomplete="street-address" placeholder="Optional" />
+                    </x-settings.field>
+                    <x-settings.field label="Role" name="role" hint="Set by your shop owner.">
+                        <div class="flex min-h-[2.375rem] flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5">
+                            @forelse ($roles as $role)
+                                <span class="rounded-full bg-emerald-100 px-3 py-0.5 text-xs font-semibold text-emerald-800">{{ $role }}</span>
+                            @empty
+                                <span class="text-sm text-slate-500">No role assigned</span>
+                            @endforelse
+                        </div>
+                    </x-settings.field>
                 </div>
+            </form>
 
-                <div class="flex-1">
-                    <label class="block mb-2 text-sm font-medium text-gray-600">Change Profile Image</label>
-                    <input type="file" wire:model="shop_image"
-                        class="w-full border rounded-md px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-blue-500">
-                    @error('shop_image')
-                        <span class="text-red-500 text-sm">{{ $message }}</span>
-                    @enderror
+            <x-slot:footer>
+                <x-settings.button type="submit" form="profile-form" target="updateProfile">Save changes</x-settings.button>
+            </x-slot:footer>
+        </x-settings.card>
+    @endif
+
+    @if ($tab === 'shop')
+        <x-settings.card title="Shop details" description="What customers and the platform see about your shop.">
+            @unless ($canEditShop)
+                <p class="mb-5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">You can view these details, but only someone with permission to edit shop settings (usually the owner) can change them.</p>
+            @endunless
+
+            <form id="shop-form" wire:submit="updateShop" class="space-y-6">
+                <x-settings.avatar name="shop_logo" :current="$logoUrl" :preview="$logoPreview" :initials="strtoupper(mb_substr($shop_name ?: 'S', 0, 1))" label="Change logo" :square="true" />
+
+                <div class="grid gap-5 sm:grid-cols-2">
+                    <x-settings.field label="Shop name" name="shop_name" required>
+                        <x-settings.input wire:model="shop_name" :disabled="!$canEditShop" placeholder="Shop name" />
+                    </x-settings.field>
+                    <x-settings.field label="Owner name" name="shop_owner" required>
+                        <x-settings.input wire:model="shop_owner" :disabled="!$canEditShop" placeholder="Owner's full name" />
+                    </x-settings.field>
+                    <x-settings.field label="Shop email" name="shop_email" required hint="Shown to the platform. Also used to reset the owner's password.">
+                        <x-settings.input wire:model="shop_email" type="email" :disabled="!$canEditShop" placeholder="shop@example.com" />
+                    </x-settings.field>
+                    <x-settings.field label="Shop contact number" name="shop_contact" required hint="10 to 15 digits, numbers only.">
+                        <x-settings.input wire:model="shop_contact" numeric :disabled="!$canEditShop" placeholder="98XXXXXXXX" />
+                    </x-settings.field>
+                    <x-settings.field label="Province" name="shop_province_id" required>
+                        <x-settings.select wire:model.live="shop_province_id" :disabled="!$canEditShop">
+                            <option value="">Select province</option>
+                            @foreach ($provinces as $province)<option value="{{ $province->id }}">{{ $province->name }}</option>@endforeach
+                        </x-settings.select>
+                    </x-settings.field>
+                    <x-settings.field label="District" name="shop_district_id" required>
+                        <x-settings.select wire:model="shop_district_id" :disabled="!$canEditShop || !$shop_province_id">
+                            <option value="">Select district</option>
+                            @foreach ($districts as $district)<option value="{{ $district->id }}">{{ $district->name }}</option>@endforeach
+                        </x-settings.select>
+                    </x-settings.field>
+                    <x-settings.field label="City" name="shop_city" required>
+                        <x-settings.input wire:model="shop_city" :disabled="!$canEditShop" placeholder="City" />
+                    </x-settings.field>
+                    <x-settings.field label="Tole / street" name="shop_tole" required>
+                        <x-settings.input wire:model="shop_tole" :disabled="!$canEditShop" placeholder="Tole or street" />
+                    </x-settings.field>
+                    <x-settings.field label="PAN number" name="pan" hint="Verified by the platform. Contact an admin to change it.">
+                        <x-settings.input :value="$shop?->pan_number ?: 'Not provided'" disabled />
+                    </x-settings.field>
+                    <x-settings.field label="Shop status" name="status">
+                        <div class="flex h-[2.375rem] items-center">
+                            <span class="rounded-full px-3 py-1 text-xs font-semibold {{ $shop?->status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">{{ ucfirst($shop?->status ?? 'unknown') }}</span>
+                        </div>
+                    </x-settings.field>
                 </div>
-            </div>
+            </form>
 
-            {{-- vendor Name --}}
-            <div>
-                <label class="block mb-2 text-sm font-medium text-gray-600">Shop Name</label>
-                <input type="text" wire:model.defer="shop_name"
-                    class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" placeholder="Shop Name">
-                @error('shop_name')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
+            @if ($canEditShop)
+                <x-slot:footer>
+                    <x-settings.button type="submit" form="shop-form" target="updateShop">Save shop details</x-settings.button>
+                </x-slot:footer>
+            @endif
+        </x-settings.card>
+    @endif
 
-            <div>
-                <label class="block mb-2 text-sm font-medium text-gray-600">Owner Name</label>
-                <input type="text" wire:model.defer="owner_name"
-                    class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                    placeholder="Admin Name">
-                @error('owner_name')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
+    @if ($tab === 'ai')
+        <x-settings.card title="AI assistant" description="Let the AI send a first reply to customers who message your shop and get no answer.">
+            <label class="flex items-start gap-4 {{ $canEditShop ? 'cursor-pointer' : 'cursor-not-allowed opacity-70' }}">
+                <input type="checkbox" wire:model="aiAutoReplyEnabled" @disabled(!$canEditShop) class="mt-1 h-5 w-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-300">
+                <span>
+                    <span class="block text-sm font-semibold text-slate-900">Reply automatically when I am slow to respond</span>
+                    <span class="mt-1 block text-sm text-slate-500">If a customer's message stays unanswered for a few minutes, the AI answers using your store policies. As soon as you or a teammate replies, the AI stops for that conversation.</span>
+                </span>
+            </label>
+            @unless ($canEditShop)
+                <p class="mt-4 text-sm text-amber-700">Only someone with permission to edit shop settings can change this.</p>
+            @endunless
 
-            {{-- Email Address --}}
-            <div>
-                <label class="block mb-2 text-sm font-medium text-gray-600">Email Address</label>
-                <input type="email" wire:model.defer="shop_email"
-                    class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                    placeholder="vendor@example.com">
-                @error('shop_email')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
+            @if ($canEditShop)
+                <x-slot:footer>
+                    <x-settings.button type="button" wire:click="updateAiAutoReply" target="updateAiAutoReply">Save AI settings</x-settings.button>
+                </x-slot:footer>
+            @endif
+        </x-settings.card>
+    @endif
 
-            {{-- province --}}
-            <div>
-                <label class="block mb-2 text-sm font-medium text-gray-600">Province</label>
-                <input type="text" wire:model.defer="shop_province"
-                    class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                    placeholder="Shop Province">
-                @error('shop_province')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
+    @if ($tab === 'security')
+        <x-settings.card title="Change password" description="Use at least 8 characters. You will need your current password.">
+            <form id="password-form" wire:submit="updatePassword" class="grid max-w-xl gap-5">
+                <x-settings.field label="Current password" name="current_password" required>
+                    <x-settings.input wire:model="current_password" type="password" autocomplete="current-password" />
+                </x-settings.field>
+                <x-settings.field label="New password" name="password" required>
+                    <x-settings.input wire:model="password" type="password" autocomplete="new-password" />
+                </x-settings.field>
+                <x-settings.field label="Confirm new password" name="password_confirmation" required>
+                    <x-settings.input wire:model="password_confirmation" type="password" autocomplete="new-password" />
+                </x-settings.field>
+            </form>
 
-            {{-- city --}}
-            <div>
-                <label class="block mb-2 text-sm font-medium text-gray-600">City</label>
-                <input type="text" wire:model.defer="shop_city"
-                    class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" placeholder="Shop city">
-                @error('shop_city')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
-
-            {{-- tole --}}
-            <div>
-                <label class="block mb-2 text-sm font-medium text-gray-600">City</label>
-                <input type="text" wire:model.defer="shop_tole"
-                    class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" placeholder="Shop tole">
-                @error('shop_tole')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
-
-            {{-- tole --}}
-            <div>
-                <label class="block mb-2 text-sm font-medium text-gray-600">phone</label>
-                <input type="number" inputmode="numeric" min="0" step="1" wire:model.defer="shop_phone"
-                    x-data @keydown="['e','E','+','-','.',','].includes($event.key) && $event.preventDefault()" @wheel="$el.blur()"
-                    class="number-input w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" placeholder="phone">
-                @error('shop_phone')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
-
-            {{-- New Password --}}
-            <div>
-                <label class="block mb-2 text-sm font-medium text-gray-600">New Password</label>
-                <input type="password" wire:model.defer="password"
-                    class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" placeholder="••••••••">
-                @error('password')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
-
-            {{-- Confirm new password --}}
-            <div>
-                <label class="block mb-2 text-sm font-medium text-gray-600">Confirm New Password</label>
-                <input type="password" wire:model.defer="newPassword"
-                    class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" placeholder="••••••••">
-                @error('newPassword')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
-
-
-            {{-- Submit --}}
-            <div class="text-end">
-                <button type="submit"
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2 rounded-md transition cursor-pointer  ">
-                    Update Profile
-                </button>
-            </div>
-
-            {{-- Loading Indicator --}}
-            <div wire:loading wire:target="updateProfile" class="text-gray-500 text-sm mt-2">
-                Updating your profile, please wait...
-            </div>
-        </form>
-    </div>
-
-    <div class="mt-6 rounded-2xl bg-white p-6 shadow">
-        <h3 class="text-lg font-semibold text-gray-800">AI support</h3>
-        <p class="mt-1 text-sm text-gray-500">Let the AI send a first response after the configured delay when your team has not replied.</p>
-        <label class="mt-4 flex items-center gap-3 text-sm font-medium text-gray-700">
-            <input type="checkbox" wire:model="aiAutoReplyEnabled" class="rounded border-gray-300 text-indigo-600">
-            Enable AI auto-replies for this shop
-        </label>
-        <button wire:click="updateAiAutoReply" class="mt-4 rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">Save AI setting</button>
-    </div>
-</div>
-
-<style>.number-input::-webkit-outer-spin-button,.number-input::-webkit-inner-spin-button{margin:0;-webkit-appearance:none}.number-input[type=number]{-moz-appearance:textfield;appearance:textfield}</style>
+            <x-slot:footer>
+                <x-settings.button type="submit" form="password-form" target="updatePassword">Update password</x-settings.button>
+            </x-slot:footer>
+        </x-settings.card>
+    @endif
+</x-settings.shell>

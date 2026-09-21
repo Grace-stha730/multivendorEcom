@@ -17,6 +17,7 @@ use Livewire\Component;
 #[Layout('components/layouts/user')]
 class Coupons extends Component
 {
+    use \App\Livewire\Concerns\PaginatesList;
     public int $walletBalance = 0;
     public int $reviewCount = 0;
     public int $wishlistCount = 0;
@@ -88,7 +89,7 @@ class Coupons extends Component
                     $query->whereNull('expires_at')->orWhere('expires_at', '>=', now());
                 })
                 ->latest()
-                ->get(),
+                ->paginate(6),
         ]);
     }
 }

@@ -14,6 +14,7 @@ use Livewire\Component;
 class Coupons extends Component
 {
     use \App\Livewire\Concerns\AuthorizesPermissions;
+    use \App\Livewire\Concerns\PaginatesList;
     public $code, $description, $type = 'fixed', $value, $min_order_amount = 0, $usage_limit = 1, $min_item_price = 0, $starts_at, $expires_at, $category_id;
     public $is_active = true;
     public $editingId = null;
@@ -120,7 +121,7 @@ class Coupons extends Component
     public function render()
     {
         return view('livewire.admin.coupons', [
-            'coupons' => Coupon::whereNull('shop_id')->latest()->get(), 'categories' => Category::orderBy('name')->get(),
+            'coupons' => Coupon::whereNull('shop_id')->latest()->paginate(10), 'categories' => Category::orderBy('name')->get(),
         ]);
     }
 }

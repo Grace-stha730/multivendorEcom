@@ -1,102 +1,49 @@
-<div class="max-w-5xl mx-auto py-8" x-data>
-    <h2 class="text-2xl font-semibold mb-6 flex items-center gap-2">
-        <i class="fa-solid fa-gear text-gray-700"></i>
-        Admin Settings
-    </h2>
+<x-settings.shell title="Settings" subtitle="Manage your profile, delivery addresses and password." :tabs="$tabs" :active="$tab" accent="indigo">
 
-    {{-- Profile Settings --}}
-    <div class="bg-white p-6 rounded-2xl shadow">
-        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-            <i class="fa-solid fa-user-cog text-gray-600"></i>
-            Profile Settings
-        </h3>
+    @if ($tab === 'profile')
+        <x-settings.card title="Profile" description="Your name and email are used on your orders and to sign in.">
+            <form id="profile-form" wire:submit="updateProfile" class="space-y-6">
+                <x-settings.avatar name="photo" :current="$photoUrl" :preview="$photoPreview" :initials="$initials" accent="indigo" />
 
-        <form wire:submit.prevent="updateProfile" class="space-y-4">
-            {{-- Profile Image --}}
-            <div class="flex flex-col md:flex-row items-center md:items-start gap-4">
-                <div>
-                    @if ($photo)
-                        <img class="w-24 h-24 rounded-full object-cover border shadow-sm"
-                            src="{{ $photo->temporaryUrl() }}" alt="Admin Image">
-                    @elseif(!$oldPhoto)
-                        <img class="w-24 h-24 rounded-full object-cover border shadow-sm"
-                            src="{{ asset('default/vendor.svg') }}" alt="">
-                    @elseif(str_starts_with($oldPhoto, 'http'))
-                        <img class="w-24 h-24 rounded-full object-cover border shadow-sm" src="{{ $oldPhoto }}" alt="Profile image">
-                    @else
-                        <img class="w-24 h-24 rounded-full object-cover border shadow-sm"
-                            src="{{ asset('storage/' . $oldPhoto) }}" alt="">
-                    @endif
+                <div class="grid gap-5 sm:grid-cols-2">
+                    <x-settings.field label="Full name" name="name" required>
+                        <x-settings.input wire:model="name" accent="indigo" autocomplete="name" placeholder="Your full name" />
+                    </x-settings.field>
+                    <x-settings.field label="Email address" name="email" required>
+                        <x-settings.input wire:model="email" type="email" accent="indigo" autocomplete="email" placeholder="you@example.com" />
+                    </x-settings.field>
                 </div>
+            </form>
 
-                <div class="flex-1">
-                    <label class="block mb-2 text-sm font-medium text-gray-600">Change Profile Image</label>
-                    <input type="file" wire:model="photo"
-                        class="w-full border rounded-md px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-blue-500">
-                    @error('photo')
-                        <span class="text-red-500 text-sm">{{ $message }}</span>
-                    @enderror
-                </div>
-            </div>
+            <x-slot:footer>
+                <x-settings.button type="submit" form="profile-form" target="updateProfile" accent="indigo">Save changes</x-settings.button>
+            </x-slot:footer>
+        </x-settings.card>
+    @endif
 
-            {{-- Name --}}
-            <div>
-                <label class="block mb-2 text-sm font-medium text-gray-600">Admin Name</label>
-                <input type="text" wire:model.defer="name"
-                    class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                    placeholder="Admin Name">
-                @error('name')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
+    @if ($tab === 'addresses')
+        <x-settings.card title="Address book" description="Choose where your orders are delivered. You can pick any of these at checkout.">
+            <livewire:user.address-manager mode="manage" />
+        </x-settings.card>
+    @endif
 
-            {{-- Email Address --}}
-            <div>
-                <label class="block mb-2 text-sm font-medium text-gray-600">Email Address</label>
-                <input type="email" wire:model.defer="email"
-                    class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                    placeholder="admin@example.com">
-                @error('email')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
+    @if ($tab === 'security')
+        <x-settings.card title="Change password" description="Use at least 8 characters. You will need your current password.">
+            <form id="password-form" wire:submit="updatePassword" class="grid max-w-xl gap-5">
+                <x-settings.field label="Current password" name="current_password" required>
+                    <x-settings.input wire:model="current_password" type="password" accent="indigo" autocomplete="current-password" />
+                </x-settings.field>
+                <x-settings.field label="New password" name="password" required>
+                    <x-settings.input wire:model="password" type="password" accent="indigo" autocomplete="new-password" />
+                </x-settings.field>
+                <x-settings.field label="Confirm new password" name="password_confirmation" required>
+                    <x-settings.input wire:model="password_confirmation" type="password" accent="indigo" autocomplete="new-password" />
+                </x-settings.field>
+            </form>
 
-            {{-- New Password --}}
-            <div>
-                <label class="block mb-2 text-sm font-medium text-gray-600">New Password</label>
-                <input type="password" wire:model.defer="password"
-                    class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" placeholder="••••••••">
-                @error('password')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
-
-            <div>
-                <label class="block mb-2 text-sm font-medium text-gray-600">Confirm New Password</label>
-                <input type="password" wire:model.defer="newPassword"
-                    class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" placeholder="••••••••">
-                @error('newPassword')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
-
-
-            {{-- Submit --}}
-            <div class="text-end">
-                <button type="submit"
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2 rounded-md transition cursor-pointer  ">
-                    Update Profile
-                </button>
-            </div>
-
-            {{-- Loading Indicator --}}
-            <div wire:loading wire:target="updateProfile" class="text-gray-500 text-sm mt-2">
-                Updating your profile, please wait...
-            </div>
-        </form>
-    </div>
-
-    <div class="bg-white p-6 rounded-2xl shadow mt-6">
-        <livewire:user.address-manager mode="manage" />
-    </div>
-</div>
+            <x-slot:footer>
+                <x-settings.button type="submit" form="password-form" target="updatePassword" accent="indigo">Update password</x-settings.button>
+            </x-slot:footer>
+        </x-settings.card>
+    @endif
+</x-settings.shell>

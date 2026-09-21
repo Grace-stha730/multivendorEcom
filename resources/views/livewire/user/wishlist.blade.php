@@ -96,6 +96,7 @@
                     @endif
                 @endforeach
             </div>
+            <div class="mt-8">{{ $wishlistItems->links() }}</div>
         @else
             <div class="flex flex-col items-center justify-center py-16 text-center">
                 <div class="w-20 h-20 bg-red-50 text-red-400 rounded-full flex items-center justify-center mb-4 text-3xl">

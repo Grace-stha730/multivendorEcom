@@ -12,6 +12,7 @@ use Livewire\Component;
 class Products extends Component
 {
     use \App\Livewire\Concerns\AuthorizesPermissions;
+    use \App\Livewire\Concerns\PaginatesList;
     public function viewDetail($id){
         $this->authorizeAdmin('product-view');
         
@@ -19,7 +20,7 @@ class Products extends Component
     public function render()
     {
         return view('livewire.admin.products',[
-            'products' => Product::with('shop', 'firstImage', 'category')->paginate(30),
+            'products' => Product::with('shop', 'firstImage', 'category')->latest()->paginate(15),
         ]);
     }
 }

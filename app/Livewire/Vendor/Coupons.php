@@ -15,6 +15,7 @@ use Livewire\Component;
 class Coupons extends Component
 {
     use \App\Livewire\Concerns\AuthorizesPermissions;
+    use \App\Livewire\Concerns\PaginatesList;
     public $code, $type = 'fixed', $value, $min_order_amount = 0, $starts_at, $expires_at, $scopeType = 'product', $product_id, $category_id;
     public $is_active = true;
     public $editingId = null;
@@ -113,7 +114,7 @@ class Coupons extends Component
     {
         $shopId = Auth::guard('shop_user')->user()->shop_id;
         return view('livewire.vendor.coupons', [
-            'coupons' => Coupon::where('shop_id', $shopId)->latest()->get(),
+            'coupons' => Coupon::where('shop_id', $shopId)->latest()->paginate(10),
             'products' => Product::where('shop_id', $shopId)->orderBy('name')->get(),
             'categories' => Category::orderBy('name')->get(),
         ]);

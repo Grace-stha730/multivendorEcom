@@ -14,6 +14,7 @@ use Livewire\Attributes\Layout;
 class Category extends Component
 {
     use \App\Livewire\Concerns\AuthorizesPermissions;
+    use \App\Livewire\Concerns\PaginatesList;
     public $name, $description,$new_description,$new_name, $id;
     public function store(){
         $this->authorizeShop('category-manage');
@@ -84,7 +85,7 @@ class Category extends Component
     public function render()
     {
         return view('livewire.vendor.category',[
-            'categories'=>ModelsCategory::latest()->get(),
+            'categories'=>ModelsCategory::latest()->paginate(15),
         ]);
     }
 }

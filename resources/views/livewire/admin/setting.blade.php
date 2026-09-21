@@ -1,125 +1,84 @@
-<div class="max-w-5xl mx-auto py-8" x-data>
-    <h2 class="text-2xl font-semibold mb-6 flex items-center gap-2">
-        <i class="fa-solid fa-gear text-gray-700"></i>
-        Admin Settings
-    </h2>
+<x-settings.shell title="Settings" subtitle="Manage your admin profile, password and see what you can do in the console." :tabs="$tabs" :active="$tab">
 
-    {{-- Profile Settings --}}
-    <div class="bg-white p-6 rounded-2xl shadow">
-        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-            <i class="fa-solid fa-user-cog text-gray-600"></i>
-            Profile Settings
-        </h3>
+    @if ($tab === 'profile')
+        <x-settings.card title="Profile" description="How you appear to other admins, and the email you sign in with.">
+            <form id="profile-form" wire:submit="updateProfile" class="space-y-6">
+                <x-settings.avatar name="image" :current="$imageUrl" :preview="$imagePreview" :initials="$initials" />
 
-        <form wire:submit.prevent="updateProfile" class="space-y-4">
-            {{-- Profile Image --}}
-            <div class="flex flex-col md:flex-row items-center md:items-start gap-4">
-                <div>
-                    @if ($image)
-                        <img class="w-24 h-24 rounded-full object-cover border shadow-sm"
-                            src="{{ $image->temporaryUrl() }}" alt="Admin Image">
-                    @elseif(!$oldImage)
-                        <img class="w-24 h-24 rounded-full object-cover border shadow-sm"
-                            src="{{ asset('default/vendor.svg') }}" alt="">
-                    @else
-                        <img class="w-24 h-24 rounded-full object-cover border shadow-sm"
-                            src="{{ asset('storage/' . $oldImage) }}" alt="">
-                    @endif
+                <div class="grid gap-5 sm:grid-cols-2">
+                    <x-settings.field label="Full name" name="name" required>
+                        <x-settings.input wire:model="name" autocomplete="name" placeholder="Your full name" />
+                    </x-settings.field>
+                    <x-settings.field label="Email address" name="email" required hint="This is your login.">
+                        <x-settings.input wire:model="email" type="email" autocomplete="email" placeholder="you@example.com" />
+                    </x-settings.field>
+                    <x-settings.field label="Phone" name="phone" hint="10 to 15 digits, numbers only.">
+                        <x-settings.input wire:model="phone" numeric autocomplete="tel" placeholder="98XXXXXXXX" />
+                    </x-settings.field>
+                    <x-settings.field label="Address" name="address">
+                        <x-settings.input wire:model="address" autocomplete="street-address" placeholder="Optional" />
+                    </x-settings.field>
+                    <x-settings.field label="Role" name="role" class="sm:col-span-2" hint="Your role is set by a super admin and cannot be changed here.">
+                        <div class="flex flex-wrap gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
+                            @forelse ($roles as $role)
+                                <span class="rounded-full bg-emerald-100 px-3 py-0.5 text-xs font-semibold text-emerald-800">{{ $role }}</span>
+                            @empty
+                                <span class="text-sm text-slate-500">No role assigned</span>
+                            @endforelse
+                        </div>
+                    </x-settings.field>
                 </div>
+            </form>
 
-                <div class="flex-1">
-                    <label class="block mb-2 text-sm font-medium text-gray-600">Change Profile Image</label>
-                    <input type="file" wire:model="image"
-                        class="w-full border rounded-md px-3 py-2 text-sm text-gray-700 focus:ring-2 focus:ring-blue-500">
-                    @error('newImage')
-                        <span class="text-red-500 text-sm">{{ $message }}</span>
-                    @enderror
+            <x-slot:footer>
+                <x-settings.button type="submit" form="profile-form" target="updateProfile">Save changes</x-settings.button>
+            </x-slot:footer>
+        </x-settings.card>
+    @endif
+
+    @if ($tab === 'security')
+        <x-settings.card title="Change password" description="Use at least 8 characters. You will need your current password.">
+            <form id="password-form" wire:submit="updatePassword" class="grid max-w-xl gap-5">
+                <x-settings.field label="Current password" name="current_password" required>
+                    <x-settings.input wire:model="current_password" type="password" autocomplete="current-password" />
+                </x-settings.field>
+                <x-settings.field label="New password" name="password" required>
+                    <x-settings.input wire:model="password" type="password" autocomplete="new-password" />
+                </x-settings.field>
+                <x-settings.field label="Confirm new password" name="password_confirmation" required>
+                    <x-settings.input wire:model="password_confirmation" type="password" autocomplete="new-password" />
+                </x-settings.field>
+            </form>
+
+            <x-slot:footer>
+                <x-settings.button type="submit" form="password-form" target="updatePassword">Update password</x-settings.button>
+            </x-slot:footer>
+        </x-settings.card>
+    @endif
+
+    @if ($tab === 'access')
+        <x-settings.card title="Your access" description="What your role lets you do. Ask a super admin if you need something changed.">
+            <div class="mb-5 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                Role:
+                @forelse ($roles as $role)
+                    <span class="rounded-full bg-emerald-100 px-3 py-0.5 text-xs font-semibold text-emerald-800">{{ $role }}</span>
+                @empty
+                    <span class="text-slate-500">none</span>
+                @endforelse
+            </div>
+
+            @forelse ($permissionGroups as $group => $permissions)
+                <div class="mb-4 last:mb-0">
+                    <h3 class="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">{{ $group }}</h3>
+                    <div class="flex flex-wrap gap-2">
+                        @foreach ($permissions as $permission)
+                            <span class="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs text-slate-700">{{ $permission }}</span>
+                        @endforeach
+                    </div>
                 </div>
-            </div>
-
-            {{-- Admin Name --}}
-            <div>
-                <label class="block mb-2 text-sm font-medium text-gray-600">Admin Name</label>
-                <input type="text" wire:model.defer="name"
-                    class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                    placeholder="Admin Name">
-                @error('name')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
-
-            {{-- Email Address --}}
-            <div>
-                <label class="block mb-2 text-sm font-medium text-gray-600">Email Address</label>
-                <input type="email" wire:model.defer="email"
-                    class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                    placeholder="admin@example.com">
-                @error('email')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
-
-            {{-- Department --}}
-            <div>
-                <label class="block mb-2 text-sm font-medium text-gray-600">Department</label>
-                <input type="text" wire:model.defer="department"
-                    class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500"
-                    placeholder="department">
-                @error('department')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
-
-            <div>
-                <label class="block mb-2 text-sm font-medium text-gray-600">phone</label>
-                <input type="number" inputmode="numeric" min="0" step="1" x-data @keydown="['e','E','+','-','.',','].includes($event.key) && $event.preventDefault()" @wheel="$el.blur()" wire:model.defer="phone"
-                    class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" placeholder="phone">
-                @error('phone')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
-
-            <div>
-                <label class="block mb-2 text-sm font-medium text-gray-600">address</label>
-                <input type="text" wire:model.defer="address"
-                    class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" placeholder="address">
-                @error('address')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
-
-            {{-- New Password --}}
-            <div>
-                <label class="block mb-2 text-sm font-medium text-gray-600">New Password</label>
-                <input type="password" wire:model.defer="password"
-                    class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" placeholder="••••••••">
-                @error('password')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
-
-            <div>
-                <label class="block mb-2 text-sm font-medium text-gray-600">Confirm New Password</label>
-                <input type="password" wire:model.defer="newPassword"
-                    class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" placeholder="••••••••">
-                @error('newPassword')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
-
-
-            {{-- Submit --}}
-            <div class="text-end">
-                <button type="submit"
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2 rounded-md transition cursor-pointer  ">
-                    Update Profile
-                </button>
-            </div>
-
-            {{-- Loading Indicator --}}
-            <div wire:loading wire:target="updateProfile" class="text-gray-500 text-sm mt-2">
-                Updating your profile, please wait...
-            </div>
-        </form>
-    </div>
-</div>
+            @empty
+                <p class="text-sm text-slate-500">Your account has no permissions yet. You can sign in, but cannot open any admin page.</p>
+            @endforelse
+        </x-settings.card>
+    @endif
+</x-settings.shell>

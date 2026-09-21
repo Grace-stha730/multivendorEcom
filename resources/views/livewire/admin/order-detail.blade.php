@@ -24,7 +24,11 @@
                 <p><span class="font-semibold">Phone:</span> +977 {{ $order->phone }}</p>
             </div>
             <div>
-                <p><span class="font-semibold">Status:</span> {{ $order->order_status }}</p>
+                <p><span class="font-semibold">Status:</span> {{ $order->awaitingPayment() ? 'Awaiting payment' : $order->order_status }}</p>
+                <p><span class="font-semibold">Payment:</span> {{ $order->payment_method }} ({{ $order->payment_status }})</p>
+                @if ($order->awaitingPayment())
+                    <p class="mt-2 rounded bg-amber-50 px-2 py-1 text-xs text-amber-800">Waiting for the customer's eSewa payment. The shop cannot receive this order and it cannot be processed yet.</p>
+                @endif
                 <p><span class="font-semibold">Order Date:</span> {{ $order->created_at->format('j M Y') }}</p>
                 <p><span class="font-semibold">Total Amount:</span> Rs. {{ number_format($order->price) }}</p>
             </div>

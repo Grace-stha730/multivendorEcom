@@ -3,6 +3,9 @@
     $items = [
         ['Dashboard', 'fa-chart-line', route('shop-user.dashboard'), ['shop-user/dashboard']], ['Products', 'fa-box', route('shop-user.product'), ['shop-user/product*']], ['Categories', 'fa-tags', route('shop-user.category'), ['shop-user/category']], ['Orders', 'fa-bag-shopping', route('shop-user.order'), ['shop-user/order', 'shop-user/order-detail*']], ['Reviews', 'fa-star', route('shop-user.product-review'), ['shop-user/product-review']], ['Coupons', 'fa-ticket', route('shop-user.coupons'), ['shop-user/coupons']], ['Earnings', 'fa-wallet', route('shop-user.earnings'), ['shop-user/earnings']], ['Messages', 'fa-comments', route('shop-user.chat'), ['shop-user/chat']],
     ];
+    if (authorizeUserCheck('staff-invite', 'shop_user')) {
+        $items[] = ['Staff', 'fa-users', route('shop-user.staff'), ['shop-user/staff*']];
+    }
 @endphp
 <div class="flex h-full min-h-0 w-full flex-col">
     <a wire:navigate href="{{ route('shop-user.dashboard') }}" class="flex items-center gap-3 px-2 text-white"><span class="grid h-10 w-10 place-items-center rounded-xl bg-emerald-400 text-lg text-emerald-950"><i class="fa-solid fa-bag-shopping"></i></span><span><span class="block text-base font-bold tracking-tight">MarketFlow</span><span class="block text-[10px] font-semibold uppercase tracking-[.18em] text-emerald-300">Shop workspace</span></span></a>

@@ -117,6 +117,7 @@
                 </div>
             @endforeach
         </div>
+        <div class="mt-8">{{ $products->links() }}</div>
     @else
         <div class="flex flex-col items-center justify-center h-96 text-center">
             <img class="w-48 mb-4 opacity-75" src="{{ asset('storage/default/noProduct.png') }}" alt="No Products">

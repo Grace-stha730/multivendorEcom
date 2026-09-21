@@ -20,6 +20,7 @@ use Livewire\Attributes\Url;
 #[Layout('components/layouts/user')]
 class Product extends Component
 {
+    use \App\Livewire\Concerns\PaginatesList;
     public $search = '';
 
     #[Url]
@@ -90,6 +91,28 @@ class Product extends Component
         }
     }
 
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedCategory(): void
+    {
+        $this->resetPage();
+    }
+
+    /** Search results are ranked in memory, so slice them into pages by hand. */
+    private function paginateCollection($items, int $perPage): \Illuminate\Pagination\LengthAwarePaginator
+    {
+        $items = collect($items);
+        $page = min($this->getPage(), max(1, (int) ceil($items->count() / $perPage)));
+
+        return new \Illuminate\Pagination\LengthAwarePaginator(
+            $items->forPage($page, $perPage)->values(), $items->count(), $perPage, $page,
+            ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
+        );
+    }
+
     public function render()
     {
         $userWishlistProductIds = [];
@@ -100,9 +123,9 @@ class Product extends Component
         }
 
         $products = trim($this->search) !== ''
-            ? app(TfidfProductSearch::class)->search($this->search, $this->category ?: null)
+            ? $this->paginateCollection(app(TfidfProductSearch::class)->search($this->search, $this->category ?: null), 12)
             : modalProduct::when($this->category, fn ($query) => $query->where('category_id', $this->category))
-                ->with(['shop', 'firstImage'])->withCount('reviews')->orderByDesc('weighted_rating')->latest()->get();
+                ->with(['shop', 'firstImage'])->withCount('reviews')->orderByDesc('weighted_rating')->latest()->paginate(12);
 
         $categories = Category::all();
 

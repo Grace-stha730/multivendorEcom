@@ -37,6 +37,6 @@ class EsewaPaymentController extends Controller
 
     public function failure()
     {
-        return redirect()->route('user.order')->with('error', 'The eSewa payment was cancelled or failed. You can try again from your orders.');
+        return redirect()->route('user.order')->with('error', 'The eSewa payment was not completed. Your order is saved as "payment pending". Press "Make payment" on the order to try again; the shop will not receive it until it is paid.');
     }
 }

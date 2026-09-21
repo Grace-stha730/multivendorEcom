@@ -12,6 +12,7 @@ use Livewire\Component;
 class Payouts extends Component
 {
     use \App\Livewire\Concerns\AuthorizesPermissions;
+    use \App\Livewire\Concerns\PaginatesList;
     public function approvePayout($id)
     {
         $this->authorizeAdmin('payment-process');
@@ -31,7 +32,7 @@ class Payouts extends Component
     public function render()
     {
         return view('livewire.admin.payouts', [
-            'payouts' => VendorPayout::with('vendor')->latest()->get(),
+            'payouts' => VendorPayout::with('vendor')->latest()->paginate(15),
         ]);
     }
 }

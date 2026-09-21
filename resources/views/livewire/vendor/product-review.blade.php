@@ -55,4 +55,5 @@
         </div>
     @endforeach
 
+    <div class="mt-4">{{ $reviewedProducts->links() }}</div>
 </section>

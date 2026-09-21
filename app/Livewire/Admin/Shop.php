@@ -21,6 +21,7 @@ use Mary\Traits\Toast;
 class Shop extends Component
 {
     use \App\Livewire\Concerns\AuthorizesPermissions;
+    use \App\Livewire\Concerns\PaginatesList;
     use WithFileUploads;
     use Toast;
 
@@ -205,8 +206,8 @@ class Shop extends Component
 
     public function render()
     {
-        $shops = ShopModel::with(['province', 'district'])->latest()->get();
-        $shops->each(function (ShopModel $shop): void {
+        $shops = ShopModel::with(['province', 'district'])->latest()->paginate(10);
+        $shops->getCollection()->each(function (ShopModel $shop): void {
             $shop->location = collect([$shop->district?->name, $shop->province?->name])->filter()->join(', ');
         });
 

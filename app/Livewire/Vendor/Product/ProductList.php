@@ -10,6 +10,7 @@ use Livewire\Livewire;
 class ProductList extends Component
 {
     use \App\Livewire\Concerns\AuthorizesPermissions;
+    use \App\Livewire\Concerns\PaginatesList;
     public $productIds;
     public function productDetail($id)
     {
@@ -29,7 +30,7 @@ class ProductList extends Component
     public function render()
     {
         return view('livewire.vendor.product.product-list', [
-            'products' => Product::forCurrentShop()->with('category', 'images')->latest()->paginate(20),
+            'products' => Product::forCurrentShop()->with('category', 'images')->latest()->paginate(15),
         ]);
     }
 }

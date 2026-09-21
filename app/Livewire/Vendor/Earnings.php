@@ -13,6 +13,7 @@ use Livewire\Component;
 #[Title('Vendor Earnings & Payouts')]
 class Earnings extends Component
 {
+    use \App\Livewire\Concerns\PaginatesList;
     use \App\Livewire\Concerns\AuthorizesPermissions;
     public $amount, $payment_method = 'Bank Transfer', $account_details, $notes;
 
@@ -61,9 +62,10 @@ class Earnings extends Component
         $netEarnings = $grossSales - $commissionFee;
 
         // 2. Payouts
-        $payouts = VendorPayout::where('shop_id', $shopId)->latest()->get();
-        $totalPaidOut = $payouts->whereIn('status', ['Approved', 'Paid'])->sum('amount');
-        $pendingPayouts = $payouts->where('status', 'Pending')->sum('amount');
+        $allPayouts = VendorPayout::where('shop_id', $shopId);
+        $totalPaidOut = (clone $allPayouts)->whereIn('status', ['Approved', 'Paid'])->sum('amount');
+        $pendingPayouts = (clone $allPayouts)->where('status', 'Pending')->sum('amount');
+        $payouts = (clone $allPayouts)->latest()->paginate(10);
         $availableBalance = max(0, $netEarnings - $totalPaidOut - $pendingPayouts);
 
         return view('livewire.vendor.earnings', [

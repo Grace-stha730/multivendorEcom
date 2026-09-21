@@ -23,7 +23,7 @@
                 <tbody>
                     @foreach ($products as $idx => $product)
                         <tr class="hover:bg-gray-50 transition">
-                            <td class="px-4 py-3 font-medium text-gray-700">{{ $idx + 1 }}</td>
+                            <td class="px-4 py-3 font-medium text-gray-700">{{ $products->firstItem() + $idx }}</td>
                             <td class="px-4 py-3 font-medium text-gray-700">
                               @if($product->firstImage)
                                 <img class="w-20 h-10 object-cover rounded-md"
@@ -45,6 +45,7 @@
                     @endforeach
                 </tbody>
             </table>
+            <div class="mt-4">{{ $products->links() }}</div>
         </div>
 
     </div>

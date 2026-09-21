@@ -18,7 +18,7 @@
                 <tbody class="divide-y divide-gray-200">
                     @foreach ($categories as $key => $category)
                         <tr class="hover:bg-gray-50">
-                            <td class="px-4 py-2">{{ $key + 1 }}</td>
+                            <td class="px-4 py-2">{{ $categories->firstItem() + $key }}</td>
                             <td class="px-4 py-2 font-medium text-gray-800">{{ $category->name }}</td>
                             <td class="px-4 py-2 text-gray-600">{{ Str::limit($category->description, 40) }}</td>
                             <td class="px-4 py-2 text-center space-x-3">
@@ -36,6 +36,7 @@
                     @endforeach
                 </tbody>
             </table>
+            <div class="mt-4">{{ $categories->links() }}</div>
         @endif
     </div>
 

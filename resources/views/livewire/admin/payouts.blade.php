@@ -65,6 +65,7 @@
                     @endforelse
                 </tbody>
             </table>
+            <div class="mt-4">{{ $payouts->links() }}</div>
         </div>
     </div>
 </div>

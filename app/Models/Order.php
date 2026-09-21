@@ -66,6 +66,16 @@ class Order extends Model
         return $this->belongsTo(UserAddress::class);
     }
 
+    public const PAYMENT_PENDING_NOTICE = "This order is waiting for the customer's eSewa payment. You can process it once the payment is confirmed.";
+
+    /** An eSewa order that has not been paid yet: the shop must not receive or process it. */
+    public function awaitingPayment(): bool
+    {
+        return $this->payment_method === 'E-Sewa'
+            && $this->payment_status !== 'Paid'
+            && $this->order_status !== 'Cancelled';
+    }
+
     /** Orders placed before saved addresses only have the old text columns. */
     public function hasAddressSnapshot(): bool
     {

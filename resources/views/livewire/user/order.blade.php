@@ -40,7 +40,9 @@
                             </div>
 
                             <div class="flex items-center gap-4 mt-3 md:mt-0">
-                                @if ($order->order_status == 'Pending')
+                                @if ($order->awaitingPayment())
+                                    <span class="font-medium text-amber-600">Payment pending. Pay with eSewa to confirm this order.</span>
+                                @elseif ($order->order_status == 'Pending')
                                     <span class="text-yellow-500">Your order has been placed and is awaiting
                                         confirmation.</span>
                                 @elseif ($order->order_status == 'Processing')
@@ -65,6 +67,12 @@
                         </div>
 
                         <div class="p-6 space-y-3">
+                            @if ($order->awaitingPayment())
+                                <div class="flex flex-col gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 md:flex-row md:items-center md:justify-between">
+                                    <div><strong>Payment pending.</strong> Your order is saved, but the shop will not receive it until you complete the eSewa payment.</div>
+                                    <a href="{{ route('user.payment.esewa', $order->id) }}" class="shrink-0 rounded-lg bg-[#60bb46] px-5 py-2 text-center font-semibold text-white hover:opacity-90">Make payment</a>
+                                </div>
+                            @endif
                             <!-- Visual Order Tracking Timeline -->
                             @if ($order->order_status !== 'Cancelled')
                                 @php
@@ -93,7 +101,7 @@
                                             <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition duration-300 {{ $step >= 1 ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500' }}">
                                                 @if($step > 1) <i class="fa-solid fa-check"></i> @else 1 @endif
                                             </div>
-                                            <span class="text-[11px] font-semibold {{ $step >= 1 ? 'text-indigo-600' : 'text-gray-500' }}">Order Placed</span>
+                                            <span class="text-[11px] font-semibold {{ $step >= 1 ? 'text-indigo-600' : 'text-gray-500' }}">{{ $order->awaitingPayment() ? 'Awaiting payment' : 'Order Placed' }}</span>
                                         </div>
 
                                         <!-- Step 2: Processing -->
@@ -144,7 +152,7 @@
                                     <p><strong>Payment:</strong> {{ $order->payment_method }}
                                         <span class="ml-1 rounded px-2 py-0.5 text-xs font-medium {{ $order->payment_status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }}">{{ $order->payment_status }}</span></p>
                                     @if ($order->payment_method === 'E-Sewa' && $order->payment_status !== 'Paid' && $order->order_status !== 'Cancelled')
-                                        <a href="{{ route('user.payment.esewa', $order->id) }}" class="mt-2 inline-block rounded bg-[#60bb46] px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90">Pay with eSewa</a>
+                                        <a href="{{ route('user.payment.esewa', $order->id) }}" class="mt-2 inline-block rounded bg-[#60bb46] px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90">Make payment</a>
                                     @endif
                                 </div>
                                 <div>
@@ -202,6 +210,7 @@
                     </div>
                 @endforeach
             </div>
+            <div class="mt-6">{{ $orders->links() }}</div>
         @else
             <div class="text-center py-10 bg-white rounded-lg shadow-sm">
                 <i class="fa-solid fa-box-open text-4xl text-gray-400 mb-3"></i>
