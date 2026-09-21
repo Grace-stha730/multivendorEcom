@@ -2,7 +2,8 @@
 
 namespace App\Livewire\User;
 
-use App\Rules\PhoneNumber;
+use App\Models\UserAddress;
+use Livewire\Attributes\On;
 use App\Models\Cart;
 use App\Models\Cart_items;
 use App\Models\Coupon;
@@ -30,14 +31,14 @@ class Checkout extends Component
     public array $variantQuantities = [];
     public $adminCouponId = '';
     public $paymentMethod = 'Cash';
-    public $userName, $userEmail, $userProvince, $userCity, $userTole, $userPhone;
+    public $addressId = null;
     private bool $fromCart = true;
 
     public function mount($product = null, $quantity = 1, $variants = null): void
     {
         abort_unless(Auth::guard('web')->check(), 403);
         $user = Auth::guard('web')->user();
-        foreach (['Name' => 'name', 'Email' => 'email', 'Province' => 'province', 'City' => 'city', 'Tole' => 'tole', 'Phone' => 'phone'] as $property => $column) $this->{'user'.$property} = $user->{$column};
+        $this->addressId = $user->defaultAddress()?->id;
         $this->fromCart = !$product;
         if ($product) {
             $product = Product::with(['firstImage', 'variants'])->findOrFail($product);
@@ -134,18 +135,48 @@ class Checkout extends Component
     private function adminOptions() { return app(CouponService::class)->eligibleAdminCouponsForCategories(collect($this->items)->pluck('category_id'))->filter(fn ($coupon) => CouponUser::where('coupon_id',$coupon->id)->where('user_id',Auth::id())->exists())->values(); }
     private function discount(Coupon $coupon, float $amount): float { return app(CouponService::class)->calculateDiscount($coupon, $amount, Auth::guard('web')->user())['discount']; }
 
+    /** Fired by the address component after an address is added, edited or deleted, so this page refreshes. */
+    #[On('address-saved')]
+    public function refreshAddresses(): void
+    {
+    }
+
+    /** Only the logged-in customer's own, complete address can be used. Never trust the id from the browser. */
+    private function resolveAddress(): ?UserAddress
+    {
+        $address = $this->addressId ? UserAddress::where('user_id', Auth::id())->find($this->addressId) : null;
+
+        if (!$address) {
+            $this->addError('addressId', 'Please add or select a delivery address to continue.');
+
+            return null;
+        }
+
+        if (!$address->isComplete()) {
+            $this->addError('addressId', 'Please complete this address (province and district) before ordering.');
+
+            return null;
+        }
+
+        return $address;
+    }
+
     public function placeOrder()
     {
-        $this->validate(['userName'=>'required|max:120','userEmail'=>'required|email','userProvince'=>'required|max:120','userCity'=>'required|max:120','userTole'=>'required|max:120','userPhone'=>['required', new PhoneNumber()],'paymentMethod'=>'required|in:Cash,E-Sewa']);
+        $this->validate(['paymentMethod'=>'required|in:Cash,E-Sewa']);
+        $address = $this->resolveAddress();
+        if (!$address) return;
+        $user = Auth::guard('web')->user();
+        $snapshot = $address->toOrderSnapshot();
         foreach (array_keys($this->items) as $key) if (!$this->validateItemStock($key)) return;
-        $order = DB::transaction(function () {
+        $order = DB::transaction(function () use ($user, $snapshot) {
             $lines = []; $totalDiscount = 0; $subtotal = 0;
             foreach ($this->items as $key => $item) { $amount = $this->lineSubtotal($item); $subtotal += $amount; $coupon = !empty($this->vendorCoupons[$key]) ? Coupon::lockForUpdate()->find($this->vendorCoupons[$key]) : null; $discount = $coupon && $this->vendorOptions($item)->contains('id', $coupon->id) ? $this->discount($coupon, $amount) : 0; $lines[$key] = compact('item','amount','coupon','discount'); $totalDiscount += $discount; }
             $admin = $this->adminCouponId ? Coupon::lockForUpdate()->find($this->adminCouponId) : null;
             $eligible = collect($lines)->filter(fn ($line) => $admin && $line['item']['category_id'] === $admin->category_id); $eligibleAmount = $eligible->sum('amount');
             $adminDiscount = $admin && $this->adminOptions()->contains('id', $admin->id) ? $this->discount($admin, $eligibleAmount) : 0;
             foreach ($eligible as $key => $line) { $share = $eligibleAmount ? round($adminDiscount * $line['amount'] / $eligibleAmount, 2) : 0; $lines[$key]['admin_coupon'] = $admin; $lines[$key]['discount'] += $share; } $totalDiscount += $adminDiscount;
-            $order = Order::create(['user_id'=>Auth::id(),'order_number'=>'ORD-'.strtoupper(uniqid()),'name'=>$this->userName,'email'=>$this->userEmail,'province'=>$this->userProvince,'city'=>$this->userCity,'tole'=>$this->userTole,'phone'=>$this->userPhone,'price'=>max(0,$subtotal-$totalDiscount),'quantity'=>collect($this->items)->sum('quantity'),'coupon_discount'=>$totalDiscount,'payment_status'=>'Pending','order_status'=>'Pending','payment_method'=>$this->paymentMethod]);
+            $order = Order::create(['user_id'=>Auth::id(),'order_number'=>'ORD-'.strtoupper(uniqid()),'name'=>$user->name,'email'=>$user->email,...$snapshot,'price'=>max(0,$subtotal-$totalDiscount),'quantity'=>collect($this->items)->sum('quantity'),'coupon_discount'=>$totalDiscount,'payment_status'=>'Pending','order_status'=>'Pending','payment_method'=>$this->paymentMethod]);
             foreach (collect($lines)->groupBy(fn ($line) => $line['item']['shop_id']) as $shopId => $shopLines) { $vendorOrder = VendorOrder::create(['order_id'=>$order->id,'shop_id'=>$shopId,'subtotal'=>$shopLines->sum(fn($l)=>$l['amount']-$l['discount']),'quantity'=>$shopLines->sum(fn($l)=>$l['item']['quantity']),'status'=>'Pending']); foreach ($shopLines as $line) { $item=$line['item']; $orderItem=Order_item::create(['order_id'=>$order->id,'vendor_order_id'=>$vendorOrder->id,'product_id'=>$item['product_id'],'quantity'=>$item['quantity'],'price'=>$this->unitPrice($item),'total'=>$line['amount']-$line['discount'],'coupon_id'=>$line['coupon']?->id ?: ($line['admin_coupon'] ?? null)?->id,'coupon_discount'=>$line['discount'],'selected_variants'=>$item['selected_variants']]); foreach (array_filter([$line['coupon'] ?? null, $line['admin_coupon'] ?? null]) as $coupon) { $discount = $coupon->id === ($line['coupon']?->id ?? null) ? $this->discount($coupon,$line['amount']) : max(0,$line['discount']-$this->discount($line['coupon'] ?? $coupon,$line['amount'])); CouponRedemption::create(['coupon_id'=>$coupon->id,'user_id'=>Auth::id(),'order_id'=>$order->id,'order_item_id'=>$orderItem->id,'discount_amount'=>$discount]); $coupon->increment('used_count'); } $product=Product::lockForUpdate()->with('variants')->find($item['product_id']); $structured=$item['selected_variants']['variants'] ?? []; if ($structured) { foreach ($structured as $selection) { $product->variants()->whereKey($selection['variant_id'])->decrement('stock', $selection['quantity']); } } else { $product->decrement('stock',$item['quantity']); } } }
             if ($this->fromCart) Cart::where('user_id', Auth::id())->get()->each->delete();
             return $order;

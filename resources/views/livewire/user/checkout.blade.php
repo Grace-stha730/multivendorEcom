@@ -86,20 +86,20 @@
             </div>
         @endif
 
+        <div class="bg-white rounded-xl shadow-sm p-5">
+            <livewire:user.address-manager mode="select" wire:model="addressId" />
+            @error('addressId')<p class="mt-3 text-sm font-medium text-red-600">{{ $message }}</p>@enderror
+        </div>
+
         <form wire:submit="placeOrder" class="bg-white rounded-xl shadow-sm p-5 grid md:grid-cols-2 gap-4">
-            <input wire:model="userName" placeholder="Name" class="border rounded p-2">
-            <input wire:model="userEmail" placeholder="Email" class="border rounded p-2">
-            <input wire:model="userPhone" type="number" inputmode="numeric" min="0" step="1" x-data @keydown="['e','E','+','-','.',','].includes($event.key) && $event.preventDefault()" @wheel="$el.blur()" placeholder="Phone (10+ digits)" class="border rounded p-2">
-            <input wire:model="userProvince" placeholder="Province" class="border rounded p-2">
-            <input wire:model="userCity" placeholder="City" class="border rounded p-2">
-            <input wire:model="userTole" placeholder="Tole" class="border rounded p-2">
             <select wire:model="paymentMethod" class="border rounded p-2"><option>Cash</option><option>E-Sewa</option></select>
             @if($adminOptions->isNotEmpty())
                 <label class="text-sm">Have a Promo / Coupon Code?
                     <select wire:model.live="adminCouponId" class="border rounded p-2 w-full mt-1"><option value="">Select collected coupon</option>@foreach($adminOptions as $coupon)<option value="{{ $coupon->id }}">{{ $coupon->code }} — {{ $coupon->type === 'percent' ? $coupon->value.'%' : 'Rs. '.$coupon->value }}</option>@endforeach</select>
                 </label>
             @endif
-            <div class="md:col-span-2 text-right"><button class="bg-indigo-600 text-white px-6 py-2 rounded">Place Order</button></div>
+            <div class="md:col-span-2 text-right">@unless ($addressId)<p class="mb-2 text-sm text-amber-700">Add or select a delivery address above to place your order.</p>@endunless
+                <button @disabled(!$addressId) class="bg-indigo-600 text-white px-6 py-2 rounded disabled:cursor-not-allowed disabled:opacity-50">Place Order</button></div>
         </form>
     </div>
 </section>

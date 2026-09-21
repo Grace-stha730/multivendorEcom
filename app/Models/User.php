@@ -20,11 +20,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
-        'province',
-        'city',
-        'tole',
         'photo',
-        'phone',
         'token',
         'status',
         'password',
@@ -51,6 +47,23 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /** The customer's address book: one real address plus any number of shipping addresses. */
+    public function addresses()
+    {
+        return $this->hasMany(UserAddress::class);
+    }
+
+    public function realAddress()
+    {
+        return $this->hasOne(UserAddress::class)->where('address_category', UserAddress::REAL);
+    }
+
+    /** The address checkout pre-selects (default, else real, else any complete one). */
+    public function defaultAddress(): ?UserAddress
+    {
+        return app(\App\Services\UserAddressService::class)->preferred($this);
     }
 
     public function carts(){

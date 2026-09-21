@@ -27,7 +27,9 @@
                         <tr class="hover:bg-gray-50 transition">
                             <td class="px-4 py-3 font-medium text-gray-700">{{ $idx + 1 }}</td>
                             <td class="px-4 py-3 font-semibold text-blue-600">{{ $order->order->order_number }}</td>
-                            <td class="px-4 py-3">{{ $order->order->name }}</td>
+                            <td class="px-4 py-3">{{ $order->order->name }}
+                                <span class="block text-xs text-gray-500">Deliver to {{ $order->order->receiver_name ?? $order->order->name }}: {{ $order->order->tole }}, {{ $order->order->city }}</span>
+                            </td>
                             <td class="px-4 py-3">{{ $order->items->count() }}</td>
                             <td class="px-4 py-3 font-semibold">Rs. {{ number_format($order->subtotal) }}</td>
                             <td class="px-4 py-3">

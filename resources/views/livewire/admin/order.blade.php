@@ -31,8 +31,11 @@
                                 <td class="px-4 py-3 font-medium text-gray-700">{{ $order->order_number }}</td>
                                 <td class="px-4 py-3 font-medium text-gray-700">{{ $order->user->name }}</td>
                                 <td class="px-4 py-3 font-medium text-gray-700">{{ $order->payment_method }}</td>
-                                <td class="px-4 py-3 font-medium text-gray-700">{{ $order->province }},
-                                    {{ $order->city }} <br> {{ $order->tole }}</td>
+                                <td class="px-4 py-3 font-medium text-gray-700">
+                                    @if ($order->receiver_name)<span class="font-semibold">{{ $order->receiver_name }}</span><br>@endif
+                                    {{ $order->tole }}, {{ $order->city }}<br>
+                                    <span class="text-gray-500">{{ collect([$order->deliveryDistrict?->name, $order->deliveryProvince?->name ?? $order->province])->filter()->implode(', ') }}</span>
+                                </td>
                                 <td class="px-4 py-3 font-medium text-gray-700">{{ $order->vendorOrders->count() }}</td>
                                 <td class="px-4 py-3 font-medium text-gray-700">{{ number_format($order->price) }}</td>
                                 <td class="px-4 py-3 font-medium text-gray-700">{{ $order->order_status }}</td>

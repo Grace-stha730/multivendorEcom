@@ -12,6 +12,17 @@ class Shop extends Model
         'ai_auto_reply_enabled',
     ];
 
+    // Older screens read shop_name / phone; the shops table calls them name / contact_number.
+    public function getShopNameAttribute(): ?string
+    {
+        return $this->name;
+    }
+
+    public function getPhoneAttribute(): ?string
+    {
+        return $this->contact_number;
+    }
+
     public function province()
     {
         return $this->belongsTo(Province::class);

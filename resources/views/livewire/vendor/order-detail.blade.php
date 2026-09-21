@@ -25,6 +25,7 @@
                 <p>{{ $vendorOrder->order->name }}</p>
                 <p>{{ $vendorOrder->order->email }}</p>
                 <p>+977 {{ $vendorOrder->order->phone }}</p>
+                <x-delivery-address :order="$vendorOrder->order" class="mt-3" />
             </div>
             <div>
                 <h3 class="font-semibold">Order Info</h3>

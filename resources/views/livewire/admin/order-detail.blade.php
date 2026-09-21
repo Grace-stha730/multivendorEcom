@@ -31,6 +31,8 @@
         </div>
     </div>
 
+    <x-delivery-address :order="$order" class="mb-6 bg-white shadow-md" />
+
     @foreach ($order->vendorOrders as $key => $vendorOrder)
         <!-- Vendor Orders -->
         <div class="space-y-6">
@@ -129,8 +131,6 @@
             </div>
     @endforeach
 
-
-</div>
 
 <!-- Overall Order Actions -->
 <div class="mt-6 flex justify-end gap-3">

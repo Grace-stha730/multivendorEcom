@@ -28,6 +28,13 @@ class Order extends Model
         'coupon_discount',
         'is_shipped',
         'payment_method',
+        'user_address_id',
+        'receiver_name',
+        'province_id',
+        'district_id',
+        'address_type',
+        'office_start_time',
+        'office_end_time',
         'payment_uuid',
         'payment_reference',
         'paid_at',
@@ -41,6 +48,28 @@ class Order extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    // The orders table already has a text column named `province`, so these relations use other names.
+    public function deliveryProvince()
+    {
+        return $this->belongsTo(Province::class, 'province_id');
+    }
+
+    public function deliveryDistrict()
+    {
+        return $this->belongsTo(District::class, 'district_id');
+    }
+
+    public function userAddress()
+    {
+        return $this->belongsTo(UserAddress::class);
+    }
+
+    /** Orders placed before saved addresses only have the old text columns. */
+    public function hasAddressSnapshot(): bool
+    {
+        return $this->receiver_name !== null;
     }
 
 

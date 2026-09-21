@@ -75,8 +75,15 @@
                 <h3 class="font-bold text-gray-700 uppercase text-xs tracking-wider mb-2 text-blue-600">Customer Details (Billed To)</h3>
                 <p class="font-semibold text-gray-900 text-base">{{ $order->name }}</p>
                 <p class="text-gray-600"><i class="fa-regular fa-envelope mr-1 text-gray-400"></i>{{ $order->email }}</p>
-                <p class="text-gray-600"><i class="fa-solid fa-phone mr-1 text-gray-400"></i>+977 {{ $order->phone }}</p>
-                <p class="text-gray-600 mt-1"><i class="fa-solid fa-location-dot mr-1 text-gray-400"></i>{{ $order->tole }}, {{ $order->city }}, {{ $order->province }}</p>
+                @php
+                    $inv = $order;
+                    $invLine = collect([$inv->tole, $inv->city, $inv->deliveryDistrict?->name, $inv->deliveryProvince?->name ?? $inv->province])->filter()->implode(', ');
+                    $invHours = $inv->address_type === 'office' ? \App\Models\UserAddress::formatHours($inv->office_start_time, $inv->office_end_time) : null;
+                @endphp
+                <p class="text-gray-600"><i class="fa-solid fa-phone mr-1 text-gray-400"></i>{{ $order->phone }}</p>
+                <p class="text-gray-600 mt-1"><i class="fa-solid fa-location-dot mr-1 text-gray-400"></i>{{ $invLine }}</p>
+                @if ($order->receiver_name && $order->receiver_name !== $order->name)<p class="text-gray-600 mt-1">Receiver: {{ $order->receiver_name }}</p>@endif
+                @if ($invHours)<p class="text-gray-600 mt-1">Office hours: {{ $invHours }}</p>@endif
             </div>
 
             <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 flex flex-col justify-between">

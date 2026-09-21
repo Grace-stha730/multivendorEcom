@@ -61,46 +61,6 @@
                 @enderror
             </div>
 
-            {{-- province --}}
-            <div>
-                <label class="block mb-2 text-sm font-medium text-gray-600">Province</label>
-                <input type="text" wire:model.defer="province"
-                    class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" placeholder="province">
-                @error('province')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
-
-            {{-- city --}}
-            <div>
-                <label class="block mb-2 text-sm font-medium text-gray-600">City</label>
-                <input type="text" wire:model.defer="city"
-                    class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" placeholder="city">
-                @error('city')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
-
-            {{-- tole --}}
-            <div>
-                <label class="block mb-2 text-sm font-medium text-gray-600">Tole</label>
-                <input type="text" wire:model.defer="tole"
-                    class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" placeholder="tole">
-                @error('tole')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
-
-            {{-- phone --}}
-            <div>
-                <label class="block mb-2 text-sm font-medium text-gray-600">phone</label>
-                <input type="number" inputmode="numeric" min="0" step="1" x-data @keydown="['e','E','+','-','.',','].includes($event.key) && $event.preventDefault()" @wheel="$el.blur()" wire:model.defer="phone"
-                    class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" placeholder="phone">
-                @error('phone')
-                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                @enderror
-            </div>
-
             {{-- New Password --}}
             <div>
                 <label class="block mb-2 text-sm font-medium text-gray-600">New Password</label>
@@ -134,5 +94,9 @@
                 Updating your profile, please wait...
             </div>
         </form>
+    </div>
+
+    <div class="bg-white p-6 rounded-2xl shadow mt-6">
+        <livewire:user.address-manager mode="manage" />
     </div>
 </div>

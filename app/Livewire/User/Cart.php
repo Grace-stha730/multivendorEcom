@@ -2,12 +2,8 @@
 
 namespace App\Livewire\User;
 
-use App\Rules\PhoneNumber;
 use App\Models\Coupon;
 use App\Models\CouponUser;
-use App\Models\Order;
-use App\Models\Order_item;
-use App\Models\VendorOrder;
 use App\Services\Wallet\PointsWalletService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -25,7 +21,7 @@ use Livewire\Attributes\Title;
 #[Layout('components/layouts/user')]
 class Cart extends Component
 {
-    public $userId, $userName, $userEmail, $userProvince, $userCity, $userTole, $userPhone;
+    public $userId;
     public $cartItems = [];
     public $subTotal = 0;
     public $cartItem;
@@ -35,8 +31,6 @@ class Cart extends Component
     public array $vendorCouponSelections = [];
     public array $couponMessages = [];
     public array $vendorCouponDiscounts = [];
-    public $paymentMethod;
-    public int $checkoutStep = 1;
     public $walletBalance = 0;
     public $redeemPoints = 0;
     public $walletDiscount = 0;
@@ -51,12 +45,6 @@ class Cart extends Component
         if (Auth::guard('web')->check()) {
             $user = Auth::guard('web')->user();
             $this->userId = $user->id;
-            $this->userName = $user->name;
-            $this->userEmail = $user->email;
-            $this->userProvince = $user->province;
-            $this->userCity = $user->city;
-            $this->userTole = $user->tole;
-            $this->userPhone = $user->phone;
             $this->walletBalance = app(PointsWalletService::class)->balance($user);
 
             $carts = ModalCart::where('user_id', $this->userId)
@@ -441,164 +429,6 @@ class Cart extends Component
         $maxPoints = $wallet->maxRedeemablePoints(Auth::guard('web')->user(), (float) $this->subTotal);
         $this->redeemPoints = min(max((int) $this->redeemPoints, 0), $maxPoints);
         $this->walletDiscount = $wallet->discountForPoints($this->redeemPoints, (float) $this->subTotal);
-    }
-
-    public function updatedPaymentMethod()
-    {
-        $this->checkoutStep = 1;
-    }
-
-    public function proceedToReview()
-    {
-        $this->validateCheckoutDetails();
-        $this->checkoutStep = 2;
-    }
-
-    public function returnToCheckoutDetails()
-    {
-        $this->checkoutStep = 1;
-    }
-
-    public function resetCheckout()
-    {
-        $this->checkoutStep = 1;
-    }
-
-    public function checkoutSubmit()
-    {
-        $this->validateCheckoutDetails();
-
-        if ($this->checkoutStep !== 2) {
-            $this->checkoutStep = 2;
-            return;
-        }
-
-        DB::beginTransaction();
-
-        try {
-            $user = Auth::guard('web')->user();
-            $wallet = app(PointsWalletService::class);
-            $cart = ModalCart::where('user_id', $this->userId)->first();
-            $cart_items = Cart_items::where('cart_id', $cart->id)->get();
-
-            if ($cart_items->isEmpty()) {
-                DB::rollBack();
-                return redirect()->back()->with('error', 'Your cart is empty!');
-            }
-
-            $coupon = null;
-            $couponUsage = null;
-            $couponDiscount = 0;
-
-            if ($this->appliedCoupon) {
-                $coupon = Coupon::where('id', $this->appliedCoupon->id)->lockForUpdate()->first();
-                $couponUsage = CouponUser::where('coupon_id', $this->appliedCoupon->id)
-                    ->where('user_id', $this->userId)
-                    ->lockForUpdate()
-                    ->first();
-
-                if (!$coupon || !$couponUsage || !$coupon->isAvailable() || $this->subTotal < $coupon->min_order_amount || !$coupon->hasEligibleItem($cart_items)) {
-                    DB::rollBack();
-                    return redirect()->route('user.cart')->with('error', 'Selected coupon is no longer valid.');
-                }
-
-                $couponDiscount = $coupon->calculateDiscount($coupon->eligibleSubtotal($cart_items));
-            }
-
-            $finalTotal = max(0, $this->subTotal - $couponDiscount);
-
-            // Create Main Order
-            $order = Order::create([
-                'user_id' => $this->userId,
-                'order_number' => 'ORD-' . strtoupper(uniqid()),
-                'name' => $this->userName,
-                'email' => $this->userEmail,
-                'province' => $this->userProvince,
-                'city' => $this->userCity,
-                'tole' => $this->userTole,
-                'phone' => $this->userPhone,
-                'price' => $finalTotal,
-                    'coupon_discount' => $couponDiscount,
-                'payment_status' => 'Pending',
-                'order_status' => 'Pending',
-                'payment_method' => $this->paymentMethod,
-                'quantity' => $cart_items->sum('quantity'),
-            ]);
-
-            // Group items by shop
-            $groupedByShop = $cart_items->groupBy(function ($item) {
-                return $item->product->shop_id;
-            });
-
-            // Create shop orders and order items
-            foreach ($groupedByShop as $shopId => $items) {
-                $vendorSubtotal = $items->sum(fn($i) => $i->price * $i->quantity);
-                $quantity = $items->sum('quantity');
-
-                $vendorOrder = VendorOrder::create([
-                    'order_id' => $order->id,
-                    'shop_id' => $shopId,
-                    'subtotal' => $vendorSubtotal,
-                    'status' => 'Pending',
-                    'quantity' => $quantity,
-                ]);
-
-                foreach ($items as $item) {
-                    Order_item::create([
-                        'order_id' => $order->id,
-                        'vendor_order_id' => $vendorOrder->id,
-                        'product_id' => $item->product_id,
-                        'quantity' => $item->quantity,
-                        'price' => $item->price,
-                        'total' => $item->price * $item->quantity, 'coupon_id' => $coupon?->id, 'coupon_discount' => $couponDiscount,
-                    ]);
-
-                    // Reduce stock
-                    $product = Product::find($item->product_id);
-                    if ($product) {
-                        $product->stock -= $item->quantity;
-                        $product->save();
-                    }
-                }
-            }
-
-            if ($coupon && $couponUsage) {
-                $coupon->increment('used_count');
-            }
-
-            // Clear cart
-            $cart_items->each->delete();
-            $cart->delete();
-
-            DB::commit();
-
-            $this->checkoutStep = 1;
-
-            if ($order->payment_method === 'E-Sewa') {
-                return redirect()->route('user.payment.esewa', $order->id);
-            }
-
-            return redirect()->route('user.cart')->with('success', 'Order Successfully Placed!');
-
-        } catch (\Throwable $th) {
-            DB::rollBack();
-            return redirect()->route('user.cart')->with('error', 'Something went wrong: ' . $th->getMessage());
-        }
-    }
-
-    private function validateCheckoutDetails(): void
-    {
-        $rules = [
-            'userName' => 'required|string|max:120',
-            'userEmail' => 'required|email|max:255',
-            'userPhone' => ['required', new PhoneNumber()],
-            'userProvince' => 'required|string|max:120',
-            'userCity' => 'required|string|max:120',
-            'userTole' => 'required|string|max:120',
-            'paymentMethod' => 'required|in:E-Sewa,Cash',
-        ];
-
-        $this->validate($rules);
     }
 
     public function render()

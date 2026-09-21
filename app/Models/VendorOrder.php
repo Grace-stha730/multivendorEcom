@@ -28,6 +28,12 @@ class VendorOrder extends Model
         return $this->belongsTo(Shop::class);
     }
 
+    // The admin order screen, the invoices and "Cancelled by ..." all call this "vendor"; it is the shop.
+    public function vendor()
+    {
+        return $this->belongsTo(Shop::class, 'shop_id');
+    }
+
     public function items()
     {
         return $this->hasMany(Order_item::class);

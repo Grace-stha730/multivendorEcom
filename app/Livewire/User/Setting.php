@@ -17,7 +17,7 @@ use Livewire\Attributes\Title;
 class Setting extends Component
 {
     use WithFileUploads;
-    public $setting, $name, $email, $province, $city, $tole, $photo, $oldPhoto, $phone, $password, $newPassword;
+    public $setting, $name, $email, $photo, $oldPhoto, $password, $newPassword;
 
     public function mount()
     {
@@ -25,11 +25,7 @@ class Setting extends Component
         $this->setting = $setting;
         $this->name = $setting->name;
         $this->email = $setting->email;
-        $this->province = $setting->province;
-        $this->city = $setting->city;
-        $this->tole = $setting->tole;
         $this->oldPhoto = $setting->photo;
-        $this->phone = $setting->phone;
     }
 
     public function updateProfile()
@@ -41,11 +37,7 @@ class Setting extends Component
                 'email',
                 Rule::unique('users', 'email')->ignore($this->setting->id),
             ],
-            'province' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:255',
-            'tole' => 'nullable|string|max:255',
             'photo' => 'nullable|image|max:2048',
-            'phone' => 'nullable|digits:10',
         ];
 
         if ($this->password) {
