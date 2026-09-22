@@ -20,13 +20,13 @@ class Message extends Component
         $this->authorizeAdmin('message-view');
         DB::beginTransaction();
         try {
-            $message = ContactMessage::find($id);
+            $message = ContactMessage::findOrFail($id);
             $message->update([
                 'is_read' => false,
             ]);
             DB::commit();
             return redirect()->route('admin.message')->with('success', 'Marked as unread');
-        } catch(\Exception $e){
+        } catch(\Throwable $e){
             DB::rollBack();
             return redirect()->route('admin.message')->with('error','Something went wrong');
         }
@@ -37,13 +37,13 @@ class Message extends Component
         $this->authorizeAdmin('message-view');
         DB::beginTransaction();
         try {
-            $message = ContactMessage::find($id);
+            $message = ContactMessage::findOrFail($id);
             $message->update([
                 'is_read' => true,
             ]);
             DB::commit();
             return redirect()->route('admin.message')->with('success', 'Marked as read');
-        } catch(\Exception $e){
+        } catch(\Throwable $e){
             DB::rollBack();
             return redirect()->route('admin.message')->with('error','Something went wrong');
         }

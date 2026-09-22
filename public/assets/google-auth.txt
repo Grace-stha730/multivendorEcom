@@ -1,0 +1,151 @@
+===================================================================
+ "SIGN IN WITH GOOGLE" (Google OAuth) EXPLAINED
+===================================================================
+
+THE PROBLEM IT SOLVES
+-----------------------
+Normally, registering for a website means: type an email, pick a
+password, remember that password forever. "Sign in with Google"
+lets a customer register/login using their existing Google account
+instead - faster, and one less password to remember. Google
+verifies the person's identity; the app trusts Google's word that
+the email address really belongs to them.
+
+This feature is only used on the CUSTOMER side (the "web" guard) -
+vendors and admins still log in with username/password only.
+
+WHAT LARAVEL SOCIALITE IS
+----------------------------
+Socialite is Laravel's official package for "login with a
+third-party provider" (Google, Facebook, GitHub, etc). It handles
+all the technical OAuth back-and-forth with Google, so the app just
+has to redirect the user to Google and read back who they are.
+
+THE PIECES INVOLVED
+----------------------
+1. config/services.php ('google' section)
+   Reads three values from .env:
+     GOOGLE_CLIENT_ID       - identifies this app to Google
+     GOOGLE_CLIENT_SECRET   - a private key proving it's really this
+                               app asking (never shown to the user)
+     GOOGLE_REDIRECT_URI    - the URL Google is allowed to send the
+                               user back to after they approve login
+                               (must exactly match what's registered
+                               in Google Cloud Console)
+
+2. routes/web.php
+     GET /auth/google/redirect  -> AuthController@redirectToGoogle
+     GET /auth/google/callback  -> AuthController@handleGoogleCallback
+   Both routes are inside the 'guest' middleware group - only
+   available to someone who is NOT already logged in.
+
+3. app/Http/Controllers/AuthController.php
+   Two methods:
+
+   redirectToGoogle()
+     Sends the browser to Google's login/consent screen using
+       Socialite::driver('google')->stateless()->redirect();
+     "stateless" means it doesn't rely on Laravel's session state to
+     verify the round trip - useful because some environments don't
+     preserve session cookies across the redirect to Google and back.
+
+   handleGoogleCallback()
+     Runs when Google sends the browser back to our app after the
+     user approves. This is where the real logic is:
+
+       a) Ask Socialite who this Google user actually is:
+            $googleUser = Socialite::driver('google')->stateless()->user();
+          This gives their name, email, and profile photo URL.
+
+       b) Look up that email in the "users" table.
+
+       c) IF an account with that email already exists:
+            - Log the user straight in (Auth::guard('web')->login())
+            - Regenerate the session (a security best-practice, to
+              stop "session fixation" attacks)
+            - Redirect to the homepage as a logged-in customer.
+          This is the "returning customer" path - no password ever
+          needed, because Google already proved who they are.
+
+       d) IF no account exists with that email (first time signing
+          in with this Google account):
+            - Generate a random 6-digit verification code
+            - Email that code to the user's address
+            - Temporarily store their pending registration info
+              (name, email, photo, a HASHED copy of the code, and
+              an expiry time) in the session - NOT in the database
+              yet, and the account is NOT created yet
+            - Redirect them to a "verify OTP" page
+
+       e) If anything goes wrong (Google error, network issue, etc),
+          it's caught, logged, and the user is bounced back to the
+          normal registration page with a friendly error message
+          instead of a raw crash.
+
+4. app/Livewire/Auth/User/VerifyOtp.php  and  CreatePassword.php
+   These finish the "first time" flow started above:
+     - VerifyOtp: the user types the 6-digit code that was emailed.
+       It's checked against the hashed code stored in the session
+       (and it expires after a set time, so an old code can't be
+       reused). This proves the person actually owns that email
+       inbox, not just that they clicked "Continue" in Google.
+     - CreatePassword: once verified, the user sets a password for
+       this account (even though they'll normally sign in with
+       Google, this password lets them also log in the normal way,
+       e.g. if they ever lose access to that Google account). This
+       is also the exact moment the User row is actually created in
+       the database, and they're logged in immediately.
+
+WHY THE 6-DIGIT-CODE STEP EXISTS AT ALL
+-------------------------------------------
+Google already verifies the email is real. Why check it again?
+Because this app also has a normal password-based signup flow that
+already requires email verification for consistency and to catch
+edge cases (e.g. a mistyped or spoofable email claim, or simply to
+keep one consistent "verify your email" experience across every
+signup method) before an account is actually created in the
+database.
+
+STEP-BY-STEP: FIRST-TIME GOOGLE SIGN-IN
+-------------------------------------------
+ 1. User clicks "Continue with Google" on the login/register page.
+ 2. Browser goes to /auth/google/redirect, which sends them to
+    Google's real login screen.
+ 3. User logs into their Google account (if not already) and
+    approves sharing their basic profile with this app.
+ 4. Google redirects back to /auth/google/callback with a proof code.
+ 5. Socialite exchanges that code with Google for the user's profile
+    (name, email, photo).
+ 6. No existing account is found for that email.
+ 7. A 6-digit code is generated, hashed, put in the session, and
+    emailed to the user.
+ 8. User is sent to the "Verify OTP" page and enters the code from
+    their email.
+ 9. Once verified, they're sent to "Create Password" to finish
+    setting up their account, and are then logged in.
+
+STEP-BY-STEP: RETURNING GOOGLE SIGN-IN
+-------------------------------------------
+ 1-5. Same as above.
+ 6. An existing account IS found for that email.
+ 7. The user is logged straight in - no OTP, no password needed.
+
+WHAT IF A HUMAN ALREADY REGISTERED WITH THAT EMAIL AND A PASSWORD?
+------------------------------------------------------------------
+Because step 6 only checks the email address, if someone already
+has a normal password-based account with that exact email, signing
+in with Google (using the same email on their Google account) will
+log them straight into that same existing account. This is the
+standard behaviour for "Sign in with Google" style features across
+the web, since Google itself verifies the email is genuinely theirs.
+
+SETUP REQUIREMENTS
+----------------------
+To make this feature work, the following must be set in .env
+(the project's .env.example now documents this):
+  GOOGLE_CLIENT_ID=...
+  GOOGLE_CLIENT_SECRET=...
+  GOOGLE_REDIRECT_URI=http://<your-app-url>/auth/google/callback
+These come from creating an "OAuth 2.0 Client ID" in the Google
+Cloud Console, under APIs & Services > Credentials, and registering
+the exact redirect URI there too.

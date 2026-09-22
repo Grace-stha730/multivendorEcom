@@ -8,7 +8,7 @@ class Shop extends Model
 {
     protected $fillable = [
         'name', 'owner', 'image', 'contact_number', 'pan_number', 'province_id',
-        'district_id', 'city', 'tole', 'email', 'phone', 'status',
+        'district_id', 'city', 'tole', 'email', 'status',
         'ai_auto_reply_enabled',
     ];
 

@@ -16,7 +16,7 @@ class ViewMessage extends Component
     public $message;
     public function mount($id)
     {
-        $this->message = ContactMessage::find($id);
+        $this->message = ContactMessage::findOrFail($id);
     }
 
     public function markAsUnread()
@@ -24,13 +24,13 @@ class ViewMessage extends Component
         $this->authorizeAdmin('message-view');
         DB::beginTransaction();
         try {
-            $message = ContactMessage::find($this->message->id);
+            $message = ContactMessage::findOrFail($this->message->id);
             $message->update([
                 'is_read' => false,
             ]);
             DB::commit();
             return redirect()->route('admin.message-datail', ['id' => $this->message->id])->with('success', 'Marked as unread');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             return redirect()->route('admin.message-datail', ['id' => $this->message->id])->with('error', 'Something went wrong');
         }
@@ -41,13 +41,13 @@ class ViewMessage extends Component
         $this->authorizeAdmin('message-view');
         DB::beginTransaction();
         try {
-            $message = ContactMessage::find($this->message->id);
+            $message = ContactMessage::findOrFail($this->message->id);
             $message->update([
                 'is_read' => true,
             ]);
             DB::commit();
             return redirect()->route('admin.message-datail', ['id' => $this->message->id])->with('success', 'Marked as read');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             return redirect()->route('admin.message-datail', ['id' => $this->message->id])->with('error', 'Something went wrong');
         }

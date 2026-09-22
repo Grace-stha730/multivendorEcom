@@ -27,4 +27,10 @@ class VendorPayout extends Model
     {
         return $this->belongsTo(Shop::class);
     }
+
+    // The admin Payouts page calls this "vendor"; it is the shop. Mirrors VendorOrder::vendor().
+    public function vendor()
+    {
+        return $this->belongsTo(Shop::class, 'shop_id');
+    }
 }

@@ -173,7 +173,17 @@
                                                     <p class="font-medium text-gray-900">{{ $item->product->name }}</p>
                                                     <p class="text-sm text-gray-500">x{{ $item->quantity }}</p>
                                                     @if($item->selected_variants)
-                                                        <p class="text-xs text-indigo-700">{{ collect($item->selected_variants)->map(fn($value, $name) => $name . ': ' . $value)->join(', ') }}</p>
+                                                        @php
+                                                            // selected_variants is either the old flat ['Size' => 'M'] shape
+                                                            // or the structured ['variants' => [{attribute_name, attribute_value, quantity}, ...]] shape.
+                                                            $sv = $item->selected_variants;
+                                                            $variantLabel = isset($sv['variants']) && is_array($sv['variants'])
+                                                                ? collect($sv['variants'])->map(fn ($v) => trim(($v['attribute_name'] ?? '') . ': ' . ($v['attribute_value'] ?? '') . (isset($v['quantity']) ? ' x' . $v['quantity'] : '')))->join(', ')
+                                                                : collect($sv)->filter(fn ($value) => !is_array($value))->map(fn ($value, $name) => $name . ': ' . $value)->join(', ');
+                                                        @endphp
+                                                        @if($variantLabel)
+                                                            <p class="text-xs text-indigo-700">{{ $variantLabel }}</p>
+                                                        @endif
                                                     @endif
                                                     @if((float) $item->coupon_discount > 0)<p class="text-xs text-green-600">Coupon discount: Rs. {{ number_format($item->coupon_discount, 2) }}</p>@endif
                                                     @if ($item->vendorOrder && $item->vendorOrder->status == 'Cancelled')
@@ -185,8 +195,8 @@
                                             </div>
                                             <div class="flex items-center gap-4">
                                                 <span class="font-semibold text-gray-700">Rs. {{ number_format($item->total) }}</span>
-                                                @if ($item->product && $item->product->vendor_id)
-                                                    <button wire:click="startChatWithVendor({{ $item->product->vendor_id }}, {{ $item->product->id }})"
+                                                @if ($item->product && $item->product->shop_user_id)
+                                                    <button wire:click="startChatWithShopUser({{ $item->product->shop_user_id }}, {{ $item->product->id }})"
                                                         class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-xs">
                                                         <i class="fa-solid fa-comments text-indigo-600"></i>
                                                         <span>Chat Vendor</span>

@@ -20,11 +20,16 @@ return new class extends Migration {
             $table->string('blurb_text', 300); $table->timestamp('generated_at');
         });
         // MySQL limits identifiers to 64 characters; use an explicit compact name.
-        $hasPairIndex = DB::selectOne("SHOW INDEX FROM product_recommendation_blurbs WHERE Key_name = 'prd_rec_blurbs_pair_uq'");
+        // Schema::getIndexes() (not "SHOW INDEX", which is MySQL-only) so this also works on SQLite.
+        $hasPairIndex = collect(Schema::getIndexes('product_recommendation_blurbs'))->contains('name', 'prd_rec_blurbs_pair_uq');
         if (! $hasPairIndex) Schema::table('product_recommendation_blurbs', fn (Blueprint $table) => $table->unique(['product_id', 'related_product_id'], 'prd_rec_blurbs_pair_uq'));
         if (!Schema::hasColumn('conversations', 'is_ai_handled')) Schema::table('conversations', fn (Blueprint $t) => $t->boolean('is_ai_handled')->default(false)->index());
         if (!Schema::hasColumn('shops', 'ai_auto_reply_enabled')) Schema::table('shops', fn (Blueprint $t) => $t->boolean('ai_auto_reply_enabled')->default(false));
-        if (Schema::hasTable('chat_messages')) DB::statement("ALTER TABLE chat_messages MODIFY sender_type ENUM('user', 'shop_user', 'ai_bot')");
+        // ENUM is MySQL-only syntax; SQLite has no enum type, and any string column already
+        // accepts these values without needing an equivalent constraint there.
+        if (Schema::hasTable('chat_messages') && DB::connection()->getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE chat_messages MODIFY sender_type ENUM('user', 'shop_user', 'ai_bot')");
+        }
     }
     public function down(): void { Schema::dropIfExists('product_recommendation_blurbs'); Schema::dropIfExists('store_policies'); Schema::dropIfExists('ai_usage_logs'); }
 };

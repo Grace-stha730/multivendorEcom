@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use App\Services\AiContentService;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -91,15 +92,17 @@ class UpdateProduct extends Component
     public function updateProduct()
     {
         $this->authorizeShop('product-edit');
+        $shopId = Auth::guard('shop_user')->user()->shop_id;
         $this->validate([
             'name' => 'required|string|max:255',
-            'stock' => 'required',
+            'stock' => 'required|integer|min:0',
             'summary' => 'required|string|max:50',
             'description' => 'required|string|max:1000',
             'discount' => 'nullable|numeric|min:0|max:100',
-            'category_id' => 'required|exists:categories,id',
+            // Only this shop's own categories or a shared admin category — never another shop's.
+            'category_id' => ['required', Rule::exists('categories', 'id')->where(fn ($q) => $q->where('shop_id', $shopId)->orWhereNull('shop_id'))],
             'price' => 'required|numeric|min:0',
-            'images.*' => 'nullable|image', // each image must be an image file and max 1MB
+            'images.*' => 'nullable|image|max:2048', // each image must be an image file, max 2MB
             'variants' => 'array',
             'variants.*.id' => 'nullable|integer',
             'variants.*.attribute_name' => 'nullable|string|max:100',
@@ -180,8 +183,10 @@ class UpdateProduct extends Component
     }
     public function render()
     {
+        $shopId = Auth::guard('shop_user')->user()->shop_id;
+
         return view('livewire.vendor.product.update-product', [
-            'categories' => Category::latest()->get(),
+            'categories' => Category::where('shop_id', $shopId)->orWhereNull('shop_id')->latest()->get(),
         ]);
     }
 }

@@ -1,0 +1,114 @@
+===================================================================
+ PROJECT OVERVIEW - Multivendor E-Commerce Platform (Laravel)
+===================================================================
+
+WHAT THIS PROJECT IS
+---------------------
+A multivendor online marketplace, similar in spirit to Daraz/Amazon
+marketplace, built with Laravel 12. "Multivendor" means many
+independent shops sell on one platform: each shop manages its own
+products, orders and staff, while a platform admin oversees the
+whole marketplace (approving shops, viewing all orders, handling
+payouts, moderating content, etc.), and customers browse/buy from
+any shop through one unified storefront.
+
+TECH STACK
+----------
+- Laravel 12 (PHP 8.2+)                - the backend framework
+- Livewire 4                           - lets PHP components update
+                                          the page live, without
+                                          writing a separate REST API
+                                          or much JavaScript
+- Mary UI                              - a UI component library built
+                                          on top of Livewire (buttons,
+                                          modals, tables, toasts, etc.)
+- Tailwind CSS 4 + daisyUI             - styling
+- Alpine.js                            - small bits of client-side
+                                          interactivity (dropdowns,
+                                          modals, etc.)
+- MySQL                                - the database
+- Spatie laravel-permission            - roles & permissions
+- Laravel Reverb                       - real-time chat (WebSockets)
+- Laravel Socialite                    - "Sign in with Google"
+- eSewa ePay v2                        - Nepali online payment gateway
+- Google Gemini (or OpenAI-compatible) - the AI chat assistant
+
+THREE SEPARATE LOGIN SYSTEMS ("guards")
+----------------------------------------
+This app has three completely independent kinds of accounts. They
+use different database tables and different login pages, and one
+person can (in theory) hold an account in more than one of them:
+
+  1. web      -> "users" table       -> customers (the shoppers)
+  2. shop_user-> "shop_users" table  -> vendor/shop staff
+  3. admin    -> "admins" table      -> platform staff
+
+Each guard has its own permission set (see ROLES_AND_PERMISSIONS.md
+in the project root for the full breakdown), so a vendor's staff
+member can never accidentally get admin powers, and vice versa.
+
+THE THREE "PANELS" (SECTIONS) OF THE APP
+-------------------------------------------
+1. CUSTOMER SITE (public + /cart, /checkout, /order, /wishlist, ...)
+   - Browse products, search, filter by category
+   - Add to cart, apply coupons, choose a delivery address
+   - Pay with Cash on Delivery or eSewa (online payment)
+   - Track orders, leave reviews, chat with a vendor or an AI
+     shopping assistant, save products to collections/wishlist
+
+2. VENDOR / SHOP PANEL (/shop-user/...)
+   - Each shop has one "owner" account (created automatically when
+     the shop is approved) and can invite staff with limited roles
+     (shop-staff, shop-salesman)
+   - Manage products (with variants like size/color), categories,
+     coupons, orders (mark Processing -> Delivered -> etc.), view
+     earnings and request payouts, reply to customer chats
+
+3. ADMIN PANEL (/admin/...)
+   - Approve or reject new shop registrations
+   - View all products/orders/shops across the whole marketplace
+   - Manage platform-wide categories and coupons
+   - Approve vendor payout requests
+   - Manage admin staff accounts and their permissions
+   - Handle contact-us messages, set AI support policies
+
+HOW A TYPICAL ORDER FLOWS THROUGH THE SYSTEM
+-----------------------------------------------
+1. Customer adds product(s) to cart (possibly from different shops)
+2. At checkout, the cart is split into one "VendorOrder" per shop,
+   but they all belong to one parent "Order" (so a single checkout
+   can involve several different sellers at once)
+3. Customer picks Cash or eSewa. eSewa redirects to eSewa's site to
+   actually pay, then comes back and the order is marked Paid.
+4. Each vendor sees only their own VendorOrder and works through:
+   Pending -> Processing -> Delivered
+5. Once EVERY vendor in that order has delivered their part, the
+   parent Order automatically moves to "Warehouse" and is marked
+   as shipped for the admin/logistics side to continue:
+   Warehouse -> Shipped -> Out for Delivery -> Delivered
+6. Customer can leave a review once an order is delivered.
+
+KEY FOLDERS TO KNOW
+---------------------
+  app/Livewire/Admin/...    -> every admin-panel page/component
+  app/Livewire/Vendor/...   -> every shop-panel page/component
+  app/Livewire/User/...     -> every customer-site page/component
+  app/Models/...            -> database models (Product, Order, Shop...)
+  app/Services/...          -> business logic that isn't tied to one
+                                page (eSewa, AI, coupons, ratings...)
+  resources/views/livewire/ -> the HTML (Blade) for each Livewire page
+  database/migrations/      -> every database table change, in order
+  database/seeders/         -> starter data (roles, provinces, etc.)
+  routes/web.php            -> every URL in the app and which
+                                component/controller handles it
+
+OTHER TXT FILES IN THIS FOLDER
+---------------------------------
+  reverb-realtime-chat.txt   - how live chat updates work (WebSockets)
+  google-auth.txt            - how "Sign in with Google" works
+  ai-chat-assistant.txt      - how the AI shopping/support assistant works
+  esewa-payment-integration.txt - how online payment via eSewa works
+
+Each file explains that one feature end-to-end: what problem it
+solves, which files are involved, and the exact step-by-step flow
+of what happens when a user uses it.

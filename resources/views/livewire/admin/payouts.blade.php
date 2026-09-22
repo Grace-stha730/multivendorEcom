@@ -1,5 +1,5 @@
 <div class="p-6 bg-gray-100 min-h-screen">
-    @include('common.message')
+    {{-- The admin layout already includes common.message, which shows session flashes as a Mary toast. --}}
 
     <div class="flex justify-between items-center mb-6">
         <div>

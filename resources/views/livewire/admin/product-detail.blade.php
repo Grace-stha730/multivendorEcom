@@ -64,14 +64,8 @@
                     </div>
                 </div>
 
-                <div class="flex gap-3 mt-8">
-                    <button class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition">
-                        <i class="fa fa-edit"></i> Edit Product
-                    </button>
-                    <button class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition">
-                        <i class="fa fa-trash"></i> Delete
-                    </button>
-                </div>
+                {{-- Product editing/deletion is the vendor's responsibility (admins only have product-view
+                     for this page by design — see RolesAndPermissionsSeeder), so no admin action buttons here. --}}
             </div>
 
         </div>

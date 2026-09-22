@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Vendor;
 
+use App\Models\ChatMessage;
 use App\Models\Order_item;
 use App\Models\Product;
 use App\Models\VendorOrder;
@@ -37,12 +38,17 @@ class Dashboard extends Component
 
         $lowStockProducts = Product::where('shop_id', $shopId)->where('stock', '<', 5)->get();
 
+        $unreadMessages = ChatMessage::where('sender_type', 'user')->where('is_read', false)
+            ->whereHas('conversation', fn ($q) => $q->where('shop_id', $shopId))
+            ->count();
+
         return view('livewire.vendor.dashboard', [
             'products' => $products,
             'orders' => $orders,
             'recentOrders' =>$recentOrders,
             'report' => $report,
             'lowStockProducts' => $lowStockProducts,
+            'unreadMessages' => $unreadMessages,
         ]);
     }
 }

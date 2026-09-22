@@ -48,13 +48,24 @@ class Review extends Component
 
         try {
             foreach ($this->order->orderItems  as $index => $item) {
+                // Already reviewed — skip so resubmitting the form can't stack duplicate ratings.
+                if ($item->is_rate) {
+                    continue;
+                }
+
                 $productId = $item->product->id;
+                $rating = (int) ($this->newRate[$productId] ?? 0);
+
+                // No star rating chosen for this product — skip rather than silently saving a 0-star review.
+                if ($rating < 1) {
+                    continue;
+                }
 
                 // Create product review
                 $review = ProductRating::create([
                     'product_id' => $productId,
                     'user_id' => Auth::id(),
-                    'rating' => $this->newRate[$productId] ?? 0,
+                    'rating' => $rating,
                     'message' => $this->message[$productId] ?? '',
                 ]);
 

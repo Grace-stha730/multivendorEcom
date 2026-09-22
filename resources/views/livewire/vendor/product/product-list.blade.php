@@ -29,9 +29,11 @@
                         <button class="text-blue-500 hover:underline text-sm cursor-pointer"
                             wire:click="productDetail({{ $product->id }})"
                             @click.prevent="showUpdateView">Edit</button>
-                        <button class="text-red-500 hover:underline text-sm cursor-pointer"
-                            @click.prevent="popup = true"
-                            wire:click.prevent='popupFunc({{ $product->id }})'>Delete</button>
+                        @if (authorizeUserCheck('product-delete', 'shop_user'))
+                            <button class="text-red-500 hover:underline text-sm cursor-pointer"
+                                @click.prevent="popup = true"
+                                wire:click.prevent='popupFunc({{ $product->id }})'>Delete</button>
+                        @endif
                     </td>
                 </tr>
             @endforeach

@@ -43,7 +43,7 @@ class Category extends Component
     public function edit($id)
     {
         $this->authorizeAdmin('category-manage');
-        $category = modelCategory::find($id);
+        $category = modelCategory::findOrFail($id);
         $this->categoryId = $category->id;
         $this->new_name = $category->name;
         $this->new_description = $category->description;

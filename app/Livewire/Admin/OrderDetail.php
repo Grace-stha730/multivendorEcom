@@ -59,7 +59,7 @@ class OrderDetail extends Component
     }
     public $order;
     public function mount($id){
-        $this->order = Order::with('vendorOrders')->findOrFail($id);
+        $this->order = Order::with(['vendorOrders.vendor', 'vendorOrders.items.product.firstImage', 'deliveryProvince', 'deliveryDistrict'])->findOrFail($id);
     }
 
     public function render()

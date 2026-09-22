@@ -1,8 +1,17 @@
 @php
     $shopUser = Auth::guard('shop_user')->user(); $shop = $shopUser?->shop;
-    $items = [
-        ['Dashboard', 'fa-chart-line', route('shop-user.dashboard'), ['shop-user/dashboard']], ['Products', 'fa-box', route('shop-user.product'), ['shop-user/product*']], ['Categories', 'fa-tags', route('shop-user.category'), ['shop-user/category']], ['Orders', 'fa-bag-shopping', route('shop-user.order'), ['shop-user/order', 'shop-user/order-detail*']], ['Reviews', 'fa-star', route('shop-user.product-review'), ['shop-user/product-review']], ['Coupons', 'fa-ticket', route('shop-user.coupons'), ['shop-user/coupons']], ['Earnings', 'fa-wallet', route('shop-user.earnings'), ['shop-user/earnings']], ['Messages', 'fa-comments', route('shop-user.chat'), ['shop-user/chat']],
-    ];
+    // Server-side route middleware already blocks access either way; this just keeps the
+    // sidebar from listing pages a role (e.g. shop-staff, shop-salesman) can't actually open.
+    $items = array_values(array_filter([
+        ['Dashboard', 'fa-chart-line', route('shop-user.dashboard'), ['shop-user/dashboard']],
+        authorizeUserCheck('product-view', 'shop_user') ? ['Products', 'fa-box', route('shop-user.product'), ['shop-user/product*']] : null,
+        authorizeUserCheck('category-manage', 'shop_user') ? ['Categories', 'fa-tags', route('shop-user.category'), ['shop-user/category']] : null,
+        authorizeUserCheck('order-view', 'shop_user') ? ['Orders', 'fa-bag-shopping', route('shop-user.order'), ['shop-user/order', 'shop-user/order-detail*']] : null,
+        authorizeUserCheck('product-view', 'shop_user') ? ['Reviews', 'fa-star', route('shop-user.product-review'), ['shop-user/product-review']] : null,
+        authorizeUserCheck('coupon-manage', 'shop_user') ? ['Coupons', 'fa-ticket', route('shop-user.coupons'), ['shop-user/coupons']] : null,
+        authorizeUserCheck('earnings-view', 'shop_user') ? ['Earnings', 'fa-wallet', route('shop-user.earnings'), ['shop-user/earnings']] : null,
+        authorizeUserCheck('chat-reply', 'shop_user') ? ['Messages', 'fa-comments', route('shop-user.chat'), ['shop-user/chat']] : null,
+    ]));
     if (authorizeUserCheck('staff-invite', 'shop_user')) {
         $items[] = ['Staff', 'fa-users', route('shop-user.staff'), ['shop-user/staff*']];
     }

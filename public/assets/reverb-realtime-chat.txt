@@ -1,0 +1,130 @@
+===================================================================
+ LARAVEL REVERB - REAL-TIME CHAT (WebSockets) EXPLAINED
+===================================================================
+
+THE PROBLEM IT SOLVES
+-----------------------
+Normally, a web page only updates when the browser asks the server
+for something (a click, a page load). That's fine for most pages,
+but for a chat feature it's bad: if a vendor replies to a customer,
+the customer's chat window would only see that reply after they
+manually refresh the page.
+
+Reverb solves this by keeping a live, open connection between the
+browser and the server (a "WebSocket"), so the server can PUSH a
+new chat message to the browser the instant it happens, with no
+refresh needed.
+
+WHAT LARAVEL REVERB IS
+-------------------------
+Reverb is Laravel's own WebSocket server. It's a small program
+(started with "php artisan reverb:start") that:
+  - keeps track of which browsers are currently connected
+  - lets the browser "subscribe" to a named channel
+  - lets the Laravel app "broadcast" an event, which Reverb then
+    instantly pushes to every browser subscribed to that channel
+
+It plays the same role as third-party services like Pusher or Ably,
+but runs on your own server for free.
+
+THE PIECES INVOLVED IN THIS PROJECT
+--------------------------------------
+1. config/broadcasting.php
+   Configures the 'reverb' connection: which app key/secret/host/
+   port to use. Values come from the .env file:
+     REVERB_APP_ID, REVERB_APP_KEY, REVERB_APP_SECRET,
+     REVERB_HOST, REVERB_PORT, REVERB_SCHEME
+
+2. app/Events/MessageSent.php
+   A Laravel "event" class. Every time a chat message is saved to
+   the database, this event is fired. It implements
+   ShouldBroadcastNow, which tells Laravel: "as soon as this event
+   fires, push it out over the WebSocket immediately" (instead of
+   waiting in a queue).
+
+   It defines:
+     - broadcastOn(): which channel to send it to. This project
+       uses a PRIVATE channel named "chat.{conversation_id}" - so
+       only people subscribed to that exact conversation receive it.
+     - broadcastWith(): the small chunk of data sent to the browser
+       (message text, sender, timestamp) - not the whole database row.
+
+3. routes/channels.php
+   Because the "chat.{conversationId}" channel is PRIVATE, Laravel
+   must check "is this specific logged-in user actually allowed to
+   listen to this conversation?" before letting them subscribe.
+   This file defines that check:
+     - if you're a shop_user, you must be the shop_user on that
+       conversation
+     - if you're a customer (web guard), you must be the user on
+       that conversation
+   This stops a random user from eavesdropping on someone else's chat.
+
+4. resources/js/echo.js
+   Runs in the browser. Sets up "Laravel Echo" (a small JavaScript
+   library) pointed at Reverb, using the public app key and host/
+   port from the .env (exposed to the frontend as VITE_REVERB_*
+   variables). This is what actually opens the WebSocket connection
+   from the browser's side.
+
+5. app/Livewire/User/Chat.php and app/Livewire/Vendor/Chat.php
+   Each chat page component listens for the broadcast using
+   Livewire's built-in Echo integration:
+
+     "echo-private:chat.{$this->activeConversationId},MessageSent"
+         => 'onMessageReceived'
+
+   In plain words: "subscribe to the private channel for whichever
+   conversation is currently open, and whenever a MessageSent event
+   arrives, run the onMessageReceived() method" - which just marks
+   the new message(s) as read and lets Livewire re-render the chat
+   window with the new message already in it.
+
+HOW IT ALL FITS TOGETHER, STEP BY STEP
+------------------------------------------
+Example: a vendor replies to a customer's chat message.
+
+ 1. The vendor types a message and clicks Send.
+ 2. Vendor/Chat.php's sendMessage() saves a new ChatMessage row to
+    the database.
+ 3. It calls  broadcast(new MessageSent($chatMessage));
+ 4. Laravel serializes that event and sends it to Reverb (the
+    WebSocket server), targeting channel "chat.<conversation id>".
+ 5. Reverb instantly pushes the event to every browser currently
+    subscribed to that channel.
+ 6. On the customer's side (if their chat page is open on that same
+    conversation), Laravel Echo receives it in the browser and tells
+    the Livewire component. Livewire's onMessageReceived() fires,
+    which re-renders the chat window - the new message just appears,
+    no page refresh, usually within a fraction of a second.
+ 7. Channel authorization (routes/channels.php) makes sure only the
+    customer and the vendor involved in that specific conversation
+    could ever have subscribed to that channel in the first place.
+
+WHY A PRIVATE CHANNEL (NOT PUBLIC)?
+--------------------------------------
+A "public" channel broadcasts to anyone who asks - fine for things
+like a public live scoreboard, terrible for private chat. A
+"private" channel requires the browser to prove (via routes/
+channels.php) that the logged-in user is allowed to listen before
+Reverb will let them subscribe. That's why chat messages can't leak
+to the wrong customer or the wrong shop.
+
+WHAT HAPPENS IF REVERB IS NOT RUNNING / NOT CONFIGURED?
+-----------------------------------------------------------
+Nothing breaks - the chat still works, it just becomes "refresh to
+see new messages" instead of instant:
+  - broadcast() is wrapped in try/catch in every chat method, so a
+    Reverb outage never stops a message from being saved.
+  - resources/js/echo.js only sets up window.Echo if
+    VITE_REVERB_APP_KEY is actually set in the environment, so
+    a fresh setup without Reverb configured won't throw JS errors.
+
+HOW TO RUN IT LOCALLY
+-------------------------
+1. Make sure the REVERB_* values are set in .env
+2. Run the WebSocket server in its own terminal:
+     php artisan reverb:start
+3. Run the normal Laravel dev server / queue as usual
+4. Make sure the frontend assets are built (npm run dev / build) so
+   resources/js/echo.js picks up the VITE_REVERB_* values

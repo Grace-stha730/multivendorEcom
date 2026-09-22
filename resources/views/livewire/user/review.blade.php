@@ -6,7 +6,7 @@
     @foreach ($order->orderItems as $item)
         <div class="border-b border-gray-200 pb-6 mb-6">
             <div class="flex items-center gap-4 mb-3">
-                <img src="{{ asset('storage/' . $item->product->firstImage->url) }}"
+                <img src="{{ $item->product->firstImage ? asset('storage/' . $item->product->firstImage->url) : asset('images/2.png') }}"
                     class="w-16 h-16 object-cover rounded-lg border">
                 <div>
                     <p class="font-semibold text-gray-800">{{ $item->product->name }}</p>

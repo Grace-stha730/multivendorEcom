@@ -27,7 +27,6 @@ class Admin extends Authenticatable
         'phone',
         'address',
         'is_active',
-        'order_id',
     ];
 
     protected function casts(): array

@@ -116,7 +116,9 @@ class Coupons extends Component
         return view('livewire.vendor.coupons', [
             'coupons' => Coupon::where('shop_id', $shopId)->latest()->paginate(10),
             'products' => Product::where('shop_id', $shopId)->orderBy('name')->get(),
-            'categories' => Category::orderBy('name')->get(),
+            // Only this shop's own categories — a coupon needs shop_id + category_id to both
+            // match (see CouponService), so offering another shop's category here just built a coupon that never applies.
+            'categories' => Category::where('shop_id', $shopId)->orderBy('name')->get(),
         ]);
     }
 }

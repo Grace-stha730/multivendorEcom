@@ -16,9 +16,11 @@ class Dashboard extends Component
 {
     public function render()
     {
-        $products = Product::all();
-        $orders = Order::all();
-        $vendorOrder = VendorOrder::all();
+        $totalProducts = Product::count();
+        $totalOrders = Order::count();
+        $vendorOrdersCount = VendorOrder::count();
+        // Only count money actually earned (delivered vendor orders), not pending/cancelled ones.
+        $totalEarnings = VendorOrder::where('status', 'Delivered')->sum('subtotal');
         $recentOrder = Order::latest()->take(5)->get();
         $report = Order_item::selectRaw('product_id, SUM(quantity) as total_sold, SUM(total) as total_price')
         ->groupBy('product_id')
@@ -28,16 +30,18 @@ class Dashboard extends Component
             ->get();
 
 
-        $lowStockProducts = Product::where('stock', '<', 5)->with('vendor')->get();
+        // Product has no vendor() relation, only shop()/shopUser() — this used to crash the dashboard.
+        $lowStockProducts = Product::where('stock', '<', 5)->with('shop')->get();
 
         return view('livewire.admin.dashboard', [
-            'products' => $products,
-            'orders' => $orders,
-            'vendorOrder' => $vendorOrder,
+            'totalProducts' => $totalProducts,
+            'totalOrders' => $totalOrders,
+            'vendorOrdersCount' => $vendorOrdersCount,
+            'totalEarnings' => $totalEarnings,
             'recentOrder' => $recentOrder,
             'report' => $report,
             'lowStockProducts' => $lowStockProducts,
         ]);
-        }
     }
+}
     

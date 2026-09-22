@@ -46,9 +46,12 @@ class VendorInfo extends Component
                 ? $product->price - $product->discount_amount
                 : $product->price;
 
-            if ($cartItem) {
+            if ($product->stock < 1) {
                 DB::rollBack();
-                return redirect()->route('user.product')->with('error', 'This is product is already in cart');
+                return redirect()->route('user.shop', ['id' => $this->shopId])->with('error', 'This product is out of stock');
+            } elseif ($cartItem) {
+                DB::rollBack();
+                return redirect()->route('user.shop', ['id' => $this->shopId])->with('error', 'This product is already in cart');
             } else {
                 Cart_items::create([
                     'cart_id' => $cart->id,
@@ -80,14 +83,17 @@ class VendorInfo extends Component
             'user_id' => $userId,
             'shop_user_id' => $this->shop->shopUsers()->value('id'),
         ], [
+            'shop_id' => $this->shop->id,
             'last_message_at' => now(),
         ]);
 
         return redirect()->route('user.chat', ['c' => $conversation->id]);
     }
 
-    public function render()
+    public function render(WeightedRatingService $ratingService)
     {
-        return view('livewire.user.vendor-info');
+        return view('livewire.user.vendor-info', [
+            'averageRate' => $ratingService->shopRating($this->shop),
+        ]);
     }
 }

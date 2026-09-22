@@ -98,7 +98,7 @@ class Wishlist extends Component
         $wishlistItems = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 9);
 
         if (Auth::guard('web')->check()) {
-            $wishlistItems = WishlistModel::with(['product', 'product.firstImage', 'product.vendor'])
+            $wishlistItems = WishlistModel::with(['product', 'product.firstImage', 'product.shop'])
                 ->where('user_id', Auth::guard('web')->id())
                 ->latest()
                 ->paginate(9);

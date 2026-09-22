@@ -1,0 +1,169 @@
+===================================================================
+ AI SHOPPING/SUPPORT CHAT ASSISTANT EXPLAINED
+===================================================================
+
+THE PROBLEM IT SOLVES
+-----------------------
+A customer often has a quick question ("is this in stock?", "what's
+your return policy?", "how do I place an order?") and doesn't want
+to wait for a human to be free. This feature adds an AI chatbot
+that can answer those questions immediately, using an actual AI
+model (Google Gemini by default), while still being able to hand
+the conversation off to a real person when needed.
+
+There are actually TWO related but separate AI features in this
+chat system:
+  1. The "AI Assistant" - a vendor-less chat purely for general
+     store questions (policies, how ordering works, etc.)
+  2. Optional AI auto-reply on a normal VENDOR chat, if that
+     specific shop has turned it on (for after-hours coverage)
+
+THE PIECES INVOLVED
+----------------------
+1. config/ai.php
+   Reads from .env:
+     AI_PROVIDER   - 'gemini' (default) or an OpenAI-compatible one
+     AI_API_KEY    - the secret key for that provider
+     AI_MODEL      - which model to call (e.g. gemini-3.6-flash)
+     AI_BASE_URL   - the provider's API base URL
+     AI_TIMEOUT    - how many seconds to wait before giving up
+     AI_AUTO_REPLY_DELAY_MINUTES - how long a vendor has to reply
+       themselves before the scheduled auto-reply kicks in (see below)
+
+2. app/Services/AiClientService.php
+   The low-level "talk to the AI provider" service. Knows nothing
+   about chat, products, or this app's business rules - its only
+   job is: given a system instruction and a user input, call
+   Gemini's (or OpenAI's) HTTP API and return the plain text answer.
+   It turns provider-specific error codes into clear messages, e.g.
+   "AI rate limit reached" or "AI authentication failed", and always
+   throws a clean AiRequestException instead of letting a raw HTTP
+   error bubble up.
+
+3. app/Services/AiSupportService.php
+   The "business logic" layer on top of AiClientService. Its job:
+   build the actual prompt for a customer-support reply.
+     - Pulls in the store's written policies (from the
+       "store_policies" table - shipping policy, returns policy,
+       general policy - editable by the admin on the Store Policies
+       page)
+     - If the chat is about a specific product, adds that product's
+       name, price, stock, and description as context
+     - Takes the last 12 messages of the conversation as history
+     - Sends all of that to AiClientService with a system prompt
+       that tells the AI: "you are a marketplace support assistant,
+       only use the given context, be concise, never invent stock
+       availability, and only offer to escalate to a human when
+       actually needed"
+     - Logs how many AI tokens were used (app/Models/AiUsageLog.php)
+       for basic usage tracking
+     - If the AI call fails for any reason, it doesn't crash the
+       chat - it just replies with "A team member will assist you
+       shortly," so the customer is never stuck with an error.
+
+4. app/Livewire/User/Chat.php  (the customer's chat page)
+   This is where a customer actually talks to the assistant.
+   Key methods:
+
+   startAiSupport()
+     Creates (or reuses) ONE special conversation per customer that
+     has no vendor and no product attached (shop_user_id = null,
+     product_id = null) - this is the "general AI Assistant" chat.
+     Marks it is_ai_handled = true.
+
+   sendMessage()
+     Saves the customer's message. Then decides:
+       - If the message contains the phrase "talk to a human":
+           * On the AI-only chat -> escalateToHuman() (see below)
+           * On a real vendor chat -> just flips is_ai_handled to
+             false, so future messages go to the vendor, not the AI
+       - Otherwise, if this is the AI-only chat and it's currently
+         AI-handled -> mark that an AI reply is needed
+     Broadcasts the new message live (see reverb-realtime-chat.txt)
+     and, if an AI reply is needed, fires a SECOND request
+     (request-ai-reply) rather than making the customer wait on this
+     first request - see "why two requests" below.
+
+   generateAiReply()
+     The actual "ask the AI and post its answer" step. Includes
+     several safety measures:
+       - Rate limiting: at most 30 AI replies per minute per customer,
+         to stop someone from spamming the AI and running up costs
+       - A short-lived lock (Cache::lock) per conversation, so if the
+         browser somehow fires this twice, the AI is only asked once
+       - Only actually calls the AI if the very latest message in the
+         conversation is genuinely from the customer (protects against
+         double replies or acting on stale state)
+     Calls AiSupportService::sendReply(), which asks the AI and saves
+     its answer as a ChatMessage from sender_type = 'ai_bot', then
+     broadcasts that reply live too, so it appears instantly.
+
+   escalateToHuman()
+     Used when a customer on the AI-only chat asks for a human. Since
+     that chat has no specific vendor, there's nobody to directly
+     hand it to - instead:
+       - A ContactMessage is created, which lands in the ADMIN's
+         Messages inbox, with a short transcript of the recent
+         conversation attached, so a human has context
+       - This only fires once per 24 hours per conversation (so
+         repeatedly asking "talk to a human" doesn't spam the admin)
+       - The bot itself replies telling the customer their request
+         was passed along and support will email them
+
+5. app/Livewire/Vendor/Chat.php  (a vendor's own chat inbox)
+   This is a completely normal human-to-human chat between a
+   customer and a specific shop - no AI is involved here by default.
+   AI only enters the picture if the shop opted in (see below).
+
+6. WHY TWO SEPARATE REQUESTS FOR ONE AI REPLY?
+   Calling an AI API can take a couple of seconds. If the whole
+   sendMessage() click had to wait for the AI's answer before the
+   page updates, the customer's OWN message wouldn't even appear on
+   screen until the AI finished - the chat would feel frozen. Instead:
+     - Request 1 (sendMessage): saves+shows the customer's message
+       immediately, sets awaitingAi = true (shows a "typing..."
+       style indicator), and tells the browser to fire a second
+       Livewire call right after.
+     - Request 2 (generateAiReply): does the slow AI call in the
+       background while the customer's message is already visible.
+   This keeps the interface responsive even though the AI call is slow.
+
+7. Scheduled AI auto-reply for a shop's own chat
+   (app/Console/Commands/ReplyToPendingAiSupport.php, run every 5
+   minutes by the scheduler in routes/console.php)
+
+   Some shops can turn on ai_auto_reply_enabled (a column on the
+   Shop model). For those shops, if:
+     - a real customer<->vendor conversation (not the AI-only one)
+     - has been waiting AI_AUTO_REPLY_DELAY_MINUTES with no vendor
+       reply yet, and
+     - the latest message is still from the customer
+   ...then the scheduled command asks the AI to send a first reply
+   on the shop's behalf, using the exact same AiSupportService as
+   above (so product/policy context still applies). This gives
+   customers an instant-ish first response even outside business
+   hours, while the vendor can still take over any time by replying
+   normally (which turns off AI handling for that conversation, see
+   sendMessage()'s "talk to a human" case).
+
+OTHER AI FEATURES IN THE APP (SAME UNDERLYING SERVICES)
+-------------------------------------------------------------
+- app/Services/AiContentService.php - used on the Vendor Product
+  create/edit pages so a vendor can click "Generate description"
+  and have the AI write a product description from the name,
+  category, price and variants they've entered.
+- app/Console/Commands/GenerateRecommendationBlurbs.php - a daily
+  scheduled job that asks the AI to write short "you might also
+  like this because..." blurbs for product recommendations
+  (app/Models/ProductRecommendationBlurb.php).
+Both reuse the same AiClientService described above, just with a
+different prompt for a different job.
+
+WHAT HAPPENS IF AI_API_KEY IS NOT SET?
+-------------------------------------------
+Nothing crashes. AiClientService immediately throws a clear
+"AI service is not configured. Add AI_API_KEY to .env." exception,
+which every caller catches and turns into a graceful fallback
+message instead of an error page. This means the whole app (and
+even the AI Assistant button) still works out of the box; it just
+won't produce real AI answers until a key is added.

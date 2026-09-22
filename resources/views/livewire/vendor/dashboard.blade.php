@@ -56,8 +56,8 @@
         <div class="bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-gray-500 text-sm">Messages</p>
-                    <h3 class="text-2xl font-bold text-red-600 mt-1">8</h3>
+                    <p class="text-gray-500 text-sm">Unread Messages</p>
+                    <h3 class="text-2xl font-bold text-red-600 mt-1">{{ $unreadMessages }}</h3>
                 </div>
                 <i class="fa-solid fa-envelope text-red-500 text-3xl"></i>
             </div>
@@ -95,7 +95,7 @@
                                         </span>
                                     @elseif($recentOrder->status == 'Processing')
                                         <span
-                                            class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">Delivered</span>
+                                            class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">Processing</span>
                                     @elseif($recentOrder->status == 'Delivered')
                                         @if ($recentOrder->is_received)
                                             <span

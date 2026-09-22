@@ -1,0 +1,195 @@
+===================================================================
+ eSEWA ONLINE PAYMENT INTEGRATION EXPLAINED
+===================================================================
+
+WHAT ESEWA IS
+----------------
+eSewa is one of the most widely used online payment services in
+Nepal (similar in role to something like PayPal/Stripe, but built
+specifically for the Nepali market, wallets, and bank linkages).
+This project integrates "eSewa ePay v2", their standard checkout
+flow, as an alternative to paying Cash on Delivery.
+
+By default this project points at eSewa's PUBLIC SANDBOX (test)
+environment, so no real money ever moves while developing - a
+deliberate, safe setup for a college project. The test merchant
+code (EPAYTEST) and a test login are documented in .env.example.
+
+THE BIG PICTURE
+------------------
+Online payments can't just trust "the browser said the payment
+succeeded" - a user could fake that by editing the URL. This
+integration is written so that an order is ONLY ever marked as paid
+after TWO independent checks both agree the payment really happened:
+
+  1. eSewa sends back a cryptographically SIGNED confirmation
+     (like a tamper-proof seal) that this app verifies.
+  2. This app then separately asks eSewa's own server directly,
+     "did you actually receive this payment?" - so even a perfectly
+     forged redirect can never mark an order paid on its own.
+
+THE PIECES INVOLVED
+----------------------
+1. config/services.php ('esewa' section)
+   Reads from .env (with safe sandbox defaults already filled in):
+     ESEWA_PRODUCT_CODE  - identifies this app/merchant to eSewa
+     ESEWA_SECRET_KEY    - a private key used to sign/verify data
+     ESEWA_FORM_URL      - where the browser is sent to actually pay
+     ESEWA_STATUS_URL    - eSewa's endpoint to double check a payment
+
+2. app/Services/EsewaService.php
+   All the eSewa logic lives here. Two main jobs:
+
+   formFor(Order $order)  -  "start a payment"
+     - Generates a unique transaction id (payment_uuid) for this
+       specific payment attempt and saves it on the order
+     - Builds the exact set of fields eSewa requires: amount, tax,
+       total, this transaction id, the product code, and which
+       success/failure URL to return to
+     - SIGNS those fields using HMAC-SHA256 with the secret key (see
+       sign() below) - this signature travels along in the form
+     - Returns the eSewa URL + all these fields, ready to be POSTed
+       as an auto-submitting HTML form (the customer briefly sees a
+       "redirecting to eSewa..." page)
+
+   completeFromCallback($encoded)  -  "finish a payment"
+     Runs when the customer is sent back from eSewa. eSewa sends
+     back a base64-encoded JSON blob describing what happened. This
+     method decodes and checks it in strict order, rejecting (return
+     null) at the first problem:
+
+       Step 1 - Structural sanity check
+         Make sure the payload actually has a signature and the
+         fields it claims to have signed.
+
+       Step 2 - The signature must cover every field we actually
+         rely on (transaction_code, status, total_amount,
+         transaction_uuid, product_code). If eSewa's signature
+         doesn't cover all of those, the payload is rejected outright
+         - this stops a scenario where only SOME fields are signed
+         and an attacker tries to smuggle in a fake amount or status
+         alongside a real signature.
+
+       Step 3 - Recompute the signature ourselves (using the same
+         sign() method and our secret key) and compare it to what
+         was sent, using hash_equals() (a comparison specifically
+         designed to avoid leaking timing information that could
+         help an attacker guess the correct signature bit by bit).
+         If it doesn't match exactly, reject.
+
+       Step 4 - Look up the order by the transaction id. If it's
+         already marked Paid, just return it as-is (this makes the
+         whole process "idempotent" - if the customer refreshes the
+         success page, nothing bad happens, it doesn't try to charge
+         or re-process anything).
+
+       Step 5 - Sanity-check the payment: status must literally be
+         'COMPLETE', the product code must match this app's, and the
+         amount eSewa says was paid must exactly match the order's
+         real price. Any mismatch -> reject.
+
+       Step 6 - THE MOST IMPORTANT CHECK: call confirmWithEsewa(),
+         which makes a separate, direct server-to-server HTTP request
+         to eSewa's own status-check endpoint and asks "for this
+         exact transaction id and amount, what really happened?" Only
+         if eSewa's own server confirms COMPLETE does this proceed.
+         This is what makes a forged/replayed browser redirect
+         useless on its own - the browser could lie, but eSewa's
+         server can't be tricked into lying to itself.
+
+       Step 7 - Only now is the order actually updated:
+         payment_status = 'Paid', the real eSewa transaction
+         reference is stored, and paid_at is set to the current time.
+
+   sign($data, $signedFieldNames)
+     The actual signing algorithm eSewa requires: take the named
+     fields in order, join them as "name=value,name=value", and
+     HMAC-SHA256 that string with the secret key, base64-encoded.
+     Used both when STARTING a payment (to prove this request is
+     genuinely from us) and when VERIFYING the callback (to prove
+     the response is genuinely from eSewa).
+
+3. app/Http/Controllers/EsewaPaymentController.php
+   The web-facing entry points:
+
+   pay($order)
+     Shown when the customer chooses "Pay with eSewa". Before doing
+     anything, it checks:
+       - the order actually belongs to the logged-in customer (so
+         nobody can pay for - or peek at - someone else's order by
+         guessing an order id in the URL)
+       - the order is still awaiting payment (not already paid or
+         cancelled)
+     If all good, it renders a tiny auto-submitting form (built from
+     EsewaService::formFor()) that immediately POSTs the browser to
+     eSewa's real payment page.
+
+   success($request)
+     eSewa redirects here after a successful payment. Reads the
+     encoded payload from the URL, hands it to
+     EsewaService::completeFromCallback(), and if that returns a
+     real order, shows the normal order-confirmation experience;
+     otherwise shows a clear failure message instead of silently
+     trusting the URL.
+
+   failure($request)
+     eSewa redirects here if the customer cancels or the payment
+     fails on their end. Nothing is marked as paid; the customer is
+     shown a friendly "payment didn't go through" message and can
+     try again or switch to Cash on Delivery.
+
+4. Order model (app/Models/Order.php) - awaitingPayment()
+   A small helper used everywhere an eSewa order needs special
+   handling: awaitingPayment() is true only when payment_method is
+   'E-Sewa' AND payment_status is still 'Pending'. This one method
+   is reused to enforce a very important rule across the app: A
+   VENDOR CANNOT MARK AN UNPAID ESEWA ORDER AS RECEIVED/PROCESSED.
+   Both the vendor order-detail page and the admin order-detail page
+   check this before allowing any status change, so a shop can never
+   accidentally start preparing an order that was never actually
+   paid for.
+
+STEP-BY-STEP: A CUSTOMER PAYING WITH ESEWA
+-----------------------------------------------
+ 1. Customer checks out and chooses "eSewa" as the payment method.
+ 2. The order is created in the database with payment_status =
+    'Pending' and payment_method = 'E-Sewa'.
+ 3. Browser is redirected to /payment/esewa/{order}.
+ 4. EsewaPaymentController::pay() verifies ownership, builds a
+    signed form via EsewaService::formFor(), and auto-submits it -
+    the browser now lands on eSewa's own payment page.
+ 5. Customer logs into eSewa (sandbox test login is documented in
+    .env.example) and approves the payment.
+ 6. eSewa redirects the browser to /payment/esewa/success with a
+    signed, encoded payload describing the result.
+ 7. EsewaPaymentController::success() calls
+    EsewaService::completeFromCallback(), which runs through all 7
+    verification steps above, INCLUDING a direct server-to-server
+    confirmation call to eSewa - only after that does it mark the
+    order Paid.
+ 8. Customer sees their order marked as paid; the vendor can now see
+    and start processing it.
+
+WHAT IF THE CUSTOMER ABANDONS THE PAYMENT / IT FAILS?
+-----------------------------------------------------------
+The order simply stays payment_status = 'Pending'. It shows up on
+the customer's Orders page with a clear "Payment pending - pay with
+eSewa to confirm this order" message (rather than looking like a
+normal placed order), and - critically - the vendor-side UI is
+blocked from treating it as a real, payable order until it's Paid
+(see the awaitingPayment() rule above). The customer can revisit the
+order and retry the eSewa payment at any time.
+
+WHY BOTH THE SIGNATURE CHECK *AND* THE SERVER CONFIRMATION CALL?
+------------------------------------------------------------------
+Either one alone would be weaker:
+  - Signature only: technically still trusts whatever the BROWSER
+    sends back, even though it's signed. In a theoretical scenario
+    where a signature or secret were ever compromised, this would be
+    the only line of defense.
+  - Server confirmation only: slower and pointless to skip the
+    signature check, since you'd be making a network call for every
+    single visit to the success URL, even obviously bogus ones.
+Doing both means a payment is trusted only when it's provably signed
+by eSewa AND independently confirmed by asking eSewa's own servers -
+defense in depth.

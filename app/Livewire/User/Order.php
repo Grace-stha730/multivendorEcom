@@ -4,6 +4,7 @@ namespace App\Livewire\User;
 
 use App\Models\Order_item;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -55,13 +56,16 @@ class Order extends Component
         DB::beginTransaction();
         try {
             $order = ModalOrder::find($this->orderItem->id);
-            $orderItems = Order_item::where('order_id', $order->id)->get();
+            $orderItems = Order_item::where('order_id', $order->id)->with('vendorOrder')->get();
 
             if ($order && !$order->is_shipped) {
                 foreach ($orderItems as $item) {
-                    $product = Product::find($item->product->id);
-                    $product->stock += $item->quantity;
-                    $product->save();
+                    // A vendor may have already cancelled their part of this order, which already
+                    // restored this item's stock — restoring it again here would double-count it.
+                    if ($item->vendorOrder && $item->vendorOrder->status === 'Cancelled') {
+                        continue;
+                    }
+                    $this->restoreStock($item);
                 }
 
                 $order->orderItems()->delete();
@@ -78,6 +82,26 @@ class Order extends Component
         }
     }
 
+    /**
+     * Mirrors Checkout::placeOrder()'s decrement: a line placed with structured variants only
+     * ever decremented ProductVariant.stock, never Product.stock, so it must be restored the
+     * same way — otherwise cancelling permanently loses the variant's stock while incorrectly
+     * inflating a product-level count that was never actually reduced.
+     */
+    private function restoreStock(Order_item $item): void
+    {
+        $structured = $item->selected_variants['variants'] ?? [];
+        if ($structured) {
+            foreach ($structured as $selection) {
+                ProductVariant::whereKey($selection['variant_id'])->increment('stock', $selection['quantity']);
+            }
+            return;
+        }
+
+        $product = Product::find($item->product_id);
+        $product?->increment('stock', $item->quantity);
+    }
+
     public function startChatWithShopUser($shopUserId, $productId = null)
     {
         if (!Auth::guard('web')->check()) {
@@ -91,6 +115,7 @@ class Order extends Component
             'shop_user_id' => $shopUserId,
             'product_id' => $productId,
         ], [
+            'shop_id' => \App\Models\ShopUser::find($shopUserId)?->shop_id,
             'last_message_at' => now(),
         ]);
 

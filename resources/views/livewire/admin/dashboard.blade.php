@@ -12,7 +12,7 @@
                 <div class="flex flex-wrap gap-2 mt-3">
                     @foreach ($lowStockProducts as $p)
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
-                            {{ $p->name }} [{{ $p->vendor->shop_name ?? 'Platform' }}] (Stock: <strong class="text-red-700">{{ $p->stock }}</strong>)
+                            {{ $p->name }} [{{ $p->shop->name ?? 'Platform' }}] (Stock: <strong class="text-red-700">{{ $p->stock }}</strong>)
                         </span>
                     @endforeach
                 </div>
@@ -28,7 +28,7 @@
                 <div>
                     <p class="text-gray-500 text-sm">Total Products</p>
                     <h3 class="text-3xl font-bold text-blue-600 mt-1">
-                        {{ $products ? count($products) : 0 }}
+                        {{ $totalProducts }}
                     </h3>
                 </div>
                 <div class="p-3 bg-blue-100 rounded-full">
@@ -43,7 +43,7 @@
                 <div>
                     <p class="text-gray-500 text-sm">Orders</p>
                     <h3 class="text-3xl font-bold text-green-600 mt-1">
-                        {{ $orders ? count($orders) : 0 }}
+                        {{ $totalOrders }}
                     </h3>
                 </div>
                 <div class="p-3 bg-green-100 rounded-full">
@@ -58,7 +58,7 @@
                 <div>
                     <p class="text-gray-500 text-sm">Vendor Orders</p>
                     <h3 class="text-3xl font-bold text-purple-600 mt-1">
-                        {{ $vendorOrder ? count($vendorOrder) : 0 }}
+                        {{ $vendorOrdersCount }}
                     </h3>
                 </div>
                 <div class="p-3 bg-purple-100 rounded-full">
@@ -73,7 +73,7 @@
                 <div>
                     <p class="text-gray-500 text-sm">Earnings</p>
                     <h3 class="text-3xl font-bold text-yellow-600 mt-1">
-                        Rs. {{ $vendorOrder ? number_format($vendorOrder->sum('subtotal'), 2) : 0 }}
+                        Rs. {{ number_format($totalEarnings, 2) }}
                     </h3>
                 </div>
                 <div class="p-3 bg-yellow-100 rounded-full">

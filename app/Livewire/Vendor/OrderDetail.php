@@ -3,6 +3,9 @@
 namespace App\Livewire\Vendor;
 
 use App\Models\Order;
+use App\Models\Order_item;
+use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\VendorOrder;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -43,10 +46,15 @@ class OrderDetail extends Component
                 $this->vendorOrder->update([
                     'status' => 'Delivered',
                 ]);
-                $order->update([
-                    'order_status' => 'Warehouse',
-                    'is_shipped' => 1,
-                ]);
+                // A multi-vendor order only moves to the warehouse/shipped stage once every
+                // vendor in it has finished — one vendor finishing first must not flip the
+                // whole order (and block the customer's cancel button) while others are still Pending.
+                if ($order->vendorOrders()->where('status', '!=', 'Delivered')->doesntExist()) {
+                    $order->update([
+                        'order_status' => 'Warehouse',
+                        'is_shipped' => 1,
+                    ]);
+                }
                 DB::commit();
                 return redirect()->route('shop-user.orderDetail', ['id' => $this->vendorId])->with('success', 'Order updated to Delivered.');
             }
@@ -68,6 +76,9 @@ class OrderDetail extends Component
         DB::beginTransaction();
         try {
             if ($this->vendorOrder->status != 'Cancelled') {
+                foreach ($this->vendorOrder->items as $item) {
+                    $this->restoreStock($item);
+                }
                 $this->vendorOrder->update([
                     'status' => 'Cancelled',
                 ]);
@@ -80,9 +91,23 @@ class OrderDetail extends Component
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->route('shop-user.orderDetail')->with('error', 'Some error occur' . $e->getMessage());
+            return redirect()->route('shop-user.orderDetail', ['id' => $this->vendorId])->with('error', 'Some error occur' . $e->getMessage());
         }
 
+    }
+
+    /** Mirrors Checkout::placeOrder()'s decrement so cancelling actually returns the stock. */
+    private function restoreStock(Order_item $item): void
+    {
+        $structured = $item->selected_variants['variants'] ?? [];
+        if ($structured) {
+            foreach ($structured as $selection) {
+                ProductVariant::whereKey($selection['variant_id'])->increment('stock', $selection['quantity']);
+            }
+            return;
+        }
+
+        Product::whereKey($item->product_id)->increment('stock', $item->quantity);
     }
 
     public function pendingOrder()
@@ -107,7 +132,7 @@ class OrderDetail extends Component
             }
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->route('shop-user.orderDetail')->with('error', 'Some error occur' . $e->getMessage());
+            return redirect()->route('shop-user.orderDetail', ['id' => $this->vendorId])->with('error', 'Some error occur' . $e->getMessage());
         }
 
     }

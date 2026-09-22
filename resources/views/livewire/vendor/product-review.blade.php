@@ -8,7 +8,7 @@
         <div class="bg-white p-6 rounded-2xl shadow-md mb-6">
             {{-- Product Info --}}
             <div class="flex items-center gap-4 mb-5">
-                <img src="{{ asset('storage/' . $reviews->first()->product->firstImage->url) }}"
+                <img src="{{ $reviews->first()->product->firstImage ? asset('storage/' . $reviews->first()->product->firstImage->url) : asset('images/2.png') }}"
                     class="w-20 h-20 object-cover rounded-xl border border-gray-200" alt="Product">
                 <div>
                     <h2 class="text-lg font-semibold text-gray-800">{{ $reviews->first()->product->name }}</h2>

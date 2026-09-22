@@ -89,10 +89,13 @@ class ProductDetail extends Component
                 });
 
             if ($cartItem) {
+                // Cap the combined total at available stock — otherwise repeatedly clicking
+                // "Add to cart" on the same selection can push the line past what's in stock.
+                $newQuantity = min($cartItem->quantity + $this->quantity, $this->selectedVariantStock());
                 $cartItem->update([
-                    'quantity' => $cartItem->quantity + $this->quantity,
+                    'quantity' => $newQuantity,
                     'price' => $finalPrice,
-                    'sub_total' => $finalPrice * ($cartItem->quantity + $this->quantity),
+                    'sub_total' => $finalPrice * $newQuantity,
                 ]);
 
                 DB::commit();
@@ -169,6 +172,7 @@ class ProductDetail extends Component
             'shop_user_id' => $this->product->shop_user_id,
             'product_id' => $this->product->id,
         ], [
+            'shop_id' => $this->product->shop_id,
             'last_message_at' => now(),
             'is_ai_handled' => (bool) $this->product->shop?->ai_auto_reply_enabled,
         ]);

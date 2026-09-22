@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Models\Category as ModelsCategory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Layout;
 
@@ -18,14 +19,17 @@ class Category extends Component
     public $name, $description,$new_description,$new_name, $id;
     public function store(){
         $this->authorizeShop('category-manage');
+        $shopId = Auth::guard('shop_user')->user()->shop_id;
         DB::beginTransaction();
         try{
             $validation  = $this->validate([
-                'name'=>'required|min:2|max:20|unique:categories,name',
+                // Categories are shared per-shop, not global, so the name only needs to be
+                // unique within this shop — otherwise one shop taking "Shoes" would block every other shop.
+                'name'=>['required','min:2','max:20', Rule::unique('categories','name')->where(fn ($q) => $q->where('shop_id', $shopId))],
                 'description'=>'nullable|string',
             ]);
 
-            $validation['shop_id'] = Auth::guard('shop_user')->user()->shop_id;
+            $validation['shop_id'] = $shopId;
             $validation['name'] = ucwords(strtolower($validation['name']));
             ModelsCategory::create($validation);
             DB::commit();
@@ -48,10 +52,11 @@ class Category extends Component
 
     public function update(){
         $this->authorizeShop('category-manage');
+        $shopId = Auth::guard('shop_user')->user()->shop_id;
         DB::beginTransaction();
         try{
             $validation  = $this->validate([
-                'new_name'=>'required|min:2|max:20|unique:categories,name,'.$this->id,
+                'new_name'=>['required','min:2','max:20', Rule::unique('categories','name')->ignore($this->id)->where(fn ($q) => $q->where('shop_id', $shopId))],
                 'new_description'=>'nullable|string',
             ]);
 
@@ -85,7 +90,7 @@ class Category extends Component
     public function render()
     {
         return view('livewire.vendor.category',[
-            'categories'=>ModelsCategory::latest()->paginate(15),
+            'categories'=>ModelsCategory::forCurrentShop()->latest()->paginate(15),
         ]);
     }
 }

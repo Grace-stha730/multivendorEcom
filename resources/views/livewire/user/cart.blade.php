@@ -109,7 +109,7 @@
                                         <!-- Remove -->
                                         <td class="px-4 py-4 text-center ">
                                             <button class="text-red-500 text-sm hover:underline cursor-pointer"
-                                                @click="show"
+                                                @click="show()"
                                                 wire:click='removePopup({{ $item->id }})'>Remove</button>
                                         </td>
                                     </tr>

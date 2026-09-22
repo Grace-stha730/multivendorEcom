@@ -388,10 +388,18 @@ class Cart extends Component
     private function variantStock(Cart_items $item, Product $product): int
     {
         $selected = $item->selected_variants ?: [];
+        // Structured shape (from Checkout's variant-quantity modal): sum the stock actually
+        // committed to this line's chosen variants.
+        if (!empty($selected['variants']) && is_array($selected['variants'])) {
+            return (int) collect($selected['variants'])->sum(function ($v) use ($product) {
+                return (int) ($product->variants->firstWhere('id', $v['variant_id'] ?? null)?->stock ?? 0);
+            });
+        }
         if (!empty($selected['variant_id'])) {
             return (int) ($product->variants->firstWhere('id', $selected['variant_id'])?->stock ?? 0);
         }
         foreach ($selected as $name => $value) {
+            if (is_array($value)) continue;
             $variant = $product->variants->first(fn ($v) => $v->attribute_name === $name && $v->attribute_value === $value);
             if ($variant) return (int) $variant->stock;
         }

@@ -14,6 +14,9 @@
     if (authorizeUserCheck('admin-user-manage', 'admin')) {
         $items[] = ['Admin Users', 'fa-user-shield', route('admin.users'), ['admin/users']];
     }
+    if (authorizeUserCheck('policy-manage', 'admin')) {
+        $items[] = ['Store Policies', 'fa-file-shield', route('admin.store-policies'), ['admin/store-policies']];
+    }
 @endphp
 <div class="flex h-full min-h-0 w-full flex-col">
     <a wire:navigate href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-2 text-white">

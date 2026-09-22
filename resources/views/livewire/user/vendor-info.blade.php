@@ -2,10 +2,10 @@
 
     <!-- Vendor Info -->
     <div class="max-w-6xl mx-auto p-6 bg-white rounded-2xl shadow-lg flex flex-col md:flex-row items-center gap-6">
-        <img src="{{ asset('storage/' . $vendor->shop_image) }} " alt="Vendor Logo"
+        <img src="{{ $shop->image ? asset('storage/' . $shop->image) : asset('storage/default/product.webp') }}" alt="Vendor Logo"
             class="w-32 h-32 rounded-full object-cover">
         <div>
-            <h1 class="text-3xl font-bold text-gray-800">{{ $vendor->shop_name }}</h1>
+            <h1 class="text-3xl font-bold text-gray-800">{{ $shop->name }}</h1>
             <p class="text-gray-600 mt-2">We sell high-quality products ranging from electronics to fashion accessories.
                 Visit us for the best deals!</p>
             <div class="mt-4 flex items-center gap-4">
@@ -19,10 +19,10 @@
             </div>
             <div class="mt-4 flex flex-wrap items-center justify-between gap-4">
                 <div class="text-gray-600 text-sm">
-                    <p>Email: {{ $vendor->shop_email }}</p>
-                    <p>Phone: +977-{{ $vendor->shop_phone }}</p>
-                    <p>Province: {{ $vendor->shop_province }}</p>
-                    <p>Address: {{ $vendor->shop_city }}, {{ $vendor->shop_tole }}</p>
+                    <p>Email: {{ $shop->email }}</p>
+                    <p>Phone: +977-{{ $shop->contact_number }}</p>
+                    <p>Province: {{ $shop->province?->name }}</p>
+                    <p>Address: {{ $shop->city }}, {{ $shop->tole }}</p>
                 </div>
                 <button wire:click="startChat"
                     class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold flex items-center gap-2 transition cursor-pointer shadow-md">
@@ -38,7 +38,7 @@
         <h2 class="text-2xl font-bold text-gray-800 mb-6">Products</h2>
         <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             <!-- Product Card  -->
-            @foreach ($vendor->products as $item)
+            @foreach ($shop->products as $item)
                 <div class="bg-white rounded-2xl shadow p-4 flex flex-col relative">
                     @if ($item->discount)
                         <span
@@ -46,7 +46,7 @@
                             -{{ $item->discount }}%
                         </span>
                     @endif
-                    <img src="{{ asset('storage/' . $item->firstImage->url) }}" alt="Product 1"
+                    <img src="{{ $item->firstImage ? asset('storage/' . $item->firstImage->url) : asset('storage/default/product.webp') }}" alt="Product 1"
                         class="rounded-xl w-full h-35 object-cover mb-4">
                     <h3 class="text-lg font-semibold text-gray-800">{{ $item->name }}</h3>
                     <p class="text-gray-600 mt-2">Rs.
@@ -54,7 +54,7 @@
                             <span class="line-through">{{ $item->price }}</span> <span
                                 class="text-green-700">{{ $item->price - $item->discount_amount }}</span>
                         @else
-                            <span>$item->price</span>
+                            <span>{{ $item->price }}</span>
                         @endif
                     </p>
                     <p class="text-gray-600 ">Stock: {{ $item->stock }}</p>

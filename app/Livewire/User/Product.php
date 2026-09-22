@@ -48,7 +48,10 @@ class Product extends Component
                 ? $product->price - $product->discount_amount
                 : $product->price;
 
-            if ($cartItem) {
+            if ($product->stock < 1) {
+                DB::rollBack();
+                return redirect()->route('user.product')->with('error', 'This product is out of stock');
+            } elseif ($cartItem) {
                 DB::rollBack();
                 return redirect()->route('user.product')->with('error', 'This product is already in cart');
             } else {

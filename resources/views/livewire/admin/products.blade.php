@@ -1,5 +1,5 @@
 <section class=" min-h-screen py-10">
-    <div lass="max-w-7xl mx-auto bg-white rounded-2xl shadow-md p-6">
+    <div class="max-w-7xl mx-auto bg-white rounded-2xl shadow-md p-6">
         <h2 class="text-3xl font-semibold mb-6 flex items-center justify-between">
             All Products
         </h2>
@@ -38,8 +38,7 @@
                             <td class="px-4 py-3 ">{{ $product->discount ? $product->discount : 'No Discount' }}</td>
                             <td class="px-4 py-3 ">
                                 <a href="{{ route('admin.product-detail',['id' => $product->id] ) }}"
-                                    class="bg-gray-800 text-white py-0.5 px-2 rounded-md cursor-pointer hover:bg-green-700"
-                                    wire:click='viewDetail({{ $product->id }})'>View Detail</a
+                                    class="bg-gray-800 text-white py-0.5 px-2 rounded-md cursor-pointer hover:bg-green-700">View Detail</a>
                             </td>
                         </tr>
                     @endforeach

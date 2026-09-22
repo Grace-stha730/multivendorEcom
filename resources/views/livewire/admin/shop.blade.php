@@ -5,7 +5,7 @@
     </div>
 
     <x-card shadow>
-        <div class="mb-4 flex items-center justify-between"><h2 class="font-semibold text-slate-800">Registered shops</h2><span class="text-sm text-slate-500">{{ $shops->count() }} {{ Str::plural('shop', $shops->count()) }} registered</span></div>
+        <div class="mb-4 flex items-center justify-between"><h2 class="font-semibold text-slate-800">Registered shops</h2><span class="text-sm text-slate-500">{{ $shops->total() }} {{ Str::plural('shop', $shops->total()) }} registered</span></div>
         <x-table :headers="$headers" :rows="$shops" striped with-pagination>
             @scope('cell_name', $shop)<div class="font-medium text-slate-900">{{ $shop->name }}</div><small class="text-slate-500">{{ $shop->email }}</small>@endscope
             @scope('cell_owner', $shop)<div>{{ $shop->owner }}</div><small class="text-slate-500">{{ $shop->contact_number }}</small>@endscope

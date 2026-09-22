@@ -15,7 +15,9 @@ class Order extends Component
     public function render()
     {
         return view('livewire.admin.order',[
-            'orders' => modelOrder::with(['user', 'deliveryProvince', 'deliveryDistrict'])->latest()->paginate(15),
+            'orders' => modelOrder::with(['user', 'deliveryProvince', 'deliveryDistrict', 'vendorOrders'])->latest()->paginate(15),
+            // Total across every order, not just the current page — orders has no 'subtotal' column, price is the real total.
+            'ordersTotal' => modelOrder::sum('price'),
         ]);
     }
 }

@@ -38,6 +38,12 @@ class Chat extends Component
     public function selectConversation($id)
     {
         $this->authorizeShop('chat-reply');
+        $shopId = Auth::guard('shop_user')->user()?->shop_id;
+        // Livewire actions are called directly and bypass whatever the UI shows, so re-check
+        // ownership here rather than trusting that $id came from this shop's own conversation list.
+        if (!Conversation::where('shop_id', $shopId)->whereKey($id)->exists()) {
+            return;
+        }
         $this->activeConversationId = $id;
         $this->markAsRead();
         $this->resetErrorBag();
@@ -52,9 +58,11 @@ class Chat extends Component
         ]);
 
         $shopUserId = Auth::guard('shop_user')->id();
+        $shopId = Auth::guard('shop_user')->user()?->shop_id;
         if (!$shopUserId) return;
 
-        $conversation = Conversation::where('shop_user_id', $shopUserId)
+        // Any staff member of the owning shop may reply, not just whoever originally started it.
+        $conversation = Conversation::where('shop_id', $shopId)
             ->findOrFail($this->activeConversationId);
 
         $chatMessage = ChatMessage::create([
@@ -84,7 +92,8 @@ class Chat extends Component
     public function markAsRead()
     {
         $this->authorizeShop('chat-reply');
-        if ($this->activeConversationId) {
+        $shopId = Auth::guard('shop_user')->user()?->shop_id;
+        if ($this->activeConversationId && Conversation::where('shop_id', $shopId)->whereKey($this->activeConversationId)->exists()) {
             ChatMessage::where('conversation_id', $this->activeConversationId)
                 ->where('sender_type', 'user')
                 ->where('is_read', false)
@@ -94,9 +103,9 @@ class Chat extends Component
 
     public function render()
     {
-        $shopUserId = Auth::guard('shop_user')->id();
+        $shopId = Auth::guard('shop_user')->user()?->shop_id;
 
-        $conversations = Conversation::where('shop_user_id', $shopUserId)
+        $conversations = Conversation::where('shop_id', $shopId)
             ->with(['user', 'product.firstImage', 'latestMessage'])
             ->orderByRaw('last_message_at IS NULL, last_message_at DESC')
             ->orderBy('updated_at', 'desc')

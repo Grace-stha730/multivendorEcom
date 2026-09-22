@@ -12,6 +12,7 @@ class Conversation extends Model
     protected $fillable = [
         'user_id',
         'shop_user_id',
+        'shop_id',
         'product_id',
         'last_message_at',
         'is_ai_handled',
@@ -38,6 +39,13 @@ class Conversation extends Model
     public function shopUser()
     {
         return $this->belongsTo(ShopUser::class);
+    }
+
+    // The conversation belongs to the shop, not to whichever single staff member started it,
+    // so every staff member with chat-reply access shares the same inbox.
+    public function shop()
+    {
+        return $this->belongsTo(Shop::class);
     }
 
     public function product()
